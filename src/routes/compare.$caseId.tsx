@@ -187,7 +187,9 @@ function Compare() {
             const hasDelta = va !== null && vb !== null;
             const diff = hasDelta ? vb - va : null;
             const inverse = "inverse" in m ? m.inverse : false;
-            const better = diff === null ? null : inverse ? diff < 0 : diff > 0;
+            const isEven = diff !== null && Math.abs(diff) < 1e-9;
+            const better =
+              diff === null || isEven ? null : inverse ? diff < 0 : diff > 0;
             return (
               <div
                 key={m.key}
