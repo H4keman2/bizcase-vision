@@ -55,7 +55,7 @@ export function CashFlowChart({
               fontSize: 12,
             }}
             labelFormatter={(m) => `Month ${m}`}
-            formatter={(v: number, n) => [fmtCompact(v), n === "a" ? labelA : labelB]}
+            formatter={(v, n) => [fmtCompact(Number(v)), n === "a" ? labelA : labelB]}
           />
           <ReferenceLine y={0} stroke={AXIS} strokeDasharray="3 3" />
           {seriesB ? <Legend wrapperStyle={{ fontFamily: "monospace", fontSize: 10 }} /> : null}
