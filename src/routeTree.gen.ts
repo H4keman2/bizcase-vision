@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
 import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareCaseIdRoute = CompareCaseIdRouteImport.update({
+  id: '/compare/$caseId',
+  path: '/compare/$caseId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
@@ -26,27 +32,31 @@ const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/case/$caseId': typeof CaseCaseIdRoute
+  '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/case/$caseId': typeof CaseCaseIdRoute
+  '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/case/$caseId': typeof CaseCaseIdRoute
+  '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/case/$caseId'
+  fullPaths: '/' | '/case/$caseId' | '/compare/$caseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/case/$caseId'
-  id: '__root__' | '/' | '/case/$caseId'
+  to: '/' | '/case/$caseId' | '/compare/$caseId'
+  id: '__root__' | '/' | '/case/$caseId' | '/compare/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CaseCaseIdRoute: typeof CaseCaseIdRoute
+  CompareCaseIdRoute: typeof CompareCaseIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/$caseId': {
+      id: '/compare/$caseId'
+      path: '/compare/$caseId'
+      fullPath: '/compare/$caseId'
+      preLoaderRoute: typeof CompareCaseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/case/$caseId': {
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CaseCaseIdRoute: CaseCaseIdRoute,
+  CompareCaseIdRoute: CompareCaseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

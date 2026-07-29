@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Screen, PageHeader, Btn, Card, Modal } from "@/components/bizcase/ui";
+import { Screen, PageHeader, Btn, Modal } from "@/components/bizcase/ui";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal } from "@/components/bizcase/ExecSummaryModal";
@@ -265,4 +265,3 @@ function HistoryRow({
   );
 }
 
-export { Card };
