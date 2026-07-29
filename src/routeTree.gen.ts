@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
 import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +37,47 @@ const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/case/$caseId' | '/compare/$caseId'
+  fullPaths: '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/case/$caseId' | '/compare/$caseId'
-  id: '__root__' | '/' | '/case/$caseId' | '/compare/$caseId'
+  to: '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
+  id: '__root__' | '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CaseCaseIdRoute: typeof CaseCaseIdRoute
   CompareCaseIdRoute: typeof CompareCaseIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   CaseCaseIdRoute: CaseCaseIdRoute,
   CompareCaseIdRoute: CompareCaseIdRoute,
 }
