@@ -46,8 +46,10 @@ export function createCase(name = "Untitled Case"): CaseRecord {
     createdAt: now,
     updatedAt: now,
     latestVersion: 0,
+    mode: "simple",
     draft: { inputs, outputs: calculate(inputs) },
   };
+
   write(caseKey(id), record);
   write(INDEX_KEY, [id, ...ids]);
   return record;
