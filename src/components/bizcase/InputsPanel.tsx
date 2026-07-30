@@ -170,10 +170,13 @@ export function InputsPanel({
               onChange={(v) => patch((d) => void (d.benefits.revenueModel.unit.unitsPerYear = v))}
             />
           </div>
+            )}
+          </>
         )}
       </Card>
 
-      {rm.type !== "none" && (
+      {detailed && rm.type !== "none" && (
+
         <Card
           label="Overhead"
           action={
