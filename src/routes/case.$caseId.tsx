@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Screen, PageHeader, Btn, Modal } from "@/components/bizcase/ui";
+import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/ui";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal } from "@/components/bizcase/ExecSummaryModal";
@@ -8,8 +8,10 @@ import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
-import type { CaseInputs, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
+import { effectiveInputs } from "@/lib/bizcase/types";
+import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/case/$caseId")({
   head: () => ({
