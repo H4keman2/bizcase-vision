@@ -1,6 +1,8 @@
 export type RevenueModelType = "none" | "aggregate" | "unit";
 export type TimelineType = "flat" | "manual" | "ramp";
 export type OverheadBasis = "cogs" | "revenue";
+export type CaseMode = "simple" | "detailed";
+
 
 export interface PhasedCapex {
   month: number;
