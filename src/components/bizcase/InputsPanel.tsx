@@ -107,10 +107,13 @@ export function InputsPanel({
           />
         </div>
 
-        <p className="mb-2 mt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          Revenue Model
-        </p>
-        <SegToggle<RevenueModelType>
+        {detailed && (
+          <>
+            <p className="mb-2 mt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Revenue Model
+            </p>
+            <SegToggle<RevenueModelType>
+
           value={rm.type}
           onChange={(v) => patch((d) => void (d.benefits.revenueModel.type = v))}
           options={[
