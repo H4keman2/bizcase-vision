@@ -1,5 +1,46 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Number input that lets the field sit empty (or mid-typed, e.g. "-", "1.")
+ * while the user edits, instead of snapping back to 0 on every keystroke.
+ */
+export function NumInput({
+  value,
+  onChange,
+  step,
+  className,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  className?: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  useEffect(() => {
+    setDraft(null);
+  }, [value]);
+
+  return (
+    <input
+      type="number"
+      step={step}
+      className={className}
+      value={draft ?? (Number.isFinite(value) ? String(value) : "")}
+      onChange={(e) => {
+        const raw = e.target.value;
+        setDraft(raw);
+        if (raw === "") return;
+        const n = Number(raw);
+        if (Number.isFinite(n)) onChange(n);
+      }}
+      onBlur={() => {
+        if (draft === "" || (draft !== null && !Number.isFinite(Number(draft)))) onChange(0);
+        setDraft(null);
+      }}
+    />
+  );
+}
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
