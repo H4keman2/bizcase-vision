@@ -102,12 +102,11 @@ export function NumField({
             {prefix}
           </span>
         ) : null}
-        <input
-          type="number"
+        <NumInput
           step={step}
           className={cn("field-inset", prefix && "pl-6", suffix && "pr-8")}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          value={value}
+          onChange={onChange}
         />
         {suffix ? (
           <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[12px] text-muted-foreground">
