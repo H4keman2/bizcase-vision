@@ -115,6 +115,16 @@ function CaseEditor() {
         }
         action={
           <>
+            <div className="w-[170px]">
+              <SegToggle<CaseMode>
+                value={mode}
+                onChange={(v) => setRecord({ ...record, mode: v })}
+                options={[
+                  { value: "simple", label: "Simple" },
+                  { value: "detailed", label: "Detailed" },
+                ]}
+              />
+            </div>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
             <Btn
@@ -136,16 +146,18 @@ function CaseEditor() {
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
-        <InputsPanel inputs={inputs} onChange={setInputs} />
+        <InputsPanel inputs={inputs} onChange={setInputs} mode={mode} />
         <div className="lg:sticky lg:top-6 lg:self-start">
           <OutputsPanel
             inputs={inputs}
             outputs={outputs}
+            mode={mode}
             onExecSummary={() => setModal("summary")}
             onImport={() => setModal("import")}
           />
         </div>
       </div>
+
 
       {modal === "save" && (
         <Modal title="Save Version" onClose={() => setModal(null)}>
