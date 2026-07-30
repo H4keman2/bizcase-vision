@@ -54,7 +54,13 @@ function CaseEditor() {
     setVersions(listVersions(caseId));
   }, [caseId]);
 
-  const outputs = useMemo(() => (inputs ? calculate(inputs) : null), [inputs]);
+  const mode: CaseMode = record?.mode ?? "simple";
+
+  const outputs = useMemo(
+    () => (inputs ? calculate(effectiveInputs(inputs, mode)) : null),
+    [inputs, mode],
+  );
+
 
   useEffect(() => {
     if (!record || !inputs || !outputs) return;
