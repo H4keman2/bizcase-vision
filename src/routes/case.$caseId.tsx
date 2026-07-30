@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Screen, PageHeader, Btn, Modal } from "@/components/bizcase/ui";
+import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/ui";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal } from "@/components/bizcase/ExecSummaryModal";
@@ -8,8 +8,10 @@ import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
-import type { CaseInputs, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
+import { effectiveInputs } from "@/lib/bizcase/types";
+import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/case/$caseId")({
   head: () => ({
@@ -52,7 +54,13 @@ function CaseEditor() {
     setVersions(listVersions(caseId));
   }, [caseId]);
 
-  const outputs = useMemo(() => (inputs ? calculate(inputs) : null), [inputs]);
+  const mode: CaseMode = record?.mode ?? "simple";
+
+  const outputs = useMemo(
+    () => (inputs ? calculate(effectiveInputs(inputs, mode)) : null),
+    [inputs, mode],
+  );
+
 
   useEffect(() => {
     if (!record || !inputs || !outputs) return;
@@ -107,6 +115,16 @@ function CaseEditor() {
         }
         action={
           <>
+            <div className="w-[170px]">
+              <SegToggle<CaseMode>
+                value={mode}
+                onChange={(v) => setRecord({ ...record, mode: v })}
+                options={[
+                  { value: "simple", label: "Simple" },
+                  { value: "detailed", label: "Detailed" },
+                ]}
+              />
+            </div>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
             <Btn
@@ -128,16 +146,18 @@ function CaseEditor() {
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
-        <InputsPanel inputs={inputs} onChange={setInputs} />
+        <InputsPanel inputs={inputs} onChange={setInputs} mode={mode} />
         <div className="lg:sticky lg:top-6 lg:self-start">
           <OutputsPanel
             inputs={inputs}
             outputs={outputs}
+            mode={mode}
             onExecSummary={() => setModal("summary")}
             onImport={() => setModal("import")}
           />
         </div>
       </div>
+
 
       {modal === "save" && (
         <Modal title="Save Version" onClose={() => setModal(null)}>
@@ -212,7 +232,8 @@ function CaseEditor() {
       {modal === "summary" && (
         <ExecSummaryModal
           name={record.name}
-          inputs={inputs}
+          inputs={effectiveInputs(inputs, mode)}
+
           outputs={outputs}
           onClose={() => setModal(null)}
         />

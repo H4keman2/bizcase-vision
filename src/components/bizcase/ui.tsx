@@ -1,9 +1,27 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+const stripGrouping = (s: string) => s.replace(/,/g, "");
+
+/** Formats a raw typed string with thousands separators, stripping leading zeros. */
+function withCommas(raw: string): string {
+  if (raw === "") return "";
+  const neg = raw.trim().startsWith("-");
+  const cleaned = raw.replace(/[^0-9.]/g, "");
+  const parts = cleaned.split(".");
+  const intRaw = parts[0].replace(/^0+(?=\d)/, "");
+  const grouped = intRaw === "" ? "" : Number(intRaw).toLocaleString("en-US");
+  const decRaw = parts.length > 1 ? parts.slice(1).join("") : null;
+  return `${neg ? "-" : ""}${grouped}${decRaw !== null ? `.${decRaw}` : ""}`;
+}
+
+const formatValue = (v: number) =>
+  Number.isFinite(v) ? v.toLocaleString("en-US", { maximumFractionDigits: 10 }) : "";
+
 /**
- * Number input that lets the field sit empty (or mid-typed, e.g. "-", "1.")
- * while the user edits, instead of snapping back to 0 on every keystroke.
+ * Number input that shows comma-grouped values while typing, keeps the raw
+ * numeric value in state, and lets the field sit empty (or mid-typed, e.g.
+ * "-", "1.") instead of snapping back to 0 on every keystroke.
  */
 export function NumInput({
   value,
@@ -17,30 +35,35 @@ export function NumInput({
   className?: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+
   useEffect(() => {
-    setDraft(null);
+    setDraft((d) => (d !== null && Number(stripGrouping(d)) === value ? d : null));
   }, [value]);
 
   return (
     <input
-      type="number"
+      type="text"
+      inputMode="decimal"
       step={step}
       className={className}
-      value={draft ?? (Number.isFinite(value) ? String(value) : "")}
+      value={draft ?? formatValue(value)}
       onChange={(e) => {
-        const raw = e.target.value;
-        setDraft(raw);
-        if (raw === "") return;
-        const n = Number(raw);
+        const formatted = withCommas(e.target.value);
+        setDraft(formatted);
+        const bare = stripGrouping(formatted);
+        if (bare === "" || bare === "-" || bare.endsWith(".")) return;
+        const n = Number(bare);
         if (Number.isFinite(n)) onChange(n);
       }}
       onBlur={() => {
-        if (draft === "" || (draft !== null && !Number.isFinite(Number(draft)))) onChange(0);
+        const bare = draft === null ? null : stripGrouping(draft);
+        if (bare !== null && (bare === "" || !Number.isFinite(Number(bare)))) onChange(0);
         setDraft(null);
       }}
     />
   );
 }
+
 
 export function Screen({ children }: { children: ReactNode }) {
   return (

@@ -2,23 +2,26 @@ import { useState } from "react";
 import { Card, Metric, Btn } from "./ui";
 import { CashFlowChart } from "./CashFlowChart";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
-import type { CaseInputs, CaseOutputs } from "@/lib/bizcase/types";
+import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
 export function OutputsPanel({
   inputs,
   outputs,
   onExecSummary,
   onImport,
+  mode = "detailed",
 }: {
   inputs: CaseInputs;
   outputs: CaseOutputs;
   onExecSummary: () => void;
   onImport: () => void;
+  mode?: CaseMode;
 }) {
   const [showChart] = useState(true);
   const chartData = outputs.cashFlowSeries.map((p) => ({ month: p.month, a: p.cumulative }));
-  const m = outputs.margins;
+  const m = mode === "simple" ? null : outputs.margins;
   const rmType = inputs.benefits.revenueModel.type;
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,7 +32,10 @@ export function OutputsPanel({
           <Metric label="Payback" value={fmtMonths(outputs.paybackMonths)} />
           <Metric label="ROI" value={fmtPercent(outputs.roi, 0)} tone={outputs.roi >= 0 ? "positive" : "negative"} />
           <Metric label="Total Investment" value={fmtCompact(outputs.totalInvestment)} />
-          <Metric label="Total Revenue" value={fmtCompact(outputs.totalRevenue)} />
+          {mode === "detailed" && (
+            <Metric label="Total Revenue" value={fmtCompact(outputs.totalRevenue)} />
+          )}
+
         </div>
       </Card>
 
