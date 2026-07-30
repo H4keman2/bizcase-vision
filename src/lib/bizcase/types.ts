@@ -75,8 +75,23 @@ export interface CaseRecord {
   createdAt: string;
   updatedAt: string;
   latestVersion: number;
+  mode?: CaseMode;
   draft: CaseDraft;
 }
+
+/** Simple mode ignores revenue-model & overhead data without deleting it. */
+export function effectiveInputs(inputs: CaseInputs, mode: CaseMode): CaseInputs {
+  if (mode !== "simple") return inputs;
+  return {
+    ...inputs,
+    benefits: {
+      ...inputs.benefits,
+      revenueModel: { ...inputs.benefits.revenueModel, type: "none" },
+      overhead: { ...inputs.benefits.overhead, enabled: false },
+    },
+  };
+}
+
 
 export function defaultInputs(): CaseInputs {
   return {
