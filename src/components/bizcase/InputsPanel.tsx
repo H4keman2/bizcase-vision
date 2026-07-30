@@ -1,5 +1,11 @@
 import { Card, NumField, SegToggle, Btn } from "./ui";
-import type { CaseInputs, RevenueModelType, TimelineType, OverheadBasis } from "@/lib/bizcase/types";
+import type {
+  CaseInputs,
+  CaseMode,
+  RevenueModelType,
+  TimelineType,
+  OverheadBasis,
+} from "@/lib/bizcase/types";
 
 type Patch = (fn: (draft: CaseInputs) => void) => void;
 
@@ -10,9 +16,11 @@ function clone<T>(v: T): T {
 export function InputsPanel({
   inputs,
   onChange,
+  mode = "detailed",
 }: {
   inputs: CaseInputs;
   onChange: (next: CaseInputs) => void;
+  mode?: CaseMode;
 }) {
   const patch: Patch = (fn) => {
     const next = clone(inputs);
@@ -20,9 +28,11 @@ export function InputsPanel({
     onChange(next);
   };
 
+  const detailed = mode === "detailed";
   const rm = inputs.benefits.revenueModel;
   const tl = inputs.benefits.timeline;
   const years = Math.max(1, Math.ceil(inputs.horizonYears));
+
 
   return (
     <div className="flex flex-col gap-4">
