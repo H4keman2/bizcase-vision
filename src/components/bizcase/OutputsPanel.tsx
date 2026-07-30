@@ -32,7 +32,10 @@ export function OutputsPanel({
           <Metric label="Payback" value={fmtMonths(outputs.paybackMonths)} />
           <Metric label="ROI" value={fmtPercent(outputs.roi, 0)} tone={outputs.roi >= 0 ? "positive" : "negative"} />
           <Metric label="Total Investment" value={fmtCompact(outputs.totalInvestment)} />
-          <Metric label="Total Revenue" value={fmtCompact(outputs.totalRevenue)} />
+          {mode === "detailed" && (
+            <Metric label="Total Revenue" value={fmtCompact(outputs.totalRevenue)} />
+          )}
+
         </div>
       </Card>
 
