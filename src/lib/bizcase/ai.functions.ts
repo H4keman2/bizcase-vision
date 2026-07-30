@@ -56,11 +56,31 @@ ROI: ${data.roi.toFixed(0)}%
 ${data.revenueContext}
 ${data.timelineContext}
 
-Write a 3 to 4 sentence plain-English executive summary. Lead with the bottom-line recommendation. No jargon, no bullet points, no em dashes, no headings. Plain prose only.`;
+Write a 3 to 4 sentence plain-English executive summary. Lead with the bottom-line recommendation. No jargon, no bullet points, no em dashes, no headings. Plain prose only.
+
+Output ONLY the finished summary text itself. Do not include a header, a title, numbered steps, multiple draft options, markdown formatting like asterisks, or any commentary about your approach. Do not say things like "Draft 1" or "Here is a summary." The very first character of your response must be the first word of the summary.`;
 
     const text = await callGateway([{ role: "user", content: prompt }]);
-    return { summary: text.trim() };
+    return { summary: cleanSummaryText(text) };
   });
+
+/** Defensive cleanup if the model still wraps the summary in headers, draft labels or markdown. */
+function cleanSummaryText(raw: string): string {
+  return raw
+    .split("\n")
+    .filter((line) => {
+      const t = line.trim();
+      if (!t) return false;
+      if (/^(\*\*|#|\d+\.\s*\*\*|draft\s*\d+:?)/i.test(t)) return false;
+      if (/^\*\s*\*draft/i.test(t)) return false;
+      return true;
+    })
+    .join(" ")
+    .replace(/\*\*/g, "")
+    .replace(/^\*+\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 const ExtractInput = z.object({ sheetText: z.string().min(1).max(20000) });
 

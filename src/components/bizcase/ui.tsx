@@ -1,5 +1,46 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Number input that lets the field sit empty (or mid-typed, e.g. "-", "1.")
+ * while the user edits, instead of snapping back to 0 on every keystroke.
+ */
+export function NumInput({
+  value,
+  onChange,
+  step,
+  className,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  className?: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  useEffect(() => {
+    setDraft(null);
+  }, [value]);
+
+  return (
+    <input
+      type="number"
+      step={step}
+      className={className}
+      value={draft ?? (Number.isFinite(value) ? String(value) : "")}
+      onChange={(e) => {
+        const raw = e.target.value;
+        setDraft(raw);
+        if (raw === "") return;
+        const n = Number(raw);
+        if (Number.isFinite(n)) onChange(n);
+      }}
+      onBlur={() => {
+        if (draft === "" || (draft !== null && !Number.isFinite(Number(draft)))) onChange(0);
+        setDraft(null);
+      }}
+    />
+  );
+}
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -102,12 +143,11 @@ export function NumField({
             {prefix}
           </span>
         ) : null}
-        <input
-          type="number"
+        <NumInput
           step={step}
           className={cn("field-inset", prefix && "pl-6", suffix && "pr-8")}
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          value={value}
+          onChange={onChange}
         />
         {suffix ? (
           <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[12px] text-muted-foreground">
