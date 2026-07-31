@@ -260,17 +260,22 @@ export function Modal({
   onClose,
   children,
   wide,
+  info,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  info?: string;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/85 p-4 py-10">
       <div className={cn("surface-card w-full", wide ? "max-w-3xl" : "max-w-md")}>
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="label-eyebrow">{title}</p>
+          <p className="label-eyebrow flex items-center gap-1.5">
+            {title}
+            {info ? <InfoTooltip field={info} /> : null}
+          </p>
           <button
             onClick={onClose}
             className="font-mono text-xs text-muted-foreground hover:text-foreground"
