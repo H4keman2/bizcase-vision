@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { InfoTooltip } from "./InfoTooltip";
 import { cn } from "@/lib/utils";
 
 const stripGrouping = (s: string) => s.replace(/,/g, "");
@@ -156,6 +157,7 @@ export function NumField({
   suffix,
   prefix,
   step,
+  info,
 }: {
   label: string;
   value: number;
@@ -163,11 +165,13 @@ export function NumField({
   suffix?: string;
   prefix?: string;
   step?: number;
+  info?: string;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <span className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
+        {info ? <InfoTooltip field={info} /> : null}
       </span>
       <div className="relative">
         {prefix ? (
@@ -225,15 +229,18 @@ export function Metric({
   label,
   value,
   tone = "default",
+  info,
 }: {
   label: string;
   value: string;
   tone?: "default" | "positive" | "negative";
+  info?: string;
 }) {
   return (
     <div className="border border-border bg-card-inset px-3 py-3">
-      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
+        {info ? <InfoTooltip field={info} /> : null}
       </p>
       <p
         className={cn(
