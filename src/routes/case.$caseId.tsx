@@ -286,9 +286,9 @@ function CaseEditor() {
       {modal === "summary" && (
         <ExecSummaryModal
           name={record.name}
-          inputs={effectiveInputs(inputs, mode)}
-
+          inputs={eff}
           outputs={outputs}
+          onGenerated={setExecSummary}
           onClose={() => setModal(null)}
         />
       )}
