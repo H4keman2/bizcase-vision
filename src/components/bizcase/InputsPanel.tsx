@@ -1,4 +1,5 @@
 import { Card, NumField, SegToggle, Btn } from "./ui";
+import { InfoTooltip } from "./InfoTooltip";
 import type {
   CaseInputs,
   CaseMode,
