@@ -1,14 +1,18 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/ui";
+import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
-import { ExecSummaryModal } from "@/components/bizcase/ExecSummaryModal";
+import { ExecSummaryModal, buildContexts } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
+import { exportCasePdf } from "@/lib/bizcase/pdf";
+import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
