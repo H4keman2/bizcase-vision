@@ -46,6 +46,9 @@ function CaseEditor() {
   const [versionLabel, setVersionLabel] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
+  const [execSummary, setExecSummary] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const runSummary = useServerFn(generateExecSummary);
 
   useEffect(() => {
     const r = getCase(caseId);
