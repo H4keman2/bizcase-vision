@@ -115,8 +115,9 @@ export function InputsPanel({
 
         {detailed && (
           <>
-            <p className="mb-2 mt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            <p className="mb-2 mt-4 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Revenue Model
+              <InfoTooltip field="revenueModel" />
             </p>
             <SegToggle<RevenueModelType>
 
