@@ -108,6 +108,49 @@ function CaseEditor() {
     );
   };
 
+  const eff = effectiveInputs(inputs, mode);
+
+  const handleExport = async () => {
+    setExporting(true);
+    let summary = execSummary;
+    if (!summary) {
+      try {
+        const { revenueContext, timelineContext } = buildContexts(eff, outputs);
+        const res = await runSummary({
+          data: {
+            name: record.name,
+            horizonYears: eff.horizonYears,
+            discountRateAnnual: eff.discountRateAnnual,
+            nre: eff.investment.nre,
+            totalInvestment: outputs.totalInvestment,
+            totalRevenue: outputs.totalRevenue,
+            npv: outputs.npv,
+            irr: outputs.irr,
+            paybackMonths: outputs.paybackMonths,
+            roi: outputs.roi,
+            revenueContext,
+            timelineContext,
+          },
+        });
+        summary = res.summary;
+        setExecSummary(res.summary);
+      } catch {
+        summary = null;
+      }
+    }
+    exportCasePdf({
+      name: record.name,
+      versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
+      inputs: eff,
+      outputs,
+      mode,
+      summary,
+    });
+    setExporting(false);
+  };
+
+
+
   return (
     <Screen>
       <PageHeader
