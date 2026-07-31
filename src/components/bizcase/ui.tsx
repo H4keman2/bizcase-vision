@@ -102,17 +102,26 @@ export function Card({
   children,
   className,
   action,
+  info,
 }: {
   label?: string;
   children: ReactNode;
   className?: string;
   action?: ReactNode;
+  info?: string;
 }) {
   return (
     <section className={cn("surface-card p-4 md:p-5", className)}>
       {(label || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
-          {label ? <p className="label-eyebrow">{label}</p> : <span />}
+          {label ? (
+            <p className="label-eyebrow flex items-center gap-1.5">
+              {label}
+              {info ? <InfoTooltip field={info} /> : null}
+            </p>
+          ) : (
+            <span />
+          )}
           {action}
         </div>
       )}
