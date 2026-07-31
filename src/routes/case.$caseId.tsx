@@ -214,7 +214,7 @@ function CaseEditor() {
 
 
       {modal === "save" && (
-        <Modal title="Save Version" onClose={() => setModal(null)}>
+        <Modal title="Save Version" info="versionLabel" onClose={() => setModal(null)}>
           <label className="mb-4 block">
             <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Version label
@@ -236,7 +236,7 @@ function CaseEditor() {
       )}
 
       {modal === "history" && (
-        <Modal title="Version History" onClose={() => setModal(null)} wide>
+        <Modal title="Version History" info="versionHistory" onClose={() => setModal(null)} wide>
           <div className="flex flex-col gap-2">
             <HistoryRow
               label="Draft (unsaved)"
