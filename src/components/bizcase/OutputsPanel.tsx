@@ -27,19 +27,19 @@ export function OutputsPanel({
     <div className="flex flex-col gap-4">
       <Card label="Results">
         <div className="grid grid-cols-2 gap-3">
-          <Metric label="NPV" value={fmtCompact(outputs.npv)} tone={outputs.npv >= 0 ? "positive" : "negative"} />
-          <Metric label="IRR" value={fmtPercent(outputs.irr)} />
-          <Metric label="Payback" value={fmtMonths(outputs.paybackMonths)} />
-          <Metric label="ROI" value={fmtPercent(outputs.roi, 0)} tone={outputs.roi >= 0 ? "positive" : "negative"} />
-          <Metric label="Total Investment" value={fmtCompact(outputs.totalInvestment)} />
+          <Metric label="NPV" info="npv" value={fmtCompact(outputs.npv)} tone={outputs.npv >= 0 ? "positive" : "negative"} />
+          <Metric label="IRR" info="irr" value={fmtPercent(outputs.irr)} />
+          <Metric label="Payback" info="payback" value={fmtMonths(outputs.paybackMonths)} />
+          <Metric label="ROI" info="roi" value={fmtPercent(outputs.roi, 0)} tone={outputs.roi >= 0 ? "positive" : "negative"} />
+          <Metric label="Total Investment" info="totalInvestment" value={fmtCompact(outputs.totalInvestment)} />
           {mode === "detailed" && (
-            <Metric label="Total Revenue" value={fmtCompact(outputs.totalRevenue)} />
+            <Metric label="Total Revenue" info="totalRevenue" value={fmtCompact(outputs.totalRevenue)} />
           )}
 
         </div>
       </Card>
 
-      <Card label="Cumulative Cash Flow">
+      <Card label="Cumulative Cash Flow" info="cumulativeCashFlow">
         {showChart && <CashFlowChart data={chartData} />}
       </Card>
 
@@ -47,22 +47,22 @@ export function OutputsPanel({
         <Card label="Margin Analysis">
           <div className="grid grid-cols-2 gap-3">
             {rmType === "aggregate" ? (
-              <Metric label="Gross Margin" value={fmtPercent(m.grossMarginPercent)} />
+              <Metric label="Gross Margin" info="grossMargin" value={fmtPercent(m.grossMarginPercent)} />
             ) : (
               <>
                 <Metric
-                  label="Contribution / Unit"
+                  label="Contribution / Unit" info="contributionPerUnit"
                   value={fmtCurrency(m.contributionMarginPerUnit, 2)}
                 />
-                <Metric label="Contribution %" value={fmtPercent(m.contributionMarginPercent)} />
+                <Metric label="Contribution %" info="contributionMargin" value={fmtPercent(m.contributionMarginPercent)} />
                 <Metric
-                  label="Breakeven Units / Yr"
+                  label="Breakeven Units / Yr" info="breakevenUnits"
                   value={m.breakevenUnitsPerYear === null ? "—" : fmtNumber(m.breakevenUnitsPerYear)}
                 />
               </>
             )}
             {inputs.benefits.overhead.enabled && (
-              <Metric label="Overhead / Yr" value={fmtCurrency(m.overheadAnnual)} />
+              <Metric label="Overhead / Yr" info="overheadAnnual" value={fmtCurrency(m.overheadAnnual)} />
             )}
           </div>
         </Card>
