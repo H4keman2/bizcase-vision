@@ -345,8 +345,26 @@ export function exportComparisonPdf(opts: {
   y += 46;
 
   y = sectionLabel(doc, "Metrics Ledger", y);
-  const ra = outputRows(a);
-  const rb = new Map(outputRows(b));
+  const ledger: { label: string; va: number | null; vb: number | null; fmt: (v: number | null) => string; inverse?: boolean }[] = [
+    { label: "NPV", va: a.outputs.npv, vb: b.outputs.npv, fmt: fmtCompact },
+    { label: "IRR", va: a.outputs.irr, vb: b.outputs.irr, fmt: (v) => fmtPercent(v) },
+    { label: "Payback", va: a.outputs.paybackMonths, vb: b.outputs.paybackMonths, fmt: fmtMonths, inverse: true },
+    { label: "ROI", va: a.outputs.roi, vb: b.outputs.roi, fmt: (v) => fmtPercent(v, 0) },
+    {
+      label: "Total Investment",
+      va: a.outputs.totalInvestment,
+      vb: b.outputs.totalInvestment,
+      fmt: fmtCompact,
+      inverse: true,
+    },
+    {
+      label: "Breakeven Units / Yr",
+      va: a.outputs.margins?.breakevenUnitsPerYear ?? null,
+      vb: b.outputs.margins?.breakevenUnitsPerYear ?? null,
+      fmt: (v) => (v === null ? "—" : fmtNumber(v)),
+      inverse: true,
+    },
+  ];
   const colX = [40, W / 2 - 20, W - 200, W - 40];
   doc.setFont("courier", "bold");
   doc.setFontSize(8);
@@ -357,23 +375,33 @@ export function exportComparisonPdf(opts: {
   doc.text("DELTA", colX[3], y, { align: "right" });
   y += 8;
 
-  ra.forEach(([label, va]) => {
-    const vb = rb.get(label) ?? "—";
+  ledger.forEach((row) => {
     y += 18;
     doc.setDrawColor(LINE);
     doc.line(40, y - 12, W - 40, y - 12);
     doc.setFont("courier", "normal");
     doc.setFontSize(8);
     doc.setTextColor(GREY);
-    doc.text(label.toUpperCase(), colX[0], y);
+    doc.text(row.label.toUpperCase(), colX[0], y);
     doc.setFontSize(9.5);
     doc.setTextColor(TEXT);
-    doc.text(va, colX[1], y, { align: "right" });
+    doc.text(row.fmt(row.va), colX[1], y, { align: "right" });
     doc.setFont("courier", "bold");
-    doc.text(vb, colX[2], y, { align: "right" });
-    doc.setTextColor(GREY);
-    doc.text(va === vb ? "EVEN" : "—", colX[3], y, { align: "right" });
+    doc.text(row.fmt(row.vb), colX[2], y, { align: "right" });
+
+    const hasDelta = row.va !== null && row.vb !== null;
+    const diff = hasDelta ? (row.vb as number) - (row.va as number) : null;
+    const even = diff !== null && Math.abs(diff) < 1e-9;
+    const better = diff === null || even ? null : row.inverse ? diff < 0 : diff > 0;
+    doc.setTextColor(better === null ? GREY : better ? "#4F7A00" : "#D93A1C");
+    doc.text(
+      diff === null ? "—" : even ? "EVEN" : `${better ? "+" : "-"}${row.fmt(Math.abs(diff)).replace("-", "")}`,
+      colX[3],
+      y,
+      { align: "right" },
+    );
   });
+
   y += 30;
 
   const maxLen = Math.max(a.outputs.cashFlowSeries.length, b.outputs.cashFlowSeries.length);
