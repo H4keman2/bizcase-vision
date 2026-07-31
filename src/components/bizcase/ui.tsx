@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { InfoTooltip } from "./InfoTooltip";
 import { cn } from "@/lib/utils";
 
 const stripGrouping = (s: string) => s.replace(/,/g, "");
@@ -102,17 +103,26 @@ export function Card({
   children,
   className,
   action,
+  info,
 }: {
   label?: string;
   children: ReactNode;
   className?: string;
   action?: ReactNode;
+  info?: string;
 }) {
   return (
     <section className={cn("surface-card p-4 md:p-5", className)}>
       {(label || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
-          {label ? <p className="label-eyebrow">{label}</p> : <span />}
+          {label ? (
+            <p className="label-eyebrow flex items-center gap-1.5">
+              {label}
+              {info ? <InfoTooltip field={info} /> : null}
+            </p>
+          ) : (
+            <span />
+          )}
           {action}
         </div>
       )}
@@ -147,6 +157,7 @@ export function NumField({
   suffix,
   prefix,
   step,
+  info,
 }: {
   label: string;
   value: number;
@@ -154,11 +165,13 @@ export function NumField({
   suffix?: string;
   prefix?: string;
   step?: number;
+  info?: string;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <span className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
+        {info ? <InfoTooltip field={info} /> : null}
       </span>
       <div className="relative">
         {prefix ? (
@@ -216,15 +229,18 @@ export function Metric({
   label,
   value,
   tone = "default",
+  info,
 }: {
   label: string;
   value: string;
   tone?: "default" | "positive" | "negative";
+  info?: string;
 }) {
   return (
     <div className="border border-border bg-card-inset px-3 py-3">
-      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
+        {info ? <InfoTooltip field={info} /> : null}
       </p>
       <p
         className={cn(
@@ -244,17 +260,22 @@ export function Modal({
   onClose,
   children,
   wide,
+  info,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  info?: string;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/85 p-4 py-10">
       <div className={cn("surface-card w-full", wide ? "max-w-3xl" : "max-w-md")}>
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="label-eyebrow">{title}</p>
+          <p className="label-eyebrow flex items-center gap-1.5">
+            {title}
+            {info ? <InfoTooltip field={info} /> : null}
+          </p>
           <button
             onClick={onClose}
             className="font-mono text-xs text-muted-foreground hover:text-foreground"

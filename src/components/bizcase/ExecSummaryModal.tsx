@@ -4,7 +4,7 @@ import { Modal, Btn } from "./ui";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseOutputs } from "@/lib/bizcase/types";
 
-function buildContexts(inputs: CaseInputs, outputs: CaseOutputs) {
+export function buildContexts(inputs: CaseInputs, outputs: CaseOutputs) {
   const rm = inputs.benefits.revenueModel;
   const m = outputs.margins;
   let revenueContext =
@@ -31,11 +31,13 @@ export function ExecSummaryModal({
   inputs,
   outputs,
   onClose,
+  onGenerated,
 }: {
   name: string;
   inputs: CaseInputs;
   outputs: CaseOutputs;
   onClose: () => void;
+  onGenerated?: (summary: string) => void;
 }) {
   const run = useServerFn(generateExecSummary);
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,7 @@ export function ExecSummaryModal({
         },
       });
       setSummary(res.summary);
+      onGenerated?.(res.summary);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {

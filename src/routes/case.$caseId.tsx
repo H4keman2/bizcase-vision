@@ -1,14 +1,18 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/ui";
+import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
-import { ExecSummaryModal } from "@/components/bizcase/ExecSummaryModal";
+import { ExecSummaryModal, buildContexts } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
+import { exportCasePdf } from "@/lib/bizcase/pdf";
+import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +46,9 @@ function CaseEditor() {
   const [versionLabel, setVersionLabel] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
+  const [execSummary, setExecSummary] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const runSummary = useServerFn(generateExecSummary);
 
   useEffect(() => {
     const r = getCase(caseId);
@@ -101,6 +108,49 @@ function CaseEditor() {
     );
   };
 
+  const eff = effectiveInputs(inputs, mode);
+
+  const handleExport = async () => {
+    setExporting(true);
+    let summary = execSummary;
+    if (!summary) {
+      try {
+        const { revenueContext, timelineContext } = buildContexts(eff, outputs);
+        const res = await runSummary({
+          data: {
+            name: record.name,
+            horizonYears: eff.horizonYears,
+            discountRateAnnual: eff.discountRateAnnual,
+            nre: eff.investment.nre,
+            totalInvestment: outputs.totalInvestment,
+            totalRevenue: outputs.totalRevenue,
+            npv: outputs.npv,
+            irr: outputs.irr,
+            paybackMonths: outputs.paybackMonths,
+            roi: outputs.roi,
+            revenueContext,
+            timelineContext,
+          },
+        });
+        summary = res.summary;
+        setExecSummary(res.summary);
+      } catch {
+        summary = null;
+      }
+    }
+    exportCasePdf({
+      name: record.name,
+      versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
+      inputs: eff,
+      outputs,
+      mode,
+      summary,
+    });
+    setExporting(false);
+  };
+
+
+
   return (
     <Screen>
       <PageHeader
@@ -125,8 +175,12 @@ function CaseEditor() {
                 ]}
               />
             </div>
+            <InfoTooltip field="caseMode" className="self-center" />
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
+            <Btn onClick={handleExport} disabled={exporting}>
+              {exporting ? "Exporting…" : "Export PDF"}
+            </Btn>
             <Btn
               onClick={() =>
                 navigate({
@@ -160,7 +214,7 @@ function CaseEditor() {
 
 
       {modal === "save" && (
-        <Modal title="Save Version" onClose={() => setModal(null)}>
+        <Modal title="Save Version" info="versionLabel" onClose={() => setModal(null)}>
           <label className="mb-4 block">
             <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Version label
@@ -182,7 +236,7 @@ function CaseEditor() {
       )}
 
       {modal === "history" && (
-        <Modal title="Version History" onClose={() => setModal(null)} wide>
+        <Modal title="Version History" info="versionHistory" onClose={() => setModal(null)} wide>
           <div className="flex flex-col gap-2">
             <HistoryRow
               label="Draft (unsaved)"
@@ -232,9 +286,9 @@ function CaseEditor() {
       {modal === "summary" && (
         <ExecSummaryModal
           name={record.name}
-          inputs={effectiveInputs(inputs, mode)}
-
+          inputs={eff}
           outputs={outputs}
+          onGenerated={setExecSummary}
           onClose={() => setModal(null)}
         />
       )}

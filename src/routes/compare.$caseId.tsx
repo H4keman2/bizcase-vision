@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Screen, PageHeader, Btn, Card } from "@/components/bizcase/ui";
 import { CashFlowChart } from "@/components/bizcase/CashFlowChart";
+import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { getCase, listVersions } from "@/lib/bizcase/storage";
+import { exportComparisonPdf } from "@/lib/bizcase/pdf";
 import { fmtCompact, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import type { CaseDraft, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -35,13 +37,14 @@ export const Route = createFileRoute("/compare/$caseId")({
 type Option = { id: string; label: string; draft: CaseDraft };
 
 const METRICS = [
-  { key: "npv", label: "NPV", fmt: (v: number | null) => fmtCompact(v) },
-  { key: "irr", label: "IRR", fmt: (v: number | null) => fmtPercent(v) },
-  { key: "payback", label: "Payback", fmt: (v: number | null) => (v === null ? "NEVER" : `${v.toFixed(1)} MO`), inverse: true },
-  { key: "roi", label: "ROI", fmt: (v: number | null) => fmtPercent(v, 0) },
+  { key: "npv", label: "NPV", info: "npv", fmt: (v: number | null) => fmtCompact(v) },
+  { key: "irr", label: "IRR", info: "irr", fmt: (v: number | null) => fmtPercent(v) },
+  { key: "payback", label: "Payback", info: "payback", fmt: (v: number | null) => (v === null ? "NEVER" : `${v.toFixed(1)} MO`), inverse: true },
+  { key: "roi", label: "ROI", info: "roi", fmt: (v: number | null) => fmtPercent(v, 0) },
   {
     key: "breakeven",
     label: "Breakeven Units / Yr",
+    info: "breakevenUnits",
     fmt: (v: number | null) => (v === null ? "—" : fmtNumber(v)),
     inverse: true,
   },
@@ -120,6 +123,25 @@ function Compare() {
     b: optB.draft.outputs.cashFlowSeries[m]?.cumulative ?? NaN,
   }));
 
+  const exportPdf = () =>
+    exportComparisonPdf({
+      name: record.name,
+      a: {
+        name: record.name,
+        versionLabel: optA.label,
+        inputs: optA.draft.inputs,
+        outputs: optA.draft.outputs,
+        mode: record.mode ?? "detailed",
+      },
+      b: {
+        name: record.name,
+        versionLabel: optB.label,
+        inputs: optB.draft.inputs,
+        outputs: optB.draft.outputs,
+        mode: record.mode ?? "detailed",
+      },
+    });
+
   const select = (side: "a" | "b", id: string) =>
     navigate({ to: "/compare/$caseId", params: { caseId }, search: { ...search, [side]: id } });
 
@@ -129,9 +151,12 @@ function Compare() {
         eyebrow="Case Comparison"
         title={record.name}
         action={
-          <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
-            Back to Editor
-          </Btn>
+          <>
+            <Btn onClick={() => exportPdf()}>Export PDF</Btn>
+            <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
+              Back to Editor
+            </Btn>
+          </>
         }
       />
 
@@ -146,7 +171,10 @@ function Compare() {
                 side === "b" ? "border border-primary" : "border border-border",
               )}
             >
-              <p className="label-eyebrow mb-2">Case {side.toUpperCase()}</p>
+              <p className="label-eyebrow mb-2 flex items-center gap-1.5">
+                Case {side.toUpperCase()}
+                <InfoTooltip field="compareSelect" />
+              </p>
               <select
                 className="field-inset"
                 value={opt.id}
@@ -178,7 +206,10 @@ function Compare() {
           <span>Metric</span>
           <span className="text-right">Case A</span>
           <span className="text-right">Case B</span>
-          <span className="text-right">Delta</span>
+          <span className="flex items-center justify-end gap-1.5 text-right">
+            Delta
+            <InfoTooltip field="compareDelta" />
+          </span>
         </div>
         <div className="mt-2 flex flex-col">
           {METRICS.map((m) => {
@@ -195,8 +226,9 @@ function Compare() {
                 key={m.key}
                 className="grid grid-cols-[1.4fr_1fr_1fr_1fr] items-center border-t border-border py-3"
               >
-                <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                <span className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                   {m.label}
+                  <InfoTooltip field={m.info} />
                 </span>
                 <span className="data-mono text-right text-sm">{m.fmt(va)}</span>
                 <span className="data-mono text-right text-sm font-bold">{m.fmt(vb)}</span>
