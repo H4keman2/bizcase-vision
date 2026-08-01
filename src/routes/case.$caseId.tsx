@@ -207,6 +207,16 @@ function CaseEditor() {
             onExecSummary={() => setModal("summary")}
             onExport={handleExport}
             exporting={exporting}
+            onExportExcel={() =>
+              exportCaseExcel({
+                name: record.name,
+                versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
+                inputs: eff,
+                outputs,
+                mode,
+                summary: execSummary,
+              })
+            }
           />
         </div>
       </div>
