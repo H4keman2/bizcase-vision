@@ -8,13 +8,15 @@ export function OutputsPanel({
   inputs,
   outputs,
   onExecSummary,
-  onImport,
+  onExport,
+  exporting,
   mode = "detailed",
 }: {
   inputs: CaseInputs;
   outputs: CaseOutputs;
   onExecSummary: () => void;
-  onImport: () => void;
+  onExport: () => void;
+  exporting: boolean;
   mode?: CaseMode;
 }) {
   const [showChart] = useState(true);
@@ -72,7 +74,9 @@ export function OutputsPanel({
         <Btn variant="primary" onClick={onExecSummary}>
           Generate Executive Summary
         </Btn>
-        <Btn onClick={onImport}>Import from Excel</Btn>
+        <Btn onClick={onExport} disabled={exporting}>
+          {exporting ? "Exporting…" : "Export PDF"}
+        </Btn>
       </div>
     </div>
   );
