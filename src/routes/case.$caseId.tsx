@@ -176,11 +176,8 @@ function CaseEditor() {
               />
             </div>
             <InfoTooltip field="caseMode" className="self-center" />
+            <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
-            <Btn onClick={() => setModal("history")}>History</Btn>
-            <Btn onClick={handleExport} disabled={exporting}>
-              {exporting ? "Exporting…" : "Export PDF"}
-            </Btn>
             <Btn
               onClick={() =>
                 navigate({
