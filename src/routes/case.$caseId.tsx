@@ -178,6 +178,7 @@ function CaseEditor() {
             <InfoTooltip field="caseMode" className="self-center" />
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
+            <Btn onClick={() => setModal("history")}>History</Btn>
             <Btn
               onClick={() =>
                 navigate({
@@ -204,7 +205,8 @@ function CaseEditor() {
             outputs={outputs}
             mode={mode}
             onExecSummary={() => setModal("summary")}
-            onImport={() => setModal("import")}
+            onExport={handleExport}
+            exporting={exporting}
           />
         </div>
       </div>
