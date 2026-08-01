@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, Metric, Btn } from "./ui";
 import { CashFlowChart } from "./CashFlowChart";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
+import { exportCaseExcel } from "@/lib/bizcase/excel";
 import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
 export function OutputsPanel({
@@ -10,6 +11,7 @@ export function OutputsPanel({
   onExecSummary,
   onExport,
   exporting,
+  onExportExcel,
   mode = "detailed",
 }: {
   inputs: CaseInputs;
@@ -17,6 +19,7 @@ export function OutputsPanel({
   onExecSummary: () => void;
   onExport: () => void;
   exporting: boolean;
+  onExportExcel: () => void;
   mode?: CaseMode;
 }) {
   const [showChart] = useState(true);
@@ -74,9 +77,12 @@ export function OutputsPanel({
         <Btn variant="primary" onClick={onExecSummary}>
           Generate Executive Summary
         </Btn>
-        <Btn onClick={onExport} disabled={exporting}>
-          {exporting ? "Exporting…" : "Export PDF"}
-        </Btn>
+        <div className="flex flex-col gap-2">
+          <Btn onClick={onExport} disabled={exporting}>
+            {exporting ? "Exporting…" : "Export to PDF"}
+          </Btn>
+          <Btn onClick={onExportExcel}>Export to Excel</Btn>
+        </div>
       </div>
     </div>
   );

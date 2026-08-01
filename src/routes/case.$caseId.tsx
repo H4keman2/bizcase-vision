@@ -12,6 +12,7 @@ import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/stor
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
+import { exportCaseExcel } from "@/lib/bizcase/excel";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -207,6 +208,16 @@ function CaseEditor() {
             onExecSummary={() => setModal("summary")}
             onExport={handleExport}
             exporting={exporting}
+            onExportExcel={() =>
+              exportCaseExcel({
+                name: record.name,
+                versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
+                inputs: eff,
+                outputs,
+                mode,
+                summary: execSummary,
+              })
+            }
           />
         </div>
       </div>
