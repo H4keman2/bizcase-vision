@@ -84,6 +84,7 @@ export function OutputsPanel({
             {exporting ? "Exporting…" : "Export to PDF"}
           </Btn>
           <Btn onClick={onExportExcel}>Export to Excel</Btn>
+          {onReset && <Btn onClick={onReset}>Reset</Btn>}
         </div>
       </div>
     </div>
