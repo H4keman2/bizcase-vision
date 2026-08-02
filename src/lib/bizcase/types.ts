@@ -93,6 +93,35 @@ export function effectiveInputs(inputs: CaseInputs, mode: CaseMode): CaseInputs 
 }
 
 
+/** All investment, benefit and timeline values reset to zero. */
+export function zeroInputs(): CaseInputs {
+  return {
+    investment: { nre: 0, upfront: 0, phased: [] },
+    benefits: {
+      costSavingsAnnual: 0,
+      timeSavingsAnnual: 0,
+      revenueModel: {
+        type: "none",
+        aggregate: { revenueLiftAnnual: 0, cogsAnnual: 0 },
+        unit: {
+          pricePerUnit: 0,
+          variableCostPerUnit: 0,
+          fixedCostsAnnual: 0,
+          unitsPerYear: 0,
+        },
+      },
+      overhead: { enabled: false, basis: "cogs", percent: 0 },
+      timeline: {
+        type: "flat",
+        manual: { yearlyMultipliers: [0, 0, 0] },
+        ramp: { year1Percent: 0, growthRatePercent: 0 },
+      },
+    },
+    horizonYears: 3,
+    discountRateAnnual: 0,
+  };
+}
+
 export function defaultInputs(): CaseInputs {
   return {
     investment: { nre: 85000, upfront: 260000, phased: [] },

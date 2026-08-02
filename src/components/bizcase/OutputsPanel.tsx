@@ -12,6 +12,7 @@ export function OutputsPanel({
   onExport,
   exporting,
   onExportExcel,
+  onReset,
   mode = "detailed",
 }: {
   inputs: CaseInputs;
@@ -20,6 +21,7 @@ export function OutputsPanel({
   onExport: () => void;
   exporting: boolean;
   onExportExcel: () => void;
+  onReset?: () => void;
   mode?: CaseMode;
 }) {
   const [showChart] = useState(true);
