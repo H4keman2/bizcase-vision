@@ -231,6 +231,7 @@ function CaseEditor() {
                 summary: execSummary,
               })
             }
+            onReset={handleReset}
           />
         </div>
       </div>
