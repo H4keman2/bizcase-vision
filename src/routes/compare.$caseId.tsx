@@ -124,7 +124,23 @@ function Compare() {
 
   const optA = resolve(search.a);
   const optB = resolve(search.b);
-  if (!optA || !optB) return <Screen>{null}</Screen>;
+  if (!optA || !optB)
+    return (
+      <Screen>
+        <PageHeader
+          eyebrow="Case Comparison"
+          title={record.name}
+          action={
+            <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
+              Back to Editor
+            </Btn>
+          }
+        />
+        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+          No saved versions yet — save at least two versions to compare.
+        </p>
+      </Screen>
+    );
 
 
   const npvDelta = optB.draft.outputs.npv - optA.draft.outputs.npv;
