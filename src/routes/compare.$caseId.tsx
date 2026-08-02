@@ -92,16 +92,7 @@ function Compare() {
     for (const c of ordered) {
       const mode = c.mode ?? "detailed";
       const prefix = c.id === caseId ? "" : `${c.name} · `;
-      // Recalculate from each case's own inputs so every option is independent.
-      const draftInputs = c.draft.inputs;
-      out.push({
-        id: `${c.id}::draft`,
-        label: `${prefix}Draft (unsaved)`,
-        draft: {
-          inputs: draftInputs,
-          outputs: calculate(effectiveInputs(draftInputs, mode)),
-        },
-      });
+      // Only saved versions are selectable; unsaved drafts are excluded.
       for (const v of listVersions(c.id)) {
         out.push({
           id: `${c.id}::v${v.versionNumber}`,
@@ -114,6 +105,7 @@ function Compare() {
       }
     }
     return out;
+
   }, [allCases, caseId]);
 
   if (!record) {
@@ -132,7 +124,23 @@ function Compare() {
 
   const optA = resolve(search.a);
   const optB = resolve(search.b);
-  if (!optA || !optB) return <Screen>{null}</Screen>;
+  if (!optA || !optB)
+    return (
+      <Screen>
+        <PageHeader
+          eyebrow="Case Comparison"
+          title={record.name}
+          action={
+            <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
+              Back to Editor
+            </Btn>
+          }
+        />
+        <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+          No saved versions yet — save at least two versions to compare.
+        </p>
+      </Screen>
+    );
 
 
   const npvDelta = optB.draft.outputs.npv - optA.draft.outputs.npv;
