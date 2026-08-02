@@ -128,14 +128,19 @@ function CaseList() {
             Case Library
           </p>
         </div>
-        <button
-          type="button"
-          aria-label="About BizCase Builder"
-          onClick={() => setAbout(true)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs font-bold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
-        >
-          ?
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          <Btn variant="primary" onClick={onNew}>
+            + New Case
+          </Btn>
+          <button
+            type="button"
+            aria-label="About BizCase Builder"
+            onClick={() => setAbout(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs font-bold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+          >
+            ?
+          </button>
+        </div>
       </div>
 
       {cases.length === 0 ? (
