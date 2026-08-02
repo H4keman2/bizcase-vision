@@ -79,24 +79,35 @@ export function PageHeader({
   title,
   action,
   titleSlot,
+  titleAction,
 }: {
   eyebrow: string;
   title?: string;
   titleSlot?: ReactNode;
   action?: ReactNode;
+  titleAction?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-      <div className="min-w-0">
-        <p className="label-eyebrow mb-2">{eyebrow}</p>
-        {titleSlot ?? (
-          <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
-        )}
+    <div className="mb-8 border-b border-border pb-5">
+      {titleAction ? (
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <p className="label-eyebrow">{eyebrow}</p>
+          <div className="shrink-0">{titleAction}</div>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          {titleAction ? null : <p className="label-eyebrow mb-2">{eyebrow}</p>}
+          {titleSlot ?? (
+            <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
+          )}
+        </div>
+        {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
       </div>
-      {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
     </div>
   );
 }
+
 
 export function Card({
   label,
