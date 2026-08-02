@@ -131,7 +131,7 @@ function header(doc: jsPDF, title: string, subtitle: string) {
   doc.setTextColor(GREEN);
   doc.setFont("courier", "bold");
   doc.setFontSize(8);
-  doc.text("ZEBRA TECHNOLOGIES", 58, 54);
+  doc.text(title.toUpperCase().slice(0, 40), 58, 54);
 
   doc.setTextColor("#FFFFFF");
   doc.setFont("helvetica", "bold");
