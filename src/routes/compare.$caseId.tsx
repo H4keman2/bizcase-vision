@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Screen, PageHeader, Btn, Card } from "@/components/bizcase/ui";
 import { CashFlowChart } from "@/components/bizcase/CashFlowChart";
 import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
-import { getCase, listVersions } from "@/lib/bizcase/storage";
+import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
+import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
 import { fmtCompact, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
-import type { CaseDraft, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
+import { effectiveInputs } from "@/lib/bizcase/types";
+import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
 type Search = { a: string; b: string };
@@ -73,25 +75,46 @@ function Compare() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [record, setRecord] = useState<CaseRecord | null>(null);
-  const [versions, setVersions] = useState<CaseVersion[]>([]);
+  const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const [showA, setShowA] = useState(true);
 
   useEffect(() => {
     setRecord(getCase(caseId));
-    setVersions(listVersions(caseId));
+    setAllCases(listCases());
   }, [caseId]);
 
   const options: Option[] = useMemo(() => {
-    if (!record) return [];
-    return [
-      { id: "draft", label: "Draft (unsaved)", draft: record.draft },
-      ...versions.map((v) => ({
-        id: `v${v.versionNumber}`,
-        label: v.versionLabel,
-        draft: { inputs: v.inputs, outputs: v.outputs } as CaseDraft,
-      })),
+    const ordered = [
+      ...allCases.filter((c) => c.id === caseId),
+      ...allCases.filter((c) => c.id !== caseId),
     ];
-  }, [record, versions]);
+    const out: Option[] = [];
+    for (const c of ordered) {
+      const mode = c.mode ?? "detailed";
+      const prefix = c.id === caseId ? "" : `${c.name} · `;
+      // Recalculate from each case's own inputs so every option is independent.
+      const draftInputs = c.draft.inputs;
+      out.push({
+        id: `${c.id}::draft`,
+        label: `${prefix}Draft (unsaved)`,
+        draft: {
+          inputs: draftInputs,
+          outputs: calculate(effectiveInputs(draftInputs, mode)),
+        },
+      });
+      for (const v of listVersions(c.id)) {
+        out.push({
+          id: `${c.id}::v${v.versionNumber}`,
+          label: `${prefix}${v.versionLabel}`,
+          draft: {
+            inputs: v.inputs,
+            outputs: calculate(effectiveInputs(v.inputs, mode)),
+          },
+        });
+      }
+    }
+    return out;
+  }, [allCases, caseId]);
 
   if (!record) {
     return (
@@ -101,9 +124,16 @@ function Compare() {
     );
   }
 
-  const optA = options.find((o) => o.id === search.a) ?? options[0];
-  const optB = options.find((o) => o.id === search.b) ?? options[0];
+  // Bare ids ("draft" / "v2") refer to the current case for backwards compatibility.
+  const resolve = (id: string) =>
+    options.find((o) => o.id === id) ??
+    options.find((o) => o.id === `${caseId}::${id}`) ??
+    options[0];
+
+  const optA = resolve(search.a);
+  const optB = resolve(search.b);
   if (!optA || !optB) return <Screen>{null}</Screen>;
+
 
   const npvDelta = optB.draft.outputs.npv - optA.draft.outputs.npv;
   const verdict =
