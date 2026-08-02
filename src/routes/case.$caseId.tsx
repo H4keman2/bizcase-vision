@@ -166,6 +166,15 @@ function CaseEditor() {
     <Screen>
       <PageHeader
         eyebrow="Case Editor"
+        titleAction={
+          <Btn
+            variant="primary"
+            onClick={handleNewCase}
+            className="scale-105 origin-right text-[105%]"
+          >
+            + New Case
+          </Btn>
+        }
         titleSlot={
           <input
             value={record.name}
@@ -189,10 +198,8 @@ function CaseEditor() {
             <InfoTooltip field="caseMode" className="self-center" />
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
-            <Btn variant="primary" onClick={handleNewCase}>
-              + New Case
-            </Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
+
             <Btn
               onClick={() =>
                 navigate({
