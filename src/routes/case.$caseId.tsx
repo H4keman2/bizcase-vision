@@ -8,9 +8,9 @@ import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal, buildContexts } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
-import { getCase, saveCase, saveVersion, listVersions } from "@/lib/bizcase/storage";
+import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
-import { effectiveInputs } from "@/lib/bizcase/types";
+import { effectiveInputs, zeroInputs } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
@@ -111,6 +111,16 @@ function CaseEditor() {
 
   const eff = effectiveInputs(inputs, mode);
 
+  const handleNewCase = () => {
+    const created = createCase("Untitled Case");
+    navigate({ to: "/case/$caseId", params: { caseId: created.id } });
+  };
+
+  const handleReset = () => {
+    setInputs(zeroInputs());
+  };
+
+
   const handleExport = async () => {
     setExporting(true);
     let summary = execSummary;
@@ -179,6 +189,9 @@ function CaseEditor() {
             <InfoTooltip field="caseMode" className="self-center" />
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
+            <Btn variant="primary" onClick={handleNewCase}>
+              + New Case
+            </Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
             <Btn
               onClick={() =>
