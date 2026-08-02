@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Screen, PageHeader, Btn, Card } from "@/components/bizcase/ui";
 import { CashFlowChart } from "@/components/bizcase/CashFlowChart";
 import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
-import { getCase, listVersions } from "@/lib/bizcase/storage";
+import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
+import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
 import { fmtCompact, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
-import type { CaseDraft, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
+import { effectiveInputs } from "@/lib/bizcase/types";
+import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
 type Search = { a: string; b: string };
