@@ -128,7 +128,7 @@ function Compare() {
       <Screen>
         <PageHeader
           eyebrow="Case Comparison"
-          title={record.name}
+          title="Case Comparison"
           action={
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
               Back to Editor
@@ -162,7 +162,7 @@ function Compare() {
 
   const exportPdf = () =>
     exportComparisonPdf({
-      name: record.name,
+      name: "Case Comparison",
       a: {
         name: record.name,
         versionLabel: optA.label,
@@ -186,7 +186,7 @@ function Compare() {
     <Screen>
       <PageHeader
         eyebrow="Case Comparison"
-        title={record.name}
+        title="Case Comparison"
         action={
           <>
             <Btn onClick={() => exportPdf()}>Export PDF</Btn>
