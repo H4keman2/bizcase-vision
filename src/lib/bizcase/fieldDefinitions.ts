@@ -57,7 +57,9 @@ export const fieldDefinitions: Record<string, string> = {
   irr: "Internal Rate of Return. The discount rate at which NPV equals zero. Compare this to your required rate of return to judge if the investment clears the bar.",
   payback:
     "How long it takes for cumulative cash flows to cover the initial investment.",
-  roi: "Return on Investment. Total net benefit divided by total investment, over the full horizon.",
+  roi: "Return on Investment: total net cash return divided by total investment across the horizon. Undiscounted — unlike NPV and IRR, it ignores the time value of money.",
+  scenario:
+    "Sensitivity view. Worst Case applies -15% to benefits/revenue and +15% to costs; Best Case applies +15% benefits and -5% costs. Your saved inputs never change.",
   totalInvestment: "All money going out over the horizon: NRE, upfront capex and any phased spend.",
   totalRevenue: "All revenue generated over the horizon before costs are subtracted.",
   grossMargin:
