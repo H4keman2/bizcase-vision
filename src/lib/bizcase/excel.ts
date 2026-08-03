@@ -131,3 +131,23 @@ export function exportCaseExcel(c: ExcelCase) {
 
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
 }
+
+/** Downloads a blank Excel template users can fill in and re-import. */
+export function downloadImportTemplate() {
+  const rows: SheetRow[] = [
+    { Field: "NRE", Value: 0, Notes: "One-time non-recurring engineering cost" },
+    { Field: "Upfront Capex", Value: 0, Notes: "Capital spent at month 0" },
+    { Field: "Phased Capex · Month", Value: 0, Notes: "Month number (add one row per phase)" },
+    { Field: "Phased Capex · Amount", Value: 0, Notes: "Amount spent in that month" },
+    { Field: "Cost Savings / Yr", Value: 0, Notes: "Annual hard cost savings" },
+    { Field: "Time Savings / Yr", Value: 0, Notes: "Annual value of time saved" },
+    { Field: "Timeline Mode", Value: "flat", Notes: "flat | ramp | manual" },
+    { Field: "Horizon (Years)", Value: 3, Notes: "Analysis horizon" },
+    { Field: "Discount Rate (Annual %)", Value: 10, Notes: "Annual discount rate, percent" },
+  ];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 46 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "BizCase Template");
+  XLSX.writeFile(wb, `BizCase_Import_Template_${today()}.xlsx`);
+}
