@@ -6,7 +6,7 @@ import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
 import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
-import { fmtCompact, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
+import { fmtCompact, fmtDate, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
 import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
