@@ -110,7 +110,7 @@ function Compare() {
   if (!record) {
     return (
       <Screen>
-        <PageHeader eyebrow="Case Comparison" title="Case not found" />
+        <PageHeader eyebrow="Compare" title="Case not found" />
       </Screen>
     );
   }
@@ -127,7 +127,7 @@ function Compare() {
     return (
       <Screen>
         <PageHeader
-          eyebrow="Case Comparison"
+          eyebrow="Compare"
           title="Case Comparison"
           action={
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
@@ -185,7 +185,7 @@ function Compare() {
   return (
     <Screen>
       <PageHeader
-        eyebrow="Case Comparison"
+        eyebrow="Compare"
         title="Case Comparison"
         action={
           <>
