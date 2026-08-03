@@ -12,7 +12,7 @@ import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs, zeroInputs } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
-import { exportCaseExcel } from "@/lib/bizcase/excel";
+import { exportCaseExcel, downloadImportTemplate } from "@/lib/bizcase/excel";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -170,7 +170,7 @@ function CaseEditor() {
           <Btn
             variant="primary"
             onClick={handleNewCase}
-            className="scale-105 origin-right text-[105%]"
+            className="origin-right"
           >
             + New Case
           </Btn>
@@ -197,6 +197,13 @@ function CaseEditor() {
             </div>
             <InfoTooltip field="caseMode" className="self-center" />
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
+            <button
+              type="button"
+              onClick={downloadImportTemplate}
+              className="self-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Download Template
+            </button>
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
 

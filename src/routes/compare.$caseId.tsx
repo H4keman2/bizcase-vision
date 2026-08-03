@@ -6,7 +6,7 @@ import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
 import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
-import { fmtCompact, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
+import { fmtCompact, fmtDate, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
 import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -91,12 +91,11 @@ function Compare() {
     const out: Option[] = [];
     for (const c of ordered) {
       const mode = c.mode ?? "detailed";
-      const prefix = c.id === caseId ? "" : `${c.name} · `;
       // Only saved versions are selectable; unsaved drafts are excluded.
       for (const v of listVersions(c.id)) {
         out.push({
           id: `${c.id}::v${v.versionNumber}`,
-          label: `${prefix}${v.versionLabel}`,
+          label: `${c.name} · v${v.versionNumber} · ${fmtDate(v.savedAt)}`,
           draft: {
             inputs: v.inputs,
             outputs: calculate(effectiveInputs(v.inputs, mode)),
@@ -111,7 +110,7 @@ function Compare() {
   if (!record) {
     return (
       <Screen>
-        <PageHeader eyebrow="Case Comparison" title="Case not found" />
+        <PageHeader eyebrow="Compare" title="Case not found" />
       </Screen>
     );
   }
@@ -128,8 +127,8 @@ function Compare() {
     return (
       <Screen>
         <PageHeader
-          eyebrow="Case Comparison"
-          title={record.name}
+          eyebrow="Compare"
+          title="Case Comparison"
           action={
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
               Back to Editor
@@ -163,7 +162,7 @@ function Compare() {
 
   const exportPdf = () =>
     exportComparisonPdf({
-      name: record.name,
+      name: "Case Comparison",
       a: {
         name: record.name,
         versionLabel: optA.label,
@@ -186,8 +185,8 @@ function Compare() {
   return (
     <Screen>
       <PageHeader
-        eyebrow="Case Comparison"
-        title={record.name}
+        eyebrow="Compare"
+        title="Case Comparison"
         action={
           <>
             <Btn onClick={() => exportPdf()}>Export PDF</Btn>
