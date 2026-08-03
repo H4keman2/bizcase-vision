@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Screen, Btn } from "@/components/bizcase/ui";
+import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
@@ -109,6 +109,7 @@ function CaseList() {
   const navigate = useNavigate();
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [about, setAbout] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
 
   useEffect(() => setCases(listCases()), []);
 
@@ -188,10 +189,7 @@ function CaseList() {
                 </div>
                 <Btn
                   variant="danger"
-                  onClick={() => {
-                    deleteCase(c.id);
-                    setCases(listCases());
-                  }}
+                  onClick={() => setPendingDelete(c)}
                 >
                   Delete
                 </Btn>
@@ -199,6 +197,27 @@ function CaseList() {
             </div>
           ))}
         </div>
+      )}
+
+      {pendingDelete && (
+        <Modal title="Delete Case" onClose={() => setPendingDelete(null)}>
+          <p className="mb-5 text-sm text-muted-foreground">
+            Delete “{pendingDelete.name}”? This cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Btn
+              variant="danger"
+              onClick={() => {
+                deleteCase(pendingDelete.id);
+                setCases(listCases());
+                setPendingDelete(null);
+              }}
+            >
+              Delete
+            </Btn>
+            <Btn onClick={() => setPendingDelete(null)}>Cancel</Btn>
+          </div>
+        </Modal>
       )}
 
       {about ? <AboutSheet onClose={() => setAbout(false)} /> : null}
