@@ -91,12 +91,11 @@ function Compare() {
     const out: Option[] = [];
     for (const c of ordered) {
       const mode = c.mode ?? "detailed";
-      const prefix = c.id === caseId ? "" : `${c.name} · `;
       // Only saved versions are selectable; unsaved drafts are excluded.
       for (const v of listVersions(c.id)) {
         out.push({
           id: `${c.id}::v${v.versionNumber}`,
-          label: `${prefix}${v.versionLabel}`,
+          label: `${c.name} · v${v.versionNumber} · ${fmtDate(v.savedAt)}`,
           draft: {
             inputs: v.inputs,
             outputs: calculate(effectiveInputs(v.inputs, mode)),
