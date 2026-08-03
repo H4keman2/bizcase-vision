@@ -10,11 +10,11 @@ import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
-import { effectiveInputs, zeroInputs } from "@/lib/bizcase/types";
+import { effectiveInputs, zeroInputs, applyScenario } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
 import { exportCaseExcel, downloadImportTemplate } from "@/lib/bizcase/excel";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
-import type { CaseInputs, CaseMode, CaseRecord, CaseVersion } from "@/lib/bizcase/types";
+import type { CaseInputs, CaseMode, CaseRecord, CaseVersion, Scenario } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
 
@@ -43,7 +43,10 @@ function CaseEditor() {
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [inputs, setInputs] = useState<CaseInputs | null>(null);
   const [versions, setVersions] = useState<CaseVersion[]>([]);
-  const [modal, setModal] = useState<null | "save" | "history" | "summary" | "import">(null);
+  const [modal, setModal] = useState<null | "save" | "history" | "summary" | "import" | "reset">(
+    null,
+  );
+  const [scenario, setScenario] = useState<Scenario>("expected");
   const [versionLabel, setVersionLabel] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
@@ -65,16 +68,21 @@ function CaseEditor() {
   const mode: CaseMode = record?.mode ?? "simple";
 
   const outputs = useMemo(
+    () => (inputs ? calculate(applyScenario(effectiveInputs(inputs, mode), scenario)) : null),
+    [inputs, mode, scenario],
+  );
+
+  const baseOutputs = useMemo(
     () => (inputs ? calculate(effectiveInputs(inputs, mode)) : null),
     [inputs, mode],
   );
 
 
   useEffect(() => {
-    if (!record || !inputs || !outputs) return;
-    const next = { ...record, draft: { inputs, outputs } };
+    if (!record || !inputs || !baseOutputs) return;
+    const next = { ...record, draft: { inputs, outputs: baseOutputs } };
     saveCase(next);
-  }, [inputs, outputs, record]);
+  }, [inputs, baseOutputs, record]);
 
   if (notFound) {
     return (
@@ -87,7 +95,7 @@ function CaseEditor() {
     );
   }
 
-  if (!record || !inputs || !outputs) return <Screen>{null}</Screen>;
+  if (!record || !inputs || !outputs || !baseOutputs) return <Screen>{null}</Screen>;
 
   const openSave = () => {
     const label = `v${record.latestVersion + 1} · ${fmtDate(new Date().toISOString())}`;
@@ -96,7 +104,10 @@ function CaseEditor() {
   };
 
   const confirmSave = () => {
-    saveVersion(caseId, versionLabel.trim() || `v${record.latestVersion + 1}`, { inputs, outputs });
+    saveVersion(caseId, versionLabel.trim() || `v${record.latestVersion + 1}`, {
+      inputs,
+      outputs: baseOutputs,
+    });
     const fresh = getCase(caseId);
     if (fresh) setRecord(fresh);
     setVersions(listVersions(caseId));
@@ -109,7 +120,7 @@ function CaseEditor() {
     );
   };
 
-  const eff = effectiveInputs(inputs, mode);
+  const eff = applyScenario(effectiveInputs(inputs, mode), scenario);
 
   const handleNewCase = () => {
     const created = createCase("Untitled Case");
@@ -118,6 +129,7 @@ function CaseEditor() {
 
   const handleReset = () => {
     setInputs(zeroInputs());
+    setModal(null);
   };
 
 
@@ -167,11 +179,7 @@ function CaseEditor() {
       <PageHeader
         eyebrow="Case Editor"
         titleAction={
-          <Btn
-            variant="primary"
-            onClick={handleNewCase}
-            className="origin-right"
-          >
+          <Btn variant="primary" onClick={handleNewCase}>
             + New Case
           </Btn>
         }
@@ -196,6 +204,18 @@ function CaseEditor() {
               />
             </div>
             <InfoTooltip field="caseMode" className="self-center" />
+            <div className="w-[260px]">
+              <SegToggle<Scenario>
+                value={scenario}
+                onChange={setScenario}
+                options={[
+                  { value: "worst", label: "Worst" },
+                  { value: "expected", label: "Expected" },
+                  { value: "best", label: "Best" },
+                ]}
+              />
+            </div>
+            <InfoTooltip field="scenario" className="self-center" />
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <button
               type="button"
@@ -245,11 +265,26 @@ function CaseEditor() {
                 summary: execSummary,
               })
             }
-            onReset={handleReset}
+            onReset={() => setModal("reset")}
           />
         </div>
       </div>
 
+
+      {modal === "reset" && (
+        <Modal title="Reset Case" onClose={() => setModal(null)}>
+          <p className="mb-5 text-sm text-muted-foreground">
+            Reset all investment, benefit and timeline inputs for “{record.name}” back to zero? This
+            cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Btn variant="danger" onClick={handleReset}>
+              Reset
+            </Btn>
+            <Btn onClick={() => setModal(null)}>Cancel</Btn>
+          </div>
+        </Modal>
+      )}
 
       {modal === "save" && (
         <Modal title="Save Version" info="versionLabel" onClose={() => setModal(null)}>

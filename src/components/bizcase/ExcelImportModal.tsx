@@ -97,6 +97,16 @@ export function ExcelImportModal({
   const [values, setValues] = useState<Extracted>({});
 
   const handleFile = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File too large, please upload a file under 5MB");
+      setStatus("error");
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      setError("Unsupported file type. Please upload an .xlsx file.");
+      setStatus("error");
+      return;
+    }
     setStatus("parsing");
     setError(null);
     try {
@@ -126,13 +136,13 @@ export function ExcelImportModal({
       {(status === "idle" || status === "error") && (
         <div>
           <p className="mb-4 text-sm text-muted-foreground">
-            Upload an .xlsx workbook. Values are reviewed before anything is written to the case.
+            Upload an .xlsx workbook (max 5MB). Values are reviewed before anything is written to the case.
           </p>
           <label className="inline-block cursor-pointer border border-primary px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-widest text-primary">
             Choose file
             <input
               type="file"
-              accept=".xlsx,.xls"
+              accept=".xlsx"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />

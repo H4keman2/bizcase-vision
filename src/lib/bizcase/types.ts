@@ -93,6 +93,55 @@ export function effectiveInputs(inputs: CaseInputs, mode: CaseMode): CaseInputs 
 }
 
 
+export type Scenario = "worst" | "expected" | "best";
+
+const SCENARIO_ADJ: Record<Scenario, { revenue: number; cost: number }> = {
+  worst: { revenue: -15, cost: 15 },
+  expected: { revenue: 0, cost: 0 },
+  best: { revenue: 15, cost: -5 },
+};
+
+export const scenarioLabel: Record<Scenario, string> = {
+  worst: "Worst Case",
+  expected: "Expected",
+  best: "Best Case",
+};
+
+/** Scales revenue/benefit and cost inputs for sensitivity analysis. Never mutates saved data. */
+export function applyScenario(inputs: CaseInputs, scenario: Scenario): CaseInputs {
+  if (scenario === "expected") return inputs;
+  const { revenue, cost } = SCENARIO_ADJ[scenario];
+  const r = 1 + revenue / 100;
+  const c = 1 + cost / 100;
+  const rm = inputs.benefits.revenueModel;
+  return {
+    ...inputs,
+    investment: {
+      nre: inputs.investment.nre * c,
+      upfront: inputs.investment.upfront * c,
+      phased: inputs.investment.phased.map((p) => ({ ...p, amount: p.amount * c })),
+    },
+    benefits: {
+      ...inputs.benefits,
+      costSavingsAnnual: inputs.benefits.costSavingsAnnual * r,
+      timeSavingsAnnual: inputs.benefits.timeSavingsAnnual * r,
+      revenueModel: {
+        ...rm,
+        aggregate: {
+          revenueLiftAnnual: rm.aggregate.revenueLiftAnnual * r,
+          cogsAnnual: rm.aggregate.cogsAnnual * c,
+        },
+        unit: {
+          ...rm.unit,
+          pricePerUnit: rm.unit.pricePerUnit * r,
+          variableCostPerUnit: rm.unit.variableCostPerUnit * c,
+          fixedCostsAnnual: rm.unit.fixedCostsAnnual * c,
+        },
+      },
+    },
+  };
+}
+
 /** All investment, benefit and timeline values reset to zero. */
 export function zeroInputs(): CaseInputs {
   return {
