@@ -1,86 +1,19 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import * as XLSX from "xlsx";
 import { Modal, Btn } from "./ui";
 import { extractCaseFromSheet } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs } from "@/lib/bizcase/types";
+import {
+  SCHEMA_FIELDS,
+  applyToInputs,
+  extractionErrorMessage,
+  fileToSheetText,
+  hasCriticalFields,
+  mapExtracted,
+  validateFile,
+  type Extracted,
+} from "@/lib/bizcase/import";
 import { cn } from "@/lib/utils";
-
-const SCHEMA_FIELDS = [
-  { key: "nre", label: "NRE", type: "currency" },
-  { key: "upfront", label: "Upfront Capex", type: "currency" },
-  { key: "costSavingsAnnual", label: "Cost Savings / Yr", type: "currency" },
-  { key: "timeSavingsAnnual", label: "Time Savings / Yr", type: "currency" },
-  { key: "revenueLiftAnnual", label: "Revenue Lift / Yr", type: "currency" },
-  { key: "cogsAnnual", label: "COGS / Yr", type: "currency" },
-  { key: "pricePerUnit", label: "Price / Unit", type: "currency" },
-  { key: "variableCostPerUnit", label: "Variable Cost / Unit", type: "currency" },
-  { key: "fixedCostsAnnual", label: "Fixed Costs / Yr", type: "currency" },
-  { key: "unitsPerYear", label: "Units / Yr", type: "number" },
-  { key: "overheadPercent", label: "Overhead %", type: "percent" },
-  { key: "overheadBasis", label: "Overhead Basis", type: "text" },
-  { key: "horizonYears", label: "Horizon (Years)", type: "number" },
-  { key: "discountRateAnnual", label: "Discount Rate (Annual)", type: "percent" },
-] as const;
-
-type FieldKey = (typeof SCHEMA_FIELDS)[number]["key"];
-type Extracted = Record<string, { value: string; confidence: string | null }>;
-
-function sheetToText(workbook: XLSX.WorkBook) {
-  let text = "";
-  workbook.SheetNames.forEach((sheetName) => {
-    const rows = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], {
-      header: 1,
-      defval: "",
-    });
-    text += `\n--- Sheet: ${sheetName} ---\n`;
-    rows.forEach((row, i) => {
-      if (row.some((cell) => cell !== "")) text += `Row ${i + 1}: ${row.join(" | ")}\n`;
-    });
-  });
-  return text.slice(0, 12000);
-}
-
-function applyToInputs(inputs: CaseInputs, values: Extracted): CaseInputs {
-  const next = JSON.parse(JSON.stringify(inputs)) as CaseInputs;
-  const num = (k: FieldKey) => {
-    const raw = values[k]?.value;
-    if (raw === undefined || raw === "") return null;
-    const n = Number(String(raw).replace(/[^0-9.-]/g, ""));
-    return Number.isFinite(n) ? n : null;
-  };
-  const set = (k: FieldKey, apply: (n: number) => void) => {
-    const n = num(k);
-    if (n !== null) apply(n);
-  };
-
-  set("nre", (n) => (next.investment.nre = n));
-  set("upfront", (n) => (next.investment.upfront = n));
-  set("costSavingsAnnual", (n) => (next.benefits.costSavingsAnnual = n));
-  set("timeSavingsAnnual", (n) => (next.benefits.timeSavingsAnnual = n));
-  set("revenueLiftAnnual", (n) => {
-    next.benefits.revenueModel.aggregate.revenueLiftAnnual = n;
-    if (next.benefits.revenueModel.type === "none") next.benefits.revenueModel.type = "aggregate";
-  });
-  set("cogsAnnual", (n) => (next.benefits.revenueModel.aggregate.cogsAnnual = n));
-  set("pricePerUnit", (n) => {
-    next.benefits.revenueModel.unit.pricePerUnit = n;
-    next.benefits.revenueModel.type = "unit";
-  });
-  set("variableCostPerUnit", (n) => (next.benefits.revenueModel.unit.variableCostPerUnit = n));
-  set("fixedCostsAnnual", (n) => (next.benefits.revenueModel.unit.fixedCostsAnnual = n));
-  set("unitsPerYear", (n) => (next.benefits.revenueModel.unit.unitsPerYear = n));
-  set("overheadPercent", (n) => {
-    next.benefits.overhead.percent = n;
-    next.benefits.overhead.enabled = true;
-  });
-  const basis = values.overheadBasis?.value?.toLowerCase();
-  if (basis === "cogs" || basis === "revenue") next.benefits.overhead.basis = basis;
-  set("horizonYears", (n) => (next.horizonYears = Math.max(1, Math.round(n))));
-  set("discountRateAnnual", (n) => (next.discountRateAnnual = n));
-
-  return next;
-}
 
 export function ExcelImportModal({
   inputs,
@@ -97,39 +30,26 @@ export function ExcelImportModal({
   const [values, setValues] = useState<Extracted>({});
 
   const handleFile = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File too large, please upload a file under 5MB");
-      setStatus("error");
-      return;
-    }
-    if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      setError("Unsupported file type. Please upload an .xlsx file.");
+    const invalid = validateFile(file);
+    if (invalid) {
+      setError(invalid);
       setStatus("error");
       return;
     }
     setStatus("parsing");
     setError(null);
     try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const text = sheetToText(wb);
+      const text = await fileToSheetText(file);
       const res = await run({ data: { sheetText: text } });
-      const fields = res.fields ?? {};
-      const mapped: Extracted = {};
-      SCHEMA_FIELDS.forEach((f) => {
-        const entry = fields[f.key];
-        mapped[f.key] = {
-          value: entry?.value === null || entry?.value === undefined ? "" : String(entry.value),
-          confidence: entry?.confidence ?? null,
-        };
-      });
-      setValues(mapped);
+      setValues(mapExtracted(res.fields));
       setStatus("review");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Import failed.");
+      setError(extractionErrorMessage(e));
       setStatus("error");
     }
   };
+
+  const incomplete = status === "review" && !hasCriticalFields(values);
 
   return (
     <Modal title="Import from Excel" onClose={onClose} wide>
@@ -162,6 +82,11 @@ export function ExcelImportModal({
           <p className="mb-4 text-sm text-muted-foreground">
             Review the extracted values. Nothing is written until you confirm.
           </p>
+          {incomplete && (
+            <p className="mb-4 border border-warning bg-warning/10 px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-warning">
+              Missing investment or benefit data — case will show $0 returns until completed.
+            </p>
+          )}
           <div className="grid max-h-[50vh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {SCHEMA_FIELDS.map((f) => {
               const v = values[f.key];
@@ -206,7 +131,7 @@ export function ExcelImportModal({
           </div>
           <div className="mt-5 flex gap-2">
             <Btn variant="primary" onClick={() => onConfirm(applyToInputs(inputs, values))}>
-              Confirm & Populate Case
+              Confirm &amp; Populate Case
             </Btn>
             <Btn onClick={onClose}>Cancel</Btn>
           </div>
