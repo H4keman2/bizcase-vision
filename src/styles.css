@@ -35,6 +35,8 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-decline: var(--decline);
+  --color-warning: var(--warning);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -62,6 +64,8 @@
   --destructive: oklch(0.6845 0.2058 32.53);
   --destructive-foreground: oklch(1 0 89.88);
   --decline: oklch(0.6845 0.2058 32.53);
+  --warning: oklch(0.8 0.16 78);
+
   --border: oklch(0.285 0 89.88);
   --input: oklch(0.285 0 89.88);
   --ring: oklch(0.9149 0.2162 123.52);
