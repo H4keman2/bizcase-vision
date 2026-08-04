@@ -122,16 +122,16 @@ function CaseList() {
 
   return (
     <Screen>
-      <div className="mb-8 flex items-start justify-between gap-4 border-b border-border pb-5">
+      <div className="mb-8 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
+          <h1 className="truncate text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
             BizCase Builder
           </h1>
           <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
             Case Library
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Btn variant="primary" onClick={onNew}>
             + New Case
           </Btn>
