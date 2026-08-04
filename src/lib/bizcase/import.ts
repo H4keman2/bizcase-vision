@@ -36,9 +36,12 @@ export function validateFile(file: File): string | null {
 
 /** Reads an .xlsx file into the flat row text the AI extractor expects. */
 export async function fileToSheetText(file: File): Promise<string> {
-  let sheets: { name: string }[];
+  let sheets: { sheet: string; data: (string | number | boolean | null)[][] }[];
   try {
-    sheets = (await readXlsxFile(file, { getSheets: true })) as { name: string }[];
+    sheets = (await readXlsxFile(file)) as unknown as {
+      sheet: string;
+      data: (string | number | boolean | null)[][];
+    }[];
   } catch {
     throw new ImportError("File could not be read — it may be corrupt or not a valid .xlsx file.");
   }
@@ -46,16 +49,8 @@ export async function fileToSheetText(file: File): Promise<string> {
   let text = "";
   let rowCount = 0;
   for (const sheet of sheets) {
-    let rows: unknown[][];
-    try {
-      rows = (await readXlsxFile(file, { sheet: sheet.name })) as unknown[][];
-    } catch {
-      throw new ImportError(
-        `Sheet "${sheet.name}" could not be read — the file may be corrupt or unsupported.`,
-      );
-    }
-    text += `\n--- Sheet: ${sheet.name} ---\n`;
-    rows.forEach((row, i) => {
+    text += `\n--- Sheet: ${sheet.sheet} ---\n`;
+    (sheet.data ?? []).forEach((row, i) => {
       const cells = row.map((c) => (c === null || c === undefined ? "" : String(c)));
       if (cells.some((c) => c !== "")) {
         text += `Row ${i + 1}: ${cells.join(" | ")}\n`;
@@ -67,6 +62,7 @@ export async function fileToSheetText(file: File): Promise<string> {
   if (rowCount === 0) throw new ImportError("File was empty — no readable rows were found.");
   return text.slice(0, 12000);
 }
+
 
 type RawFields = Record<string, { value: number | string | null; confidence: string | null }>;
 
