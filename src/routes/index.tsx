@@ -4,6 +4,7 @@ import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
+import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -110,6 +111,7 @@ function CaseList() {
   const [cases, setCases] = useState<CaseRecord[]>([]);
   const [about, setAbout] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   useEffect(() => setCases(listCases()), []);
 
@@ -133,6 +135,7 @@ function CaseList() {
           <Btn variant="primary" onClick={onNew}>
             + New Case
           </Btn>
+          <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
           <button
             type="button"
             aria-label="About BizCase Builder"
@@ -218,6 +221,16 @@ function CaseList() {
             <Btn onClick={() => setPendingDelete(null)}>Cancel</Btn>
           </div>
         </Modal>
+      )}
+
+      {bulkOpen && (
+        <BulkImportModal
+          onClose={() => setBulkOpen(false)}
+          onImported={() => {
+            setBulkOpen(false);
+            setCases(listCases());
+          }}
+        />
       )}
 
       {about ? <AboutSheet onClose={() => setAbout(false)} /> : null}
