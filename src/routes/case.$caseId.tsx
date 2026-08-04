@@ -220,7 +220,7 @@ function CaseEditor() {
             <button
               type="button"
               onClick={downloadImportTemplate}
-              className="self-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground underline underline-offset-4 hover:text-primary"
+              className="px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
             >
               Download Template
             </button>
