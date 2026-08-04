@@ -35,6 +35,8 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-decline: var(--decline);
+  --color-warning: var(--warning);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
