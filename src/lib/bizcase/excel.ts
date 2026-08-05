@@ -1,6 +1,8 @@
 import * as XLSX from "xlsx";
 import {
-  describeManualTimeline,
+  describeManualTimelineShort,
+  manualTimelinePeriods,
+  resolveManualSchedule,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
@@ -51,7 +53,7 @@ function inputRows(c: ExcelCase): SheetRow[] {
       tl.type === "ramp"
         ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
         : tl.type === "manual"
-          ? describeManualTimeline(tl.manual)
+          ? describeManualTimelineShort(tl.manual)
           : "Flat",
   });
   if (c.mode === "detailed") {
@@ -105,7 +107,7 @@ function outputRows(c: ExcelCase): SheetRow[] {
   return rows;
 }
 
-const CURRENCY_FMT = '$#,##0;($#,##0);-';
+const CURRENCY_FMT = "$#,##0;($#,##0);-";
 const PERCENT_FMT = "0.0%";
 
 /** Bold, light-grey header row across the sheet's first row. */
@@ -153,6 +155,26 @@ function cashFlowSheet(c: ExcelCase): XLSX.WorkSheet {
   return ws;
 }
 
+/** One row per period (year/quarter/month/week) for a manual timeline, so ramp
+ *  volumes and other schedule details are never crammed into a single cell. */
+function timelineSheet(c: ExcelCase): XLSX.WorkSheet | null {
+  const tl = c.inputs.benefits.timeline;
+  if (tl.type !== "manual") return null;
+  const periods = manualTimelinePeriods(tl.manual);
+  if (!periods.length) return null;
+
+  const isMultiplier = periods[0].isMultiplier;
+  const basis = resolveManualSchedule(tl.manual).basis;
+  const valueLabel = isMultiplier ? "Multiplier" : basis === "units" ? "Units" : "Amount";
+
+  const rows: SheetRow[] = periods.map((p) => ({ Period: p.label, [valueLabel]: p.value }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{ wch: 16 }, { wch: 16 }];
+  styleHeaderRow(ws);
+  if (!isMultiplier && basis !== "units") formatColumn(ws, 1, CURRENCY_FMT);
+  return ws;
+}
+
 /** Builds an .xlsx workbook for a single case and triggers a download. */
 export function exportCaseExcel(c: ExcelCase) {
   const wb = XLSX.utils.book_new();
@@ -169,14 +191,6 @@ export function exportCaseExcel(c: ExcelCase) {
   summary.push({ Metric: "", Value: "" });
   summary.push({ Metric: "— Assumptions —", Value: "" });
   inputRows(c).forEach((r) => summary.push(r));
-  if (c.summary) {
-    summary.push({ Metric: "", Value: "" });
-    summary.push({ Metric: "— Executive Summary —", Value: "" });
-    summary.push({ Metric: "Verdict", Value: c.summary.verdict });
-    c.summary.drivers.forEach((d) => summary.push({ Metric: "Driver:", Value: d }));
-    c.summary.risks.forEach((r) => summary.push({ Metric: "Risk:", Value: r }));
-    summary.push({ Metric: "Next Step", Value: c.summary.nextStep });
-  }
   const summarySheet = XLSX.utils.json_to_sheet(summary);
   summarySheet["!cols"] = [{ wch: 34 }, { wch: 52 }];
   styleHeaderRow(summarySheet);
@@ -201,12 +215,137 @@ export function exportCaseExcel(c: ExcelCase) {
   });
 
   XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  const tlSheet = timelineSheet(c);
+  if (tlSheet) XLSX.utils.book_append_sheet(wb, tlSheet, "Timeline");
   XLSX.utils.book_append_sheet(wb, cashFlowSheet(c), "Cash Flow");
 
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
 }
 
 type LedgerKind = "currency" | "percent" | "number";
+
+/** Short text summary of a case's timeline, safe for a single sheet cell. */
+function timelineSummary(c: ExcelCase): string {
+  const tl = c.inputs.benefits.timeline;
+  if (tl.type === "ramp") return `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`;
+  if (tl.type === "manual") return describeManualTimelineShort(tl.manual);
+  return "Flat";
+}
+
+/** Side-by-side assumptions/inputs sheet for the comparison workbook — mirrors the
+ *  single-case Assumptions rows, but as A/B columns instead of one flat list. */
+function assumptionsCompareSheet(a: ExcelCase, b: ExcelCase): XLSX.WorkSheet {
+  type Def = {
+    label: string;
+    kind: LedgerKind | "text";
+    get: (c: ExcelCase) => number | string | null;
+  };
+  const unit = (c: ExcelCase) => c.inputs.benefits.revenueModel.unit;
+  const aggregate = (c: ExcelCase) => c.inputs.benefits.revenueModel.aggregate;
+  const isDetailed = (c: ExcelCase) => c.mode === "detailed";
+  const rm = (c: ExcelCase) => c.inputs.benefits.revenueModel.type;
+
+  const defs: Def[] = [
+    { label: "NRE", kind: "currency", get: (c) => c.inputs.investment.nre },
+    { label: "Upfront Capex", kind: "currency", get: (c) => c.inputs.investment.upfront },
+    {
+      label: "Phased Capex Total",
+      kind: "currency",
+      get: (c) => c.inputs.investment.phased.reduce((sum, p) => sum + p.amount, 0) || null,
+    },
+    {
+      label: "Cost Savings / Yr",
+      kind: "currency",
+      get: (c) => c.inputs.benefits.costSavingsAnnual,
+    },
+    {
+      label: "Time Savings / Yr",
+      kind: "currency",
+      get: (c) => c.inputs.benefits.timeSavingsAnnual,
+    },
+    { label: "Horizon (Years)", kind: "number", get: (c) => c.inputs.horizonYears },
+    {
+      label: "Discount Rate (Annual)",
+      kind: "percent",
+      get: (c) => c.inputs.discountRateAnnual / 100,
+    },
+    { label: "Timeline", kind: "text", get: (c) => timelineSummary(c) },
+    {
+      label: "Revenue Model",
+      kind: "text",
+      get: (c) =>
+        isDetailed(c)
+          ? rm(c) === "unit"
+            ? "Unit-Level"
+            : rm(c) === "aggregate"
+              ? "Aggregate"
+              : "None"
+          : null,
+    },
+    {
+      label: "Revenue Lift / Yr",
+      kind: "currency",
+      get: (c) => (isDetailed(c) && rm(c) === "aggregate" ? aggregate(c).revenueLiftAnnual : null),
+    },
+    {
+      label: "COGS / Yr",
+      kind: "currency",
+      get: (c) => (isDetailed(c) && rm(c) === "aggregate" ? aggregate(c).cogsAnnual : null),
+    },
+    {
+      label: "Price / Unit",
+      kind: "currency",
+      get: (c) => (isDetailed(c) && rm(c) === "unit" ? unit(c).pricePerUnit : null),
+    },
+    {
+      label: "Variable Cost / Unit",
+      kind: "currency",
+      get: (c) => (isDetailed(c) && rm(c) === "unit" ? unit(c).variableCostPerUnit : null),
+    },
+    {
+      label: "Fixed Costs / Yr",
+      kind: "currency",
+      get: (c) => (isDetailed(c) && rm(c) === "unit" ? unit(c).fixedCostsAnnual : null),
+    },
+    {
+      label: "Units / Yr",
+      kind: "number",
+      get: (c) => (isDetailed(c) && rm(c) === "unit" ? unit(c).unitsPerYear : null),
+    },
+    {
+      label: "Overhead",
+      kind: "percent",
+      get: (c) =>
+        isDetailed(c) && c.inputs.benefits.overhead.enabled
+          ? c.inputs.benefits.overhead.percent / 100
+          : null,
+    },
+  ];
+
+  const rows: SheetRow[] = [];
+  const kinds: Def["kind"][] = [];
+  for (const d of defs) {
+    const va = d.get(a);
+    const vb = d.get(b);
+    if (va === null && vb === null) continue; // not applicable to either case
+    rows.push({
+      Metric: d.label,
+      [`A · ${a.versionLabel}`]: va ?? "",
+      [`B · ${b.versionLabel}`]: vb ?? "",
+    });
+    kinds.push(d.kind);
+  }
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{ wch: 26 }, { wch: 28 }, { wch: 28 }];
+  styleHeaderRow(ws);
+  kinds.forEach((kind, i) => {
+    if (kind === "number" || kind === "text") return;
+    const fmt = kind === "percent" ? PERCENT_FMT : CURRENCY_FMT;
+    for (let col = 1; col <= 2; col++) formatCell(ws, i + 1, col, fmt);
+  });
+  return ws;
+}
 
 /** Side-by-side comparison workbook: metrics ledger + one cash flow sheet per case. */
 export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: ExcelCase }) {
@@ -215,7 +354,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
 
   const defs: { label: string; kind: LedgerKind; get: (c: ExcelCase) => number | null }[] = [
     { label: "NPV", kind: "currency", get: (c) => c.outputs.npv },
-    { label: "IRR", kind: "percent", get: (c) => (c.outputs.irr === null ? null : c.outputs.irr / 100) },
+    {
+      label: "IRR",
+      kind: "percent",
+      get: (c) => (c.outputs.irr === null ? null : c.outputs.irr / 100),
+    },
     { label: "Payback (Months)", kind: "number", get: (c) => c.outputs.paybackMonths },
     { label: "ROI", kind: "percent", get: (c) => c.outputs.roi / 100 },
     { label: "Total Investment", kind: "currency", get: (c) => c.outputs.totalInvestment },
@@ -235,6 +378,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
         c.outputs.margins?.contributionMarginPercent == null
           ? null
           : c.outputs.margins.contributionMarginPercent / 100,
+    },
+    {
+      label: "Contribution Margin / Unit",
+      kind: "currency",
+      get: (c) => c.outputs.margins?.contributionMarginPerUnit ?? null,
     },
     {
       label: "Breakeven Units / Yr",
@@ -267,12 +415,18 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
     for (let col = 1; col <= 3; col++) formatCell(ledger, i + 1, col, fmt);
   });
   XLSX.utils.book_append_sheet(wb, ledger, "Metrics Ledger");
+  XLSX.utils.book_append_sheet(wb, assumptionsCompareSheet(a, b), "Assumptions");
 
   // Excel sheet names cap at 31 chars and reject several punctuation marks.
-  const sheetName = (side: string, label: string) =>
-    `CF ${side} ${label}`.replace(/[\\/?*[\]:]/g, "-").slice(0, 31);
-  XLSX.utils.book_append_sheet(wb, cashFlowSheet(a), sheetName("A", a.versionLabel));
-  XLSX.utils.book_append_sheet(wb, cashFlowSheet(b), sheetName("B", b.versionLabel));
+  const sheetName = (prefix: string, side: string, label: string) =>
+    `${prefix} ${side} ${label}`.replace(/[\\/?*[\]:]/g, "-").slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(a), sheetName("CF", "A", a.versionLabel));
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(b), sheetName("CF", "B", b.versionLabel));
+
+  const tlA = timelineSheet(a);
+  if (tlA) XLSX.utils.book_append_sheet(wb, tlA, sheetName("TL", "A", a.versionLabel));
+  const tlB = timelineSheet(b);
+  if (tlB) XLSX.utils.book_append_sheet(wb, tlB, sheetName("TL", "B", b.versionLabel));
 
   XLSX.writeFile(wb, `BizCase_Comparison_${slug(name)}_${today()}.xlsx`);
 }

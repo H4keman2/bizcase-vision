@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
-  describeManualTimeline,
+  describeManualTimelineShort,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
@@ -203,7 +203,7 @@ function inputRows(c: PdfCase): [string, string][] {
     tl.type === "ramp"
       ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
       : tl.type === "manual"
-        ? describeManualTimeline(tl.manual)
+        ? describeManualTimelineShort(tl.manual)
         : "Flat",
   ]);
   if (mode === "detailed") {
@@ -347,7 +347,7 @@ function summaryBlock(doc: jsPDF, s: ExecSummary, y: number) {
   return y;
 }
 
-/** Diagonal "FREE VERSION" watermark on every page (free tier only). */
+/** Diagonal "BizCase-Builder" watermark on every page (free tier only). */
 function watermarkIfUnlicensed(doc: jsPDF) {
   if (isLicensed()) return;
   const W = doc.internal.pageSize.getWidth();
@@ -355,13 +355,13 @@ function watermarkIfUnlicensed(doc: jsPDF) {
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    const gs = doc.GState({ opacity: 0.12 });
+    const gs = doc.GState({ opacity: 0.22 });
     doc.saveGraphicsState();
     doc.setGState(gs);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(64);
-    doc.setTextColor("#999999");
-    doc.text("FREE VERSION", W / 2, H / 2, { align: "center", angle: 45 });
+    doc.setFontSize(50);
+    doc.setTextColor("#666666");
+    doc.text("BizCase-Builder", W / 2, H / 2, { align: "center", angle: 45 });
     doc.restoreGraphicsState();
   }
 }

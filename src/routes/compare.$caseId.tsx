@@ -124,13 +124,29 @@ function Compare() {
   }
 
   // Bare ids ("draft" / "v2") refer to the current case for backwards compatibility.
-  const resolve = (id: string) =>
-    options.find((o) => o.id === id) ??
-    options.find((o) => o.id === `${caseId}::${id}`) ??
-    options[0];
+  const resolveExplicit = (id: string) =>
+    options.find((o) => o.id === id) ?? options.find((o) => o.id === `${caseId}::${id}`) ?? null;
 
-  const optA = resolve(search.a);
-  const optB = resolve(search.b);
+  const explicitA = resolveExplicit(search.a);
+  const explicitB = resolveExplicit(search.b);
+
+  // If either side wasn't an explicit, resolvable selection (i.e. we're on a
+  // bare/default landing rather than a user-picked comparison), fall back to
+  // two distinct options instead of silently comparing a version against itself.
+  // Prefer pairing two different cases; only fall back to two versions of the
+  // same case when no other case has a saved version to compare against.
+  let optA = explicitA;
+  let optB = explicitB;
+  if (!optA || !optB || optA.id === optB.id) {
+    optA = optA ?? options[0] ?? null;
+    const caseIdA = optA?.id.split("::")[0] ?? null;
+    optB =
+      (optB && optB.id !== optA?.id ? optB : null) ??
+      options.find((o) => o.id !== optA?.id && o.id.split("::")[0] !== caseIdA) ??
+      options.find((o) => o.id !== optA?.id) ??
+      null;
+  }
+
   if (!optA || !optB)
     return (
       <Screen>
@@ -144,7 +160,9 @@ function Compare() {
           }
         />
         <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-          No saved versions yet — save at least two versions to compare.
+          {options.length === 0
+            ? "No saved versions yet — save a version to use the compare feature."
+            : "Only one saved version available to compare. Save another version, or create a new case, then try again."}
         </p>
       </Screen>
     );
@@ -224,7 +242,8 @@ function Compare() {
       toast.success("Excel comparison exported");
     } catch (err) {
       toast.error("Excel export failed", {
-        description: err instanceof Error ? err.message : "Unexpected error while building the workbook.",
+        description:
+          err instanceof Error ? err.message : "Unexpected error while building the workbook.",
       });
     } finally {
       setExporting(false);

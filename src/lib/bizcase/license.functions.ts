@@ -5,6 +5,9 @@ const Input = z.object({ key: z.string().min(4).max(200) });
 
 const PRODUCT_ID = "6tG_g_n57LnSvv1_IMgXiA==";
 
+/** How many devices/browsers a single license key can activate. */
+const MAX_USES = 3;
+
 /** Turns a raw Gumroad message into something a buyer can act on. */
 function friendlyMessage(raw: string | undefined, status: number): string {
   const m = (raw ?? "").toLowerCase();
@@ -39,7 +42,7 @@ export const verifyLicenseKey = createServerFn({ method: "POST" })
         body: new URLSearchParams({
           product_id: PRODUCT_ID,
           license_key: key,
-          increment_uses_count: "false",
+          increment_uses_count: "true",
         }),
       });
     } catch {
@@ -48,13 +51,12 @@ export const verifyLicenseKey = createServerFn({ method: "POST" })
       );
     }
 
-    const json = (await res.json().catch(() => null)) as
-      | {
-          success?: boolean;
-          message?: string;
-          purchase?: { refunded?: boolean; chargebacked?: boolean; disputed?: boolean };
-        }
-      | null;
+    const json = (await res.json().catch(() => null)) as {
+      success?: boolean;
+      message?: string;
+      uses?: number;
+      purchase?: { refunded?: boolean; chargebacked?: boolean; disputed?: boolean };
+    } | null;
 
     if (!json) {
       throw new Error(
@@ -72,6 +74,11 @@ export const verifyLicenseKey = createServerFn({ method: "POST" })
     if (json.purchase?.chargebacked || json.purchase?.disputed) {
       throw new Error(
         "This purchase is disputed, so the key is on hold. Contact support to have it restored.",
+      );
+    }
+    if (typeof json.uses === "number" && json.uses > MAX_USES) {
+      throw new Error(
+        `This key has already been activated on the maximum of ${MAX_USES} devices. Contact support if you need it reset.`,
       );
     }
 

@@ -6,6 +6,7 @@ import { LicenseModal } from "./LicenseModals";
 import {
   GUMROAD_URL,
   LICENSE_PRICE,
+  FREE_CASE_LIMIT,
   clearLicenseKey,
   getLicenseKey,
   maskLicenseKey,
@@ -73,7 +74,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       <p className="text-sm text-foreground">
                         Sign out of the full version on this device? Your cases stay saved, but you
                         will need the key again to import, export without a watermark, or add more
-                        than 3 cases.
+                        than {FREE_CASE_LIMIT} cases.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Btn
@@ -98,8 +99,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
               ) : (
                 <div className="flex flex-col gap-3">
                   <p className="font-mono text-[11px] text-muted-foreground">
-                    Free version: 3 cases, no Excel import, watermarked exports. One-time{" "}
-                    {LICENSE_PRICE} unlock.
+                    Free version: {FREE_CASE_LIMIT} cases, no Excel import, no best/worst case, no
+                    import template, watermarked exports. One-time {LICENSE_PRICE} unlock.
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
                     <Btn variant="primary" onClick={() => setLicenseOpen(true)}>

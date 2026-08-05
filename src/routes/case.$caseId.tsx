@@ -8,7 +8,7 @@ import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal, buildSummaryPayload } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { UpgradeModal } from "@/components/bizcase/LicenseModals";
-import { LicenseLimitError } from "@/lib/bizcase/license";
+import { LicenseLimitError, isLicensed } from "@/lib/bizcase/license";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
@@ -86,6 +86,10 @@ function CaseEditor() {
   );
 
   useEffect(() => {
+    if (!isLicensed() && scenario !== "expected") setScenario("expected");
+  }, [scenario]);
+
+  useEffect(() => {
     if (!record || !inputs || !baseOutputs) return;
     const next = { ...record, draft: { inputs, outputs: baseOutputs } };
     saveCase(next);
@@ -105,13 +109,13 @@ function CaseEditor() {
   if (!record || !inputs || !outputs || !baseOutputs) return <Screen>{null}</Screen>;
 
   const openSave = () => {
-    const label = `v${record.latestVersion + 1} · ${fmtDate(new Date().toISOString())}`;
+    const label = `${record.name} · v${record.latestVersion + 1} · ${fmtDate(new Date().toISOString())}`;
     setVersionLabel(label);
     setModal("save");
   };
 
   const confirmSave = () => {
-    saveVersion(caseId, versionLabel.trim() || `v${record.latestVersion + 1}`, {
+    saveVersion(caseId, versionLabel.trim() || `${record.name} · v${record.latestVersion + 1}`, {
       inputs,
       outputs: baseOutputs,
     });
@@ -201,10 +205,13 @@ function CaseEditor() {
               <SegToggle<Scenario>
                 value={scenario}
                 onChange={setScenario}
+                onLockedClick={() =>
+                  setUpgrade("Best and worst case scenarios are part of the full version.")
+                }
                 options={[
-                  { value: "worst", label: "Worst" },
+                  { value: "worst", label: "Worst", disabled: !isLicensed() },
                   { value: "expected", label: "Expected" },
-                  { value: "best", label: "Best" },
+                  { value: "best", label: "Best", disabled: !isLicensed() },
                 ]}
               />
             </div>
@@ -212,8 +219,18 @@ function CaseEditor() {
             <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             <button
               type="button"
-              onClick={downloadImportTemplate}
-              className="px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
+              aria-disabled={!isLicensed()}
+              onClick={() =>
+                isLicensed()
+                  ? downloadImportTemplate()
+                  : setUpgrade("Downloading the import template is part of the full version.")
+              }
+              className={cn(
+                "px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+                isLicensed()
+                  ? "text-muted-foreground hover:text-primary"
+                  : "cursor-not-allowed text-muted-foreground/30",
+              )}
             >
               Download Template
             </button>
@@ -225,10 +242,6 @@ function CaseEditor() {
                 navigate({
                   to: "/compare/$caseId",
                   params: { caseId },
-                  search: {
-                    a: versions[0]?.versionNumber ? `v${versions[0].versionNumber}` : "draft",
-                    b: "draft",
-                  },
                 })
               }
             >

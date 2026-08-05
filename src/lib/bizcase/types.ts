@@ -102,7 +102,6 @@ export function resolveManualSchedule(
   };
 }
 
-
 /** Human-readable summary of a manual timeline, for exports and prompts. */
 export function describeManualTimeline(
   manual: CaseInputs["benefits"]["timeline"]["manual"],
@@ -114,6 +113,45 @@ export function describeManualTimeline(
     return `Manual by ${unit} (${sched.values.join(", ")}${suffix} per ${unit.toLowerCase()})`;
   }
   return `Manual by ${unit} (x${(sched.legacyMultipliers ?? []).join(", x")})`;
+}
+
+/** One-line manual timeline summary that never enumerates every period value —
+ *  safe to drop into a fixed-width table cell without overflowing it. */
+export function describeManualTimelineShort(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): string {
+  const sched = resolveManualSchedule(manual);
+  const unit = GRANULARITY_LABEL[sched.granularity];
+  const count = sched.values?.length ?? sched.legacyMultipliers?.length ?? 0;
+  const suffix = sched.basis === "units" ? " · units" : "";
+  return `Manual by ${unit} · ${count} ${unit.toLowerCase()}${count === 1 ? "" : "s"}${suffix}`;
+}
+
+export interface ManualTimelinePeriod {
+  label: string;
+  value: number;
+  isMultiplier: boolean;
+}
+
+/** Per-period breakdown of a manual timeline (one entry per year/quarter/month/week),
+ *  for exports that want each value in its own row or column. */
+export function manualTimelinePeriods(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): ManualTimelinePeriod[] {
+  const sched = resolveManualSchedule(manual);
+  const unit = GRANULARITY_LABEL[sched.granularity];
+  if (sched.values) {
+    return sched.values.map((v, i) => ({
+      label: `${unit} ${i + 1}`,
+      value: v,
+      isMultiplier: false,
+    }));
+  }
+  return (sched.legacyMultipliers ?? []).map((v, i) => ({
+    label: `${unit} ${i + 1} (×)`,
+    value: v,
+    isMultiplier: true,
+  }));
 }
 
 export interface Margins {

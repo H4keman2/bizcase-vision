@@ -215,10 +215,13 @@ export function SegToggle<T extends string>({
   options,
   value,
   onChange,
+  onLockedClick,
 }: {
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; disabled?: boolean }[];
   value: T;
   onChange: (v: T) => void;
+  /** Called instead of onChange when a disabled option is clicked (e.g. to show an upgrade prompt). */
+  onLockedClick?: (v: T) => void;
 }) {
   return (
     <div className="flex border border-border">
@@ -226,12 +229,15 @@ export function SegToggle<T extends string>({
         <button
           key={o.value}
           type="button"
-          onClick={() => onChange(o.value)}
+          aria-disabled={o.disabled}
+          onClick={() => (o.disabled ? onLockedClick?.(o.value) : onChange(o.value))}
           className={cn(
-            "flex-1 px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest",
-            value === o.value
-              ? "bg-primary text-primary-foreground"
-              : "bg-card-inset text-muted-foreground hover:bg-border/60 hover:text-foreground",
+            "flex-1 px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+            o.disabled
+              ? "cursor-not-allowed bg-card-inset/30 text-muted-foreground/30"
+              : value === o.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-card-inset text-muted-foreground hover:bg-border/60 hover:text-foreground",
           )}
         >
           {o.label}

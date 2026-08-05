@@ -2,7 +2,7 @@
 
 export const GUMROAD_URL = "https://hakeman.gumroad.com/l/bizcase-builder";
 export const LICENSE_PRICE = "$19.99";
-export const FREE_CASE_LIMIT = 3;
+export const FREE_CASE_LIMIT = 2;
 
 const KEY = "bizcase:license";
 const EVENT = "bizcase:license-changed";

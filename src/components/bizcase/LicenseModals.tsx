@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Modal, Btn, LoadingLine } from "./ui";
 import { verifyLicenseKey } from "@/lib/bizcase/license.functions";
-import { GUMROAD_URL, LICENSE_PRICE, saveLicenseKey } from "@/lib/bizcase/license";
+import { GUMROAD_URL, LICENSE_PRICE, FREE_CASE_LIMIT, saveLicenseKey } from "@/lib/bizcase/license";
 
 /** Inline upgrade prompt shown wherever a paid feature is blocked. */
 export function UpgradeNotice({ reason }: { reason: string }) {
@@ -30,9 +30,11 @@ export function UpgradeNotice({ reason }: { reason: string }) {
 }
 
 export const FREE_FEATURES = [
-  "3 business cases",
+  `${FREE_CASE_LIMIT} business cases`,
   "Watermarked PDF exports",
   "No Excel import",
+  "No best/worst case scenarios",
+  "No import template download",
   "Core metrics, charts & comparison",
 ];
 
@@ -40,6 +42,8 @@ export const FULL_FEATURES = [
   "Unlimited business cases",
   "Watermark-free PDF exports",
   "Excel import with AI field mapping",
+  "Best & worst case scenario modeling",
+  "Downloadable import template",
   "Everything in Free, forever, no subscription",
 ];
 
