@@ -279,14 +279,27 @@ function CaseList() {
     <Screen>
       <PageBackdrop />
       <div className="mb-8 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="truncate text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
-            BizCase Builder
-          </h1>
-          <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            {greetingText} —{" "}
-            {cases.length === 0 ? "let's build your first case" : "ready when you are"}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
+              BizCase Builder
+            </h1>
+            <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              {greetingText} —{" "}
+              {cases.length === 0 ? "let's build your first case" : "ready when you are"}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 sm:hidden">
+            <button
+              type="button"
+              aria-label="About BizCase Builder"
+              onClick={() => setAbout(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs font-bold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+            >
+              ?
+            </button>
+            <SettingsGear />
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Btn variant="primary" onClick={onNew}>
@@ -297,13 +310,16 @@ function CaseList() {
             type="button"
             aria-label="About BizCase Builder"
             onClick={() => setAbout(true)}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs font-bold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs font-bold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground sm:flex"
           >
             ?
           </button>
-          <SettingsGear />
+          <span className="hidden sm:block">
+            <SettingsGear />
+          </span>
         </div>
       </div>
+
 
       {cases.length === 0 ? (
         <div className="surface-card relative overflow-hidden p-10 text-center">
