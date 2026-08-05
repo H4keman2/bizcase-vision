@@ -11,6 +11,7 @@ import { fmtCompact, fmtDate, fmtNumber, fmtPercent } from "@/lib/bizcase/format
 import { effectiveInputs } from "@/lib/bizcase/types";
 import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Search = { a: string; b: string };
 
@@ -84,6 +85,7 @@ function Compare() {
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [allCases, setAllCases] = useState<CaseRecord[]>([]);
   const [showA, setShowA] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     setRecord(getCase(caseId));
@@ -202,6 +204,33 @@ function Compare() {
     },
   });
 
+  const handleExportExcel = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const cases = excelCases();
+      const missing = (["a", "b"] as const).filter(
+        (k) => !cases[k]?.inputs || !cases[k]?.outputs?.cashFlowSeries?.length,
+      );
+      if (missing.length) {
+        throw new Error(
+          `Missing case data for ${missing.map((m) => `Case ${m.toUpperCase()}`).join(" and ")}.`,
+        );
+      }
+      // Yield a frame so the button can paint its loading state before the
+      // synchronous workbook build blocks the main thread.
+      await new Promise((r) => setTimeout(r, 0));
+      exportComparisonExcel(cases);
+      toast.success("Excel comparison exported");
+    } catch (err) {
+      toast.error("Excel export failed", {
+        description: err instanceof Error ? err.message : "Unexpected error while building the workbook.",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const select = (side: "a" | "b", id: string) =>
     navigate({ to: "/compare/$caseId", params: { caseId }, search: { ...search, [side]: id } });
 
@@ -213,7 +242,9 @@ function Compare() {
         action={
           <>
             <Btn onClick={() => exportPdf()}>Export PDF</Btn>
-            <Btn onClick={() => exportComparisonExcel(excelCases())}>Export Excel</Btn>
+            <Btn onClick={handleExportExcel} disabled={exporting}>
+              {exporting ? "Exporting…" : "Export Excel"}
+            </Btn>
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
               Back to Editor
             </Btn>
