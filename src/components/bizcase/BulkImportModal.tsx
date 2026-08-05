@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Modal, Btn } from "./ui";
+import { Modal, Btn, LoadingLine } from "./ui";
 import { extractCaseFromSheet } from "@/lib/bizcase/ai.functions";
 import { calculate } from "@/lib/bizcase/calc";
 import { createCase, saveCase, saveVersion } from "@/lib/bizcase/storage";
@@ -121,13 +121,13 @@ export function BulkImportModal({
             Select up to {MAX_BATCH_FILES} .xlsx workbooks (max 5MB each). Each file becomes its own
             case. Nothing is created until you confirm.
           </p>
-          <label className="inline-block cursor-pointer border border-primary px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-widest text-primary">
+          <label className="inline-block cursor-pointer border border-primary px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring">
             Choose files
             <input
               type="file"
               accept=".xlsx"
               multiple
-              className="hidden"
+              className="sr-only"
               onChange={(e) => e.target.files?.length && handleFiles(e.target.files)}
             />
           </label>
@@ -135,9 +135,7 @@ export function BulkImportModal({
         </div>
       )}
 
-      {status === "parsing" && (
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">{progress}</p>
-      )}
+      {status === "parsing" && <LoadingLine label={progress} />}
 
       {status === "review" && (
         <div>

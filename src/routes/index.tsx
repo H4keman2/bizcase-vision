@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
-import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
+import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
 import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
 
@@ -73,7 +73,10 @@ function AboutSheet({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/85" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-background/85"
+      onClick={onClose}
+    >
       <div
         className="surface-card w-full max-w-2xl animate-in slide-in-from-bottom duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -148,38 +151,51 @@ function CaseList() {
       </div>
 
       {cases.length === 0 ? (
-        <>
-          <div className="mb-4 grid grid-cols-3 gap-3">
-            <StatTile label="Cases Created" value="0" />
-            <StatTile label="Avg ROI Modeled" value="—" />
-            <StatTile label="Fastest Payback" value="—" />
+        <div className="surface-card relative overflow-hidden p-10 text-center">
+          <BackdropChart />
+          <div className="relative">
+            <p className="mb-2 text-base font-semibold">No cases yet</p>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Create a case to model investment, benefits and returns.
+            </p>
+            <Btn variant="primary" onClick={onNew}>
+              + New Case
+            </Btn>
           </div>
-
-          <div className="surface-card relative overflow-hidden p-10 text-center">
-            <BackdropChart />
-            <div className="relative">
-              <p className="mb-2 text-base font-semibold">No cases yet</p>
-              <p className="mb-6 text-sm text-muted-foreground">
-                Create a case to model investment, benefits and returns.
-              </p>
-              <Btn variant="primary" onClick={onNew}>
-                + New Case
-              </Btn>
-            </div>
-          </div>
-        </>
+        </div>
       ) : (
         <div className="flex flex-col gap-3">
+          <div className="mb-1 grid grid-cols-3 gap-3">
+            <StatTile label="Cases" value={String(cases.length)} />
+            <StatTile
+              label="Avg ROI Modeled"
+              value={fmtPercent(
+                cases.reduce((s, c) => s + c.draft.outputs.roi, 0) / cases.length,
+                0,
+              )}
+            />
+            <StatTile
+              label="Fastest Payback"
+              value={(() => {
+                const paybacks = cases
+                  .map((c) => c.draft.outputs.paybackMonths)
+                  .filter((p): p is number => p !== null);
+                return paybacks.length ? fmtMonths(Math.min(...paybacks)) : "—";
+              })()}
+            />
+          </div>
           {cases.map((c) => (
             <div
               key={c.id}
-              className="surface-card flex items-center justify-between gap-4 px-5 py-4"
+              className="group surface-card flex items-center justify-between gap-4 px-5 py-4 hover:border-primary/50"
             >
               <button
                 className="min-w-0 flex-1 text-left"
                 onClick={() => navigate({ to: "/case/$caseId", params: { caseId: c.id } })}
               >
-                <p className="mb-1 truncate text-base font-semibold">{c.name}</p>
+                <p className="mb-1 truncate text-base font-semibold group-hover:text-primary">
+                  {c.name}
+                </p>
                 <p className="font-mono text-xs text-muted-foreground">
                   Updated {fmtDate(c.updatedAt)} · NPV {fmtCompact(c.draft.outputs.npv)}
                 </p>
@@ -190,10 +206,7 @@ function CaseList() {
                     {c.latestVersion} {c.latestVersion === 1 ? "version" : "versions"}
                   </p>
                 </div>
-                <Btn
-                  variant="danger"
-                  onClick={() => setPendingDelete(c)}
-                >
+                <Btn variant="danger" onClick={() => setPendingDelete(c)}>
                   Delete
                 </Btn>
               </div>

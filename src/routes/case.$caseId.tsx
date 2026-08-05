@@ -17,7 +17,6 @@ import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion, Scenario } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
-
 export const Route = createFileRoute("/case/$caseId")({
   head: () => ({
     meta: [
@@ -77,7 +76,6 @@ function CaseEditor() {
     [inputs, mode],
   );
 
-
   useEffect(() => {
     if (!record || !inputs || !baseOutputs) return;
     const next = { ...record, draft: { inputs, outputs: baseOutputs } };
@@ -132,7 +130,6 @@ function CaseEditor() {
     setModal(null);
   };
 
-
   const handleExport = async () => {
     setExporting(true);
     let summary = execSummary;
@@ -172,8 +169,6 @@ function CaseEditor() {
     setExporting(false);
   };
 
-
-
   return (
     <Screen>
       <PageHeader
@@ -188,7 +183,7 @@ function CaseEditor() {
             value={record.name}
             onChange={(e) => setRecord({ ...record, name: e.target.value })}
             onBlur={() => saveCase(record)}
-            className="w-full max-w-lg border border-transparent bg-transparent text-2xl font-bold tracking-tight outline-none focus:border-border focus:bg-card-inset md:text-3xl"
+            className="w-full max-w-lg border border-transparent bg-transparent text-2xl font-bold tracking-tight outline-none hover:border-border/60 focus:border-primary focus:bg-card-inset md:text-3xl"
           />
         }
         action={
@@ -232,7 +227,10 @@ function CaseEditor() {
                 navigate({
                   to: "/compare/$caseId",
                   params: { caseId },
-                  search: { a: versions[0]?.versionNumber ? `v${versions[0].versionNumber}` : "draft", b: "draft" },
+                  search: {
+                    a: versions[0]?.versionNumber ? `v${versions[0].versionNumber}` : "draft",
+                    b: "draft",
+                  },
                 })
               }
             >
@@ -269,7 +267,6 @@ function CaseEditor() {
           />
         </div>
       </div>
-
 
       {modal === "reset" && (
         <Modal title="Reset Case" onClose={() => setModal(null)}>
@@ -400,7 +397,9 @@ function HistoryRow({
       onClick={onSelect}
       className={cn(
         "flex items-center justify-between border px-4 py-3 text-left",
-        selected ? "border-primary bg-card-inset" : "border-border bg-card-inset",
+        selected
+          ? "border-primary bg-card-inset"
+          : "border-border bg-card-inset hover:border-muted-foreground",
         isDraft && "border-dashed",
       )}
     >
@@ -412,4 +411,3 @@ function HistoryRow({
     </button>
   );
 }
-

@@ -65,7 +65,6 @@ export function NumInput({
   );
 }
 
-
 export function Screen({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background px-4 py-7 text-foreground md:px-10 md:py-10">
@@ -107,7 +106,6 @@ export function PageHeader({
     </div>
   );
 }
-
 
 export function Card({
   label,
@@ -151,10 +149,13 @@ export function Btn({
     <button
       {...props}
       className={cn(
-        "px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors disabled:cursor-not-allowed disabled:opacity-40",
-        variant === "primary" && "bg-primary text-primary-foreground hover:opacity-85",
-        variant === "ghost" && "border border-border text-foreground hover:border-primary",
-        variant === "danger" && "border border-decline text-decline hover:bg-decline/10",
+        "px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0",
+        variant === "primary" &&
+          "bg-primary text-primary-foreground hover:opacity-85 active:opacity-75",
+        variant === "ghost" &&
+          "border border-border text-foreground hover:border-primary hover:bg-card-inset",
+        variant === "danger" &&
+          "border border-decline text-decline hover:bg-decline/10 active:bg-decline/15",
         className,
       )}
     />
@@ -223,10 +224,10 @@ export function SegToggle<T extends string>({
           type="button"
           onClick={() => onChange(o.value)}
           className={cn(
-            "flex-1 px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+            "flex-1 px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest",
             value === o.value
               ? "bg-primary text-primary-foreground"
-              : "bg-card-inset text-muted-foreground hover:text-foreground",
+              : "bg-card-inset text-muted-foreground hover:bg-border/60 hover:text-foreground",
           )}
         >
           {o.label}
@@ -241,27 +242,46 @@ export function Metric({
   value,
   tone = "default",
   info,
+  size = "default",
 }: {
   label: string;
   value: string;
   tone?: "default" | "positive" | "negative";
   info?: string;
+  size?: "default" | "hero";
 }) {
   return (
-    <div className="border border-border bg-card-inset px-3 py-3">
+    <div
+      className={cn(
+        "border border-border bg-card-inset",
+        size === "hero" ? "px-4 py-4" : "px-3 py-3",
+      )}
+    >
       <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
         {info ? <InfoTooltip field={info} /> : null}
       </p>
       <p
         className={cn(
-          "data-mono text-lg font-bold",
+          "data-mono font-bold",
+          size === "hero" ? "text-3xl" : "text-lg",
           tone === "positive" && "text-primary",
           tone === "negative" && "text-decline",
         )}
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+export function LoadingLine({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative h-[3px] w-20 overflow-hidden bg-card-inset">
+        <div className="absolute inset-y-0 w-1/3 animate-scan bg-primary" />
+      </div>
+      <p className="font-mono text-xs uppercase tracking-widest text-primary">{label}</p>
     </div>
   );
 }
@@ -279,9 +299,24 @@ export function Modal({
   wide?: boolean;
   info?: string;
 }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/85 p-4 py-10">
-      <div className={cn("surface-card w-full", wide ? "max-w-3xl" : "max-w-md")}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/85 p-4 py-10 animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div
+        className={cn(
+          "surface-card w-full animate-in fade-in zoom-in-95 duration-150",
+          wide ? "max-w-3xl" : "max-w-md",
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <p className="label-eyebrow flex items-center gap-1.5">
             {title}
@@ -289,7 +324,8 @@ export function Modal({
           </p>
           <button
             onClick={onClose}
-            className="font-mono text-xs text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+            className="border border-transparent px-2 py-1 font-mono text-xs text-muted-foreground hover:border-border hover:text-foreground"
           >
             ESC
           </button>

@@ -29,20 +29,40 @@ export function OutputsPanel({
   const m = mode === "simple" ? null : outputs.margins;
   const rmType = inputs.benefits.revenueModel.type;
 
-
   return (
     <div className="flex flex-col gap-4">
       <Card label="Results">
-        <div className="grid grid-cols-2 gap-3">
-          <Metric label="NPV" info="npv" value={fmtCompact(outputs.npv)} tone={outputs.npv >= 0 ? "positive" : "negative"} />
+        <div className="mb-3 grid grid-cols-2 gap-3">
+          <Metric
+            label="NPV"
+            info="npv"
+            size="hero"
+            value={fmtCompact(outputs.npv)}
+            tone={outputs.npv >= 0 ? "positive" : "negative"}
+          />
+          <Metric
+            label="ROI"
+            info="roi"
+            size="hero"
+            value={fmtPercent(outputs.roi, 0)}
+            tone={outputs.roi >= 0 ? "positive" : "negative"}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Metric label="IRR" info="irr" value={fmtPercent(outputs.irr)} />
           <Metric label="Payback" info="payback" value={fmtMonths(outputs.paybackMonths)} />
-          <Metric label="ROI" info="roi" value={fmtPercent(outputs.roi, 0)} tone={outputs.roi >= 0 ? "positive" : "negative"} />
-          <Metric label="Total Investment" info="totalInvestment" value={fmtCompact(outputs.totalInvestment)} />
+          <Metric
+            label="Total Investment"
+            info="totalInvestment"
+            value={fmtCompact(outputs.totalInvestment)}
+          />
           {mode === "detailed" && (
-            <Metric label="Total Revenue" info="totalRevenue" value={fmtCompact(outputs.totalRevenue)} />
+            <Metric
+              label="Total Revenue"
+              info="totalRevenue"
+              value={fmtCompact(outputs.totalRevenue)}
+            />
           )}
-
         </div>
       </Card>
 
@@ -52,24 +72,40 @@ export function OutputsPanel({
 
       {m && (
         <Card label="Margin Analysis">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {rmType === "aggregate" ? (
-              <Metric label="Gross Margin" info="grossMargin" value={fmtPercent(m.grossMarginPercent)} />
+              <Metric
+                label="Gross Margin"
+                info="grossMargin"
+                value={fmtPercent(m.grossMarginPercent)}
+              />
             ) : (
               <>
                 <Metric
-                  label="Contribution / Unit" info="contributionPerUnit"
+                  label="Contribution / Unit"
+                  info="contributionPerUnit"
                   value={fmtCurrency(m.contributionMarginPerUnit, 2)}
                 />
-                <Metric label="Contribution %" info="contributionMargin" value={fmtPercent(m.contributionMarginPercent)} />
                 <Metric
-                  label="Breakeven Units / Yr" info="breakevenUnits"
-                  value={m.breakevenUnitsPerYear === null ? "—" : fmtNumber(m.breakevenUnitsPerYear)}
+                  label="Contribution %"
+                  info="contributionMargin"
+                  value={fmtPercent(m.contributionMarginPercent)}
+                />
+                <Metric
+                  label="Breakeven Units / Yr"
+                  info="breakevenUnits"
+                  value={
+                    m.breakevenUnitsPerYear === null ? "—" : fmtNumber(m.breakevenUnitsPerYear)
+                  }
                 />
               </>
             )}
             {inputs.benefits.overhead.enabled && (
-              <Metric label="Overhead / Yr" info="overheadAnnual" value={fmtCurrency(m.overheadAnnual)} />
+              <Metric
+                label="Overhead / Yr"
+                info="overheadAnnual"
+                value={fmtCurrency(m.overheadAnnual)}
+              />
             )}
           </div>
         </Card>

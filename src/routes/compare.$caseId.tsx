@@ -41,7 +41,13 @@ type Option = { id: string; label: string; draft: CaseDraft };
 const METRICS = [
   { key: "npv", label: "NPV", info: "npv", fmt: (v: number | null) => fmtCompact(v) },
   { key: "irr", label: "IRR", info: "irr", fmt: (v: number | null) => fmtPercent(v) },
-  { key: "payback", label: "Payback", info: "payback", fmt: (v: number | null) => (v === null ? "NEVER" : `${v.toFixed(1)} MO`), inverse: true },
+  {
+    key: "payback",
+    label: "Payback",
+    info: "payback",
+    fmt: (v: number | null) => (v === null ? "NEVER" : `${v.toFixed(1)} MO`),
+    inverse: true,
+  },
   { key: "roi", label: "ROI", info: "roi", fmt: (v: number | null) => fmtPercent(v, 0) },
   {
     key: "breakeven",
@@ -104,7 +110,6 @@ function Compare() {
       }
     }
     return out;
-
   }, [allCases, caseId]);
 
   if (!record) {
@@ -140,7 +145,6 @@ function Compare() {
         </p>
       </Screen>
     );
-
 
   const npvDelta = optB.draft.outputs.npv - optA.draft.outputs.npv;
   const verdict =
@@ -204,8 +208,10 @@ function Compare() {
             <div
               key={side}
               className={cn(
-                "bg-card p-4",
-                side === "b" ? "border border-primary" : "border border-border",
+                "bg-card p-4 transition-colors",
+                side === "b"
+                  ? "border border-primary"
+                  : "border border-border hover:border-muted-foreground",
               )}
             >
               <p className="label-eyebrow mb-2 flex items-center gap-1.5">
@@ -231,7 +237,7 @@ function Compare() {
         })}
       </div>
 
-      <div className="mb-4 bg-primary px-5 py-4 text-primary-foreground">
+      <div className="mb-4 bg-primary px-5 py-4 text-primary-foreground animate-in fade-in slide-in-from-top-2 duration-300">
         <p className="font-mono text-sm font-bold uppercase tracking-wide">
           {verdict} · {npvDelta >= 0 ? "+" : "-"}
           {fmtCompact(Math.abs(npvDelta))} NPV
@@ -256,12 +262,11 @@ function Compare() {
             const diff = hasDelta ? vb - va : null;
             const inverse = "inverse" in m ? m.inverse : false;
             const isEven = diff !== null && Math.abs(diff) < 1e-9;
-            const better =
-              diff === null || isEven ? null : inverse ? diff < 0 : diff > 0;
+            const better = diff === null || isEven ? null : inverse ? diff < 0 : diff > 0;
             return (
               <div
                 key={m.key}
-                className="grid grid-cols-[1.4fr_1fr_1fr_1fr] items-center border-t border-border py-3"
+                className="grid grid-cols-[1.4fr_1fr_1fr_1fr] items-center border-t border-border py-3 transition-colors hover:bg-card-inset/60"
               >
                 <span className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                   {m.label}

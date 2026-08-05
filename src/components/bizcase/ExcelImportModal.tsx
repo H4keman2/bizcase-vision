@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Modal, Btn } from "./ui";
+import { Modal, Btn, LoadingLine } from "./ui";
 import { extractCaseFromSheet } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs } from "@/lib/bizcase/types";
 import {
@@ -56,14 +56,15 @@ export function ExcelImportModal({
       {(status === "idle" || status === "error") && (
         <div>
           <p className="mb-4 text-sm text-muted-foreground">
-            Upload an .xlsx workbook (max 5MB). Values are reviewed before anything is written to the case.
+            Upload an .xlsx workbook (max 5MB). Values are reviewed before anything is written to
+            the case.
           </p>
-          <label className="inline-block cursor-pointer border border-primary px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-widest text-primary">
+          <label className="inline-block cursor-pointer border border-primary px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-primary hover:text-primary-foreground has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring">
             Choose file
             <input
               type="file"
               accept=".xlsx"
-              className="hidden"
+              className="sr-only"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
           </label>
@@ -71,11 +72,7 @@ export function ExcelImportModal({
         </div>
       )}
 
-      {status === "parsing" && (
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">
-          Reading workbook and mapping fields…
-        </p>
-      )}
+      {status === "parsing" && <LoadingLine label="Reading workbook and mapping fields…" />}
 
       {status === "review" && (
         <div>

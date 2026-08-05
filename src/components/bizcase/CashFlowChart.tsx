@@ -1,5 +1,6 @@
 import {
-  LineChart,
+  ComposedChart,
+  Area,
   Line,
   XAxis,
   YAxis,
@@ -13,6 +14,8 @@ import { fmtCompact } from "@/lib/bizcase/format";
 
 const AXIS = "#8A8A8A";
 const GRID = "#2A2A2A";
+const PRIMARY = "#C7F92B";
+const DECLINE = "#FF5A3C";
 
 export function CashFlowChart({
   data,
@@ -27,10 +30,25 @@ export function CashFlowChart({
   labelB?: string;
   showA?: boolean;
 }) {
+  // Where the zero line sits within the series' vertical range, used to
+  // split the fill into a positive (above-zero) and negative (below-zero)
+  // band — a cumulative cash-flow curve almost always crosses zero once.
+  const values = data.map((d) => d.a).filter((v) => Number.isFinite(v));
+  const max = values.length ? Math.max(...values, 0) : 1;
+  const min = values.length ? Math.min(...values, 0) : -1;
+  const range = max - min || 1;
+  const zeroOffset = Math.min(1, Math.max(0, max / range));
+
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="cashFlowSplit" x1="0" y1="0" x2="0" y2="1">
+              <stop offset={zeroOffset} stopColor={PRIMARY} stopOpacity={0.28} />
+              <stop offset={zeroOffset} stopColor={DECLINE} stopOpacity={0.22} />
+            </linearGradient>
+          </defs>
           <CartesianGrid stroke={GRID} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="month"
@@ -47,6 +65,7 @@ export function CashFlowChart({
             width={56}
           />
           <Tooltip
+            cursor={{ stroke: PRIMARY, strokeWidth: 1, strokeDasharray: "3 3" }}
             contentStyle={{
               backgroundColor: "#141414",
               border: "1px solid #2A2A2A",
@@ -59,20 +78,41 @@ export function CashFlowChart({
           />
           <ReferenceLine y={0} stroke={AXIS} strokeDasharray="3 3" />
           {seriesB ? <Legend wrapperStyle={{ fontFamily: "monospace", fontSize: 10 }} /> : null}
-          {showA && (
+          {showA && !seriesB && (
+            <Area
+              type="monotone"
+              dataKey="a"
+              name={labelA}
+              stroke={PRIMARY}
+              strokeWidth={2}
+              fill="url(#cashFlowSplit)"
+              dot={false}
+              activeDot={{ r: 4, fill: PRIMARY, stroke: "#141414", strokeWidth: 2 }}
+            />
+          )}
+          {showA && seriesB && (
             <Line
               type="monotone"
               dataKey="a"
               name={labelA}
-              stroke={seriesB ? "#8A8A8A" : "#C7F92B"}
+              stroke="#8A8A8A"
               strokeWidth={2}
               dot={false}
+              activeDot={{ r: 4, fill: "#8A8A8A", stroke: "#141414", strokeWidth: 2 }}
             />
           )}
           {seriesB && (
-            <Line type="monotone" dataKey="b" name={labelB} stroke="#C7F92B" strokeWidth={2} dot={false} />
+            <Line
+              type="monotone"
+              dataKey="b"
+              name={labelB}
+              stroke={PRIMARY}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4, fill: PRIMARY, stroke: "#141414", strokeWidth: 2 }}
+            />
           )}
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

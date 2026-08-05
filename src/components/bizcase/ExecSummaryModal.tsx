@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Modal, Btn } from "./ui";
+import { Modal, Btn, LoadingLine } from "./ui";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs, CaseOutputs } from "@/lib/bizcase/types";
 
 export function buildContexts(inputs: CaseInputs, outputs: CaseOutputs) {
   const rm = inputs.benefits.revenueModel;
   const m = outputs.margins;
-  let revenueContext =
-    "This case is driven by cost and time savings, with no new revenue stream.";
+  let revenueContext = "This case is driven by cost and time savings, with no new revenue stream.";
   if (rm.type === "unit" && m) {
     revenueContext = `Revenue is modeled at the unit level with a contribution margin of $${(m.contributionMarginPerUnit ?? 0).toFixed(2)} per unit (${(m.contributionMarginPercent ?? 0).toFixed(0)}%), requiring roughly ${Math.round(m.breakevenUnitsPerYear ?? 0)} units per year to break even on fixed costs.`;
   } else if (rm.type === "aggregate" && m) {
@@ -88,11 +87,7 @@ export function ExecSummaryModal({
         </div>
       )}
 
-      {loading && (
-        <p className="font-mono text-xs uppercase tracking-widest text-primary">
-          Generating summary…
-        </p>
-      )}
+      {loading && <LoadingLine label="Generating summary…" />}
 
       {error && (
         <div>

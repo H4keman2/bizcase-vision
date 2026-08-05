@@ -34,7 +34,6 @@ export function InputsPanel({
   const tl = inputs.benefits.timeline;
   const years = Math.max(1, Math.ceil(inputs.horizonYears));
 
-
   return (
     <div className="flex flex-col gap-4">
       <Card label="Investment">
@@ -60,7 +59,9 @@ export function InputsPanel({
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Phased Capex
             </p>
-            <Btn onClick={() => patch((d) => void d.investment.phased.push({ month: 6, amount: 0 }))}>
+            <Btn
+              onClick={() => patch((d) => void d.investment.phased.push({ month: 6, amount: 0 }))}
+            >
               + Add
             </Btn>
           </div>
@@ -72,13 +73,13 @@ export function InputsPanel({
                 <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
                   <NumField
                     label="Month"
-            info="phasedMonth"
+                    info="phasedMonth"
                     value={p.month}
                     onChange={(v) => patch((d) => void (d.investment.phased[i].month = v))}
                   />
                   <NumField
                     label="Amount"
-            info="phasedAmount"
+                    info="phasedAmount"
                     prefix="$"
                     value={p.amount}
                     onChange={(v) => patch((d) => void (d.investment.phased[i].amount = v))}
@@ -121,79 +122,85 @@ export function InputsPanel({
               <InfoTooltip field="revenueModel" />
             </p>
             <SegToggle<RevenueModelType>
+              value={rm.type}
+              onChange={(v) => patch((d) => void (d.benefits.revenueModel.type = v))}
+              options={[
+                { value: "none", label: "None" },
+                { value: "aggregate", label: "Aggregate" },
+                { value: "unit", label: "Unit-Level" },
+              ]}
+            />
 
-          value={rm.type}
-          onChange={(v) => patch((d) => void (d.benefits.revenueModel.type = v))}
-          options={[
-            { value: "none", label: "None" },
-            { value: "aggregate", label: "Aggregate" },
-            { value: "unit", label: "Unit-Level" },
-          ]}
-        />
+            {rm.type === "aggregate" && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <NumField
+                  label="Revenue Lift / Yr"
+                  info="revenueLiftAnnual"
+                  prefix="$"
+                  value={rm.aggregate.revenueLiftAnnual}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.aggregate.revenueLiftAnnual = v))
+                  }
+                />
+                <NumField
+                  label="COGS / Yr"
+                  info="cogsAnnual"
+                  prefix="$"
+                  value={rm.aggregate.cogsAnnual}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.aggregate.cogsAnnual = v))
+                  }
+                />
+              </div>
+            )}
 
-        {rm.type === "aggregate" && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <NumField
-              label="Revenue Lift / Yr"
-            info="revenueLiftAnnual"
-              prefix="$"
-              value={rm.aggregate.revenueLiftAnnual}
-              onChange={(v) =>
-                patch((d) => void (d.benefits.revenueModel.aggregate.revenueLiftAnnual = v))
-              }
-            />
-            <NumField
-              label="COGS / Yr"
-            info="cogsAnnual"
-              prefix="$"
-              value={rm.aggregate.cogsAnnual}
-              onChange={(v) => patch((d) => void (d.benefits.revenueModel.aggregate.cogsAnnual = v))}
-            />
-          </div>
-        )}
-
-        {rm.type === "unit" && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <NumField
-              label="Price / Unit"
-            info="pricePerUnit"
-              prefix="$"
-              value={rm.unit.pricePerUnit}
-              onChange={(v) => patch((d) => void (d.benefits.revenueModel.unit.pricePerUnit = v))}
-            />
-            <NumField
-              label="Variable Cost / Unit"
-            info="variableCostPerUnit"
-              prefix="$"
-              value={rm.unit.variableCostPerUnit}
-              onChange={(v) =>
-                patch((d) => void (d.benefits.revenueModel.unit.variableCostPerUnit = v))
-              }
-            />
-            <NumField
-              label="Fixed Costs / Yr"
-            info="fixedCostsAnnual"
-              prefix="$"
-              value={rm.unit.fixedCostsAnnual}
-              onChange={(v) => patch((d) => void (d.benefits.revenueModel.unit.fixedCostsAnnual = v))}
-            />
-            <NumField
-              label="Units / Yr"
-            info="unitsPerYear"
-              value={rm.unit.unitsPerYear}
-              onChange={(v) => patch((d) => void (d.benefits.revenueModel.unit.unitsPerYear = v))}
-            />
-          </div>
+            {rm.type === "unit" && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <NumField
+                  label="Price / Unit"
+                  info="pricePerUnit"
+                  prefix="$"
+                  value={rm.unit.pricePerUnit}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.unit.pricePerUnit = v))
+                  }
+                />
+                <NumField
+                  label="Variable Cost / Unit"
+                  info="variableCostPerUnit"
+                  prefix="$"
+                  value={rm.unit.variableCostPerUnit}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.unit.variableCostPerUnit = v))
+                  }
+                />
+                <NumField
+                  label="Fixed Costs / Yr"
+                  info="fixedCostsAnnual"
+                  prefix="$"
+                  value={rm.unit.fixedCostsAnnual}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.unit.fixedCostsAnnual = v))
+                  }
+                />
+                <NumField
+                  label="Units / Yr"
+                  info="unitsPerYear"
+                  value={rm.unit.unitsPerYear}
+                  onChange={(v) =>
+                    patch((d) => void (d.benefits.revenueModel.unit.unitsPerYear = v))
+                  }
+                />
+              </div>
             )}
           </>
         )}
       </Card>
 
       {detailed && rm.type !== "none" && (
-
         <Card
           label="Overhead"
-            info="overhead"
+          info="overhead"
           action={
             <button
               type="button"
@@ -202,8 +209,8 @@ export function InputsPanel({
               }
               className={`border px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest ${
                 inputs.benefits.overhead.enabled
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground"
+                  ? "border-primary bg-primary text-primary-foreground hover:opacity-85"
+                  : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
               }`}
             >
               {inputs.benefits.overhead.enabled ? "Enabled" : "Disabled"}
@@ -227,7 +234,7 @@ export function InputsPanel({
               </div>
               <NumField
                 label="Overhead %"
-            info="overheadPercent"
+                info="overheadPercent"
                 suffix="%"
                 value={inputs.benefits.overhead.percent}
                 onChange={(v) => patch((d) => void (d.benefits.overhead.percent = v))}
@@ -241,8 +248,7 @@ export function InputsPanel({
         </Card>
       )}
 
-      <Card label="Timeline"
-            info="timeline">
+      <Card label="Timeline" info="timeline">
         <SegToggle<TimelineType>
           value={tl.type}
           onChange={(v) => patch((d) => void (d.benefits.timeline.type = v))}
@@ -281,14 +287,14 @@ export function InputsPanel({
           <div className="mt-3 grid grid-cols-2 gap-3">
             <NumField
               label="Year 1"
-            info="rampYear1"
+              info="rampYear1"
               suffix="%"
               value={tl.ramp.year1Percent}
               onChange={(v) => patch((d) => void (d.benefits.timeline.ramp.year1Percent = v))}
             />
             <NumField
               label="Growth / Yr"
-            info="rampGrowth"
+              info="rampGrowth"
               suffix="%"
               value={tl.ramp.growthRatePercent}
               onChange={(v) => patch((d) => void (d.benefits.timeline.ramp.growthRatePercent = v))}

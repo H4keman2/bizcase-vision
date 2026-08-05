@@ -91,6 +91,44 @@
   input[type="number"] {
     -moz-appearance: textfield;
   }
+
+  /* Consistent, deliberate motion on every interactive surface. */
+  button,
+  a,
+  input,
+  [role="button"],
+  [tabindex] {
+    transition:
+      color 120ms ease,
+      background-color 120ms ease,
+      border-color 120ms ease,
+      opacity 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  /* Keyboard-visible focus ring everywhere; mouse clicks stay clean. */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  button:disabled:focus-visible {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @utility label-eyebrow {
@@ -100,6 +138,19 @@
   text-transform: uppercase;
   color: var(--color-primary);
   font-weight: 700;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}
+
+@utility animate-scan {
+  animation: scan 1.1s ease-in-out infinite;
 }
 
 @utility data-mono {
@@ -121,7 +172,14 @@
   font-size: 0.8125rem;
   color: var(--color-foreground);
   outline: none;
+  &:hover {
+    border-color: var(--color-muted-foreground);
+  }
   &:focus {
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent);
+  }
+  &:focus-visible {
+    outline: none;
   }
 }
