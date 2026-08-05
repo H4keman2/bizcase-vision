@@ -34,7 +34,7 @@ export function SettingsLauncher() {
         type="button"
         aria-label="Settings"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card font-mono text-base text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.4)] hover:border-primary hover:text-primary"
+        className="fixed top-4 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card font-mono text-base text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.4)] hover:border-primary hover:text-primary"
       >
         ⚙
       </button>
