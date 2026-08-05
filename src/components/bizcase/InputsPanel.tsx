@@ -429,6 +429,34 @@ export function InputsPanel({
                 ? `Units sold in each ${GRANULARITY_LABEL[manualGranularity].toLowerCase()}, priced with the unit revenue model. Cost & time savings still apply on top.`
                 : `Total net benefit booked in each ${GRANULARITY_LABEL[manualGranularity].toLowerCase()}. These values replace the annual run-rate benefits above.`}
             </p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Total across horizon:{" "}
+              <span className="text-foreground">
+                {manualBasis === "amount" ? "$" : ""}
+                {Math.round(manualTotal).toLocaleString()}
+                {manualBasis === "units" ? " u" : ""}
+              </span>{" "}
+              / target {manualBasis === "amount" ? "$" : ""}
+              {manualTarget.toLocaleString()}
+              {manualBasis === "units" ? " u" : ""}
+            </p>
+            {hasNegativeUnits && (
+              <p className="mt-2 border border-decline bg-decline/10 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-decline">
+                Negative unit values aren&apos;t valid — enter zero or more units per period.
+              </p>
+            )}
+            {manualOffTarget && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 border border-warning bg-warning/10 px-3 py-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-warning">
+                  {manualDrift > 0 ? "Over" : "Under"} the{" "}
+                  {manualBasis === "units" ? "units / yr" : "annual run-rate"} target by{" "}
+                  {manualBasis === "amount" ? "$" : ""}
+                  {Math.abs(Math.round(manualDrift)).toLocaleString()}
+                  {manualBasis === "units" ? " u" : ""}
+                </p>
+                <Btn onClick={() => setManual(manualGranularity, manualBasis)}>Redistribute</Btn>
+              </div>
+            )}
           </div>
         )}
         {tl.type === "ramp" && (
