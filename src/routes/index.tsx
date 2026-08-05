@@ -368,7 +368,13 @@ function CaseList() {
           <Btn variant="primary" onClick={onNew}>
             + New Case
           </Btn>
-          <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+          {!isLicensed() ? (
+            <LockedHover>
+              <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+            </LockedHover>
+          ) : (
+            <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+          )}
           <UpgradeCard />
           <button
             type="button"
