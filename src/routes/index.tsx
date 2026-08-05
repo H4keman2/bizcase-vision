@@ -159,6 +159,53 @@ function PageBackdrop() {
         style={{ background: "var(--color-primary)" }}
       />
 
+/** Aggregate cumulative cash flow across every saved case — real content and
+ *  real color for the space below the case list. */
+function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
+  const data = aggregateCashFlowSeries(cases.map((c) => c.draft.outputs.cashFlowSeries ?? []));
+  if (data.length < 2) return null;
+  const final = data[data.length - 1].a;
+  const breakEven = data.find((d) => d.a >= 0 && d.month > 0)?.month ?? null;
+
+  return (
+    <section className="surface-card mt-4 p-4 md:p-5">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">Portfolio</p>
+          <h2 className="text-base font-bold uppercase tracking-tight">
+            Aggregate Cumulative Cash Flow
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            All {cases.length} {cases.length === 1 ? "case" : "cases"} combined
+          </p>
+        </div>
+        <div className="flex gap-6">
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Net at horizon
+            </p>
+            <p
+              className={`data-mono text-lg font-bold ${final >= 0 ? "text-primary" : "text-decline"}`}
+            >
+              {fmtCompact(final)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Break-even
+            </p>
+            <p className="data-mono text-lg font-bold">
+              {breakEven === null ? "—" : fmtMonths(breakEven)}
+            </p>
+          </div>
+        </div>
+      </div>
+      <CashFlowChart data={data} labelA="Portfolio" />
+    </section>
+  );
+}
+
+
     </div>
   );
 }
