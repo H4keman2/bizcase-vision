@@ -50,8 +50,18 @@ export function LicenseModal({ onClose }: { onClose: () => void }) {
 
   const unlock = async () => {
     const trimmed = key.trim();
-    if (trimmed.length < 4) {
-      setError("Enter the license key from your purchase receipt.");
+    if (!trimmed) {
+      setError("Paste your license key first. You will find it in your Gumroad purchase receipt.");
+      return;
+    }
+    if (trimmed.length < 8) {
+      setError(
+        "That key looks too short. Copy the full key from your receipt, including the dashes.",
+      );
+      return;
+    }
+    if (/\s/.test(trimmed)) {
+      setError("The key contains spaces or line breaks. Paste it as a single unbroken line.");
       return;
     }
     setBusy(true);
@@ -62,7 +72,15 @@ export function LicenseModal({ onClose }: { onClose: () => void }) {
       toast.success("License activated — full version unlocked.");
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "That license key could not be verified.");
+      const message =
+        e instanceof Error && e.message
+          ? e.message
+          : "That license key could not be verified. Check the key and try again.";
+      setError(
+        /fetch|network|failed to fetch/i.test(message)
+          ? "Could not reach the license server. Check your internet connection and try again."
+          : message,
+      );
     } finally {
       setBusy(false);
     }
