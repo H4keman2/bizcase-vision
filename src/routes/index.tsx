@@ -158,10 +158,14 @@ function PageBackdrop() {
         className="absolute left-1/2 top-0 h-[520px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.16] blur-3xl"
         style={{ background: "var(--color-primary)" }}
       />
+    </div>
+  );
+}
 
 /** Aggregate cumulative cash flow across every saved case — real content and
  *  real color for the space below the case list. */
 function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
+
   const data = aggregateCashFlowSeries(cases.map((c) => c.draft.outputs.cashFlowSeries ?? []));
   if (data.length < 2) return null;
   const final = data[data.length - 1].a;
