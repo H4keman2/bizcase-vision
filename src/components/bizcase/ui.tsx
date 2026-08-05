@@ -129,10 +129,10 @@ export function Card({
       {(label || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {label ? (
-            <p className="label-eyebrow flex items-center gap-1.5">
+            <h2 className="label-eyebrow flex items-center gap-1.5">
               {label}
               {info ? <InfoTooltip field={info} /> : null}
-            </p>
+            </h2>
           ) : (
             <span />
           )}
