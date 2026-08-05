@@ -140,20 +140,12 @@ export function buildCashFlowSeries(inputs: CaseInputs): number[] {
     if (month >= 0 && month <= horizonMonths) series[month] -= amount || 0;
   });
 
-  const { revenueAnnual, cogsAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
-  const overheadAnnual = computeOverheadAnnual(inputs);
-  const netRevenue = revenueAnnual - cogsAnnual - overheadAnnual;
-  const baseAnnual =
-    (inputs.benefits.costSavingsAnnual || 0) +
-    netRevenue +
-    (inputs.benefits.timeSavingsAnnual || 0);
-
   for (let m = 1; m <= horizonMonths; m++) {
-    const mult = timelineMultiplierForMonth(inputs.benefits.timeline, m);
-    series[m] += (baseAnnual * mult) / 12;
+    series[m] += monthlyBenefit(inputs, m).net;
   }
   return series;
 }
+
 
 export function npv(cashFlows: number[], monthlyRate: number): number {
   return cashFlows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + monthlyRate, t), 0);
