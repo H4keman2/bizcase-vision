@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/ui";
+import { Screen, PageHeader, Btn, Modal, SegToggle, LockedHover } from "@/components/bizcase/ui";
 import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
