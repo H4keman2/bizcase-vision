@@ -210,9 +210,6 @@ function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
 }
 
 
-    </div>
-  );
-}
 
 function AboutSheet({ onClose }: { onClose: () => void }) {
   useEffect(() => {
