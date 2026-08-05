@@ -1,11 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Modal, Btn, NumField, SegToggle } from "./ui";
 import { SettingsCtx } from "./settings-context";
+import { toast } from "sonner";
 import { LicenseModal } from "./LicenseModals";
 import {
   GUMROAD_URL,
   LICENSE_PRICE,
   clearLicenseKey,
+  getLicenseKey,
+  maskLicenseKey,
   isLicensed,
   onLicenseChange,
 } from "@/lib/bizcase/license";
@@ -26,6 +29,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [licenseOpen, setLicenseOpen] = useState(false);
   const [licensed, setLicensed] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   useEffect(() => {
     setLicensed(isLicensed());
@@ -55,17 +59,41 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 License
               </p>
               {licensed ? (
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="border border-primary px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
-                    Full version unlocked
-                  </span>
-                  <Btn
-                    onClick={() => {
-                      clearLicenseKey();
-                    }}
-                  >
-                    Remove Key
-                  </Btn>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="border border-primary px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+                      Full version unlocked
+                    </span>
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      Key {maskLicenseKey(getLicenseKey() ?? "")}
+                    </span>
+                  </div>
+                  {confirmSignOut ? (
+                    <div className="border border-warning bg-warning/10 p-3">
+                      <p className="text-sm text-foreground">
+                        Sign out of the full version on this device? Your cases stay saved, but you
+                        will need the key again to import, export without a watermark, or add more
+                        than 3 cases.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Btn
+                          variant="primary"
+                          onClick={() => {
+                            clearLicenseKey();
+                            setConfirmSignOut(false);
+                            toast.success("Signed out. This device is back on the free version.");
+                          }}
+                        >
+                          Sign Out
+                        </Btn>
+                        <Btn onClick={() => setConfirmSignOut(false)}>Cancel</Btn>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Btn onClick={() => setConfirmSignOut(true)}>Sign Out</Btn>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
