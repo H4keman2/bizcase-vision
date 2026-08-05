@@ -361,7 +361,7 @@ export function InputsPanel({
                   key={i}
                   label={periodLabel(manualGranularity, i)}
                   info="manualValue"
-                  withCommas
+
                   prefix={manualBasis === "amount" ? "$" : undefined}
                   suffix={manualBasis === "units" ? "u" : undefined}
                   value={manualValues[i] ?? 0}
