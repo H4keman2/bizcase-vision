@@ -216,6 +216,58 @@ function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
 
 
 
+/** Dismissible Free-vs-Full upgrade card shown on the home screen to
+ *  unlicensed users who haven't dismissed it yet. */
+const LICENSE_CARD_KEY = "bizcase:license-card-dismissed";
+
+function UpgradeCard() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isLicensed()) {
+      setShow(false);
+      return;
+    }
+    try {
+      setShow(!window.localStorage.getItem(LICENSE_CARD_KEY));
+    } catch {
+      setShow(true);
+    }
+  }, []);
+
+  if (!show) return null;
+
+  const dismiss = () => {
+    setShow(false);
+    try {
+      window.localStorage.setItem(LICENSE_CARD_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return (
+    <section className="surface-card relative mb-4 p-5">
+      <button
+        type="button"
+        aria-label="Dismiss"
+        onClick={dismiss}
+        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center border border-border font-mono text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+      >
+        ×
+      </button>
+      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">
+        Unlock the full version
+      </p>
+      <p className="mb-4 text-sm text-muted-foreground">
+        A one-time {LICENSE_PRICE} payment removes every limit. No subscription.
+      </p>
+      <UpgradeCompare />
+    </section>
+  );
+}
+
 function AboutSheet({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
