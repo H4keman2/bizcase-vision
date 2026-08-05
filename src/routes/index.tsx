@@ -71,35 +71,51 @@ function StatTile({
   value,
   format,
   delay = 0,
+  tone = "default",
 }: {
   label: string;
   value: number | null;
   format: (v: number) => string;
   delay?: number;
+  tone?: "default" | "positive" | "negative";
 }) {
   const animated = useCountUp(value ?? 0);
   return (
     <div
-      className="animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500"
+      className={`animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500 ${
+        tone === "positive"
+          ? "border-l-2 border-l-primary"
+          : tone === "negative"
+            ? "border-l-2 border-l-decline"
+            : ""
+      }`}
       style={{ animationDelay: `${delay}ms`, animationFillMode: "backwards" }}
     >
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <p className="data-mono text-lg font-bold text-foreground">
+      <p
+        className={`data-mono text-lg font-bold ${
+          tone === "positive"
+            ? "text-primary"
+            : tone === "negative"
+              ? "text-decline"
+              : "text-foreground"
+        }`}
+      >
         {value === null ? "—" : format(animated)}
       </p>
     </div>
   );
 }
 
-function BackdropChart() {
+function BackdropChart({ className = "" }: { className?: string }) {
   return (
     <svg
       aria-hidden="true"
       viewBox="0 0 600 200"
-      preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.13]"
+      preserveAspectRatio="xMidYMid slice"
+      className={`pointer-events-none absolute inset-0 h-full w-full ${className}`}
     >
       {[40, 80, 120, 160].map((y) => (
         <line key={y} x1="0" y1={y} x2="600" y2={y} stroke="var(--color-border)" strokeWidth="1" />
@@ -118,6 +134,21 @@ function BackdropChart() {
         strokeDasharray="6 6"
       />
     </svg>
+  );
+}
+
+/** Faint full-page texture — the same data-line motif used in the empty state,
+ *  stretched behind the whole screen so it doesn't feel like a void once
+ *  cases exist. Fixed to the viewport, sits behind all content. */
+function PageBackdrop() {
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <BackdropChart className="opacity-[0.05]" />
+      <div
+        className="absolute left-1/2 top-0 h-[480px] w-[900px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.08] blur-3xl"
+        style={{ background: "var(--color-primary)" }}
+      />
+    </div>
   );
 }
 
@@ -182,6 +213,7 @@ function CaseList() {
 
   return (
     <Screen>
+      <PageBackdrop />
       <div className="mb-8 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="truncate text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
@@ -210,7 +242,7 @@ function CaseList() {
 
       {cases.length === 0 ? (
         <div className="surface-card relative overflow-hidden p-10 text-center">
-          <BackdropChart />
+          <BackdropChart className="opacity-[0.13]" />
           <div className="relative animate-in fade-in zoom-in-95 duration-500">
             <p className="mb-2 text-base font-semibold">Ready when you are</p>
             <p className="mb-6 text-sm text-muted-foreground">
@@ -228,6 +260,13 @@ function CaseList() {
             <StatTile
               label="Avg ROI Modeled"
               delay={60}
+              tone={
+                cases.length
+                  ? cases.reduce((s, c) => s + c.draft.outputs.roi, 0) / cases.length >= 0
+                    ? "positive"
+                    : "negative"
+                  : "default"
+              }
               value={
                 cases.length
                   ? cases.reduce((s, c) => s + c.draft.outputs.roi, 0) / cases.length
@@ -247,35 +286,46 @@ function CaseList() {
               format={(v) => fmtMonths(v)}
             />
           </div>
-          {cases.map((c, i) => (
-            <div
-              key={c.id}
-              className="group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 px-5 py-4 duration-500 hover:border-primary/50"
-              style={{ animationDelay: `${Math.min(i, 8) * 40}ms`, animationFillMode: "backwards" }}
-            >
-              <button
-                className="min-w-0 flex-1 text-left"
-                onClick={() => navigate({ to: "/case/$caseId", params: { caseId: c.id } })}
+          {cases.map((c, i) => {
+            const positive = c.draft.outputs.npv >= 0;
+            return (
+              <div
+                key={c.id}
+                className={`group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 border-l-2 px-5 py-4 duration-500 hover:border-primary/50 ${
+                  positive ? "border-l-primary" : "border-l-decline"
+                }`}
+                style={{
+                  animationDelay: `${Math.min(i, 8) * 40}ms`,
+                  animationFillMode: "backwards",
+                }}
               >
-                <p className="mb-1 truncate text-base font-semibold group-hover:text-primary">
-                  {c.name}
-                </p>
-                <p className="font-mono text-xs text-muted-foreground">
-                  Updated {fmtDate(c.updatedAt)} · NPV {fmtCompact(c.draft.outputs.npv)}
-                </p>
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                    {c.latestVersion} {c.latestVersion === 1 ? "version" : "versions"}
+                <button
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => navigate({ to: "/case/$caseId", params: { caseId: c.id } })}
+                >
+                  <p className="mb-1 truncate text-base font-semibold group-hover:text-primary">
+                    {c.name}
                   </p>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    Updated {fmtDate(c.updatedAt)} · NPV{" "}
+                    <span className={positive ? "text-primary" : "text-decline"}>
+                      {fmtCompact(c.draft.outputs.npv)}
+                    </span>
+                  </p>
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                      {c.latestVersion} {c.latestVersion === 1 ? "version" : "versions"}
+                    </p>
+                  </div>
+                  <Btn variant="danger" onClick={() => setPendingDelete(c)}>
+                    Delete
+                  </Btn>
                 </div>
-                <Btn variant="danger" onClick={() => setPendingDelete(c)}>
-                  Delete
-                </Btn>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
