@@ -305,14 +305,16 @@ function CaseList() {
             return (
               <div
                 key={c.id}
-                className={`group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 border-l-2 px-5 py-4 duration-500 hover:border-primary/50 ${
-                  positive ? "border-l-primary" : "border-l-decline"
-                }`}
+                className="group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 px-5 py-4 duration-500"
                 style={{
                   animationDelay: `${Math.min(i, 8) * 40}ms`,
                   animationFillMode: "backwards",
+                  borderLeft: `3px solid ${
+                    positive ? "var(--color-primary)" : "var(--color-decline)"
+                  }`,
                 }}
               >
+
                 <button
                   className="min-w-0 flex-1 text-left"
                   onClick={() => navigate({ to: "/case/$caseId", params: { caseId: c.id } })}
