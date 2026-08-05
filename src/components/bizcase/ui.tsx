@@ -101,9 +101,9 @@ export function PageHeader({
       </div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          {titleSlot ?? (
-            <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
-          )}
+          <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
+            {titleSlot ?? title}
+          </h1>
         </div>
         {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
       </div>
