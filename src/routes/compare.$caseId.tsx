@@ -6,6 +6,7 @@ import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
 import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
+import { exportComparisonExcel } from "@/lib/bizcase/excel";
 import { fmtCompact, fmtDate, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
 import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
@@ -183,6 +184,24 @@ function Compare() {
       },
     });
 
+  const excelCases = () => ({
+    name: "Case Comparison",
+    a: {
+      name: record.name,
+      versionLabel: optA.label,
+      inputs: optA.draft.inputs,
+      outputs: optA.draft.outputs,
+      mode: record.mode ?? ("detailed" as const),
+    },
+    b: {
+      name: record.name,
+      versionLabel: optB.label,
+      inputs: optB.draft.inputs,
+      outputs: optB.draft.outputs,
+      mode: record.mode ?? ("detailed" as const),
+    },
+  });
+
   const select = (side: "a" | "b", id: string) =>
     navigate({ to: "/compare/$caseId", params: { caseId }, search: { ...search, [side]: id } });
 
@@ -194,6 +213,7 @@ function Compare() {
         action={
           <>
             <Btn onClick={() => exportPdf()}>Export PDF</Btn>
+            <Btn onClick={() => exportComparisonExcel(excelCases())}>Export Excel</Btn>
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
               Back to Editor
             </Btn>

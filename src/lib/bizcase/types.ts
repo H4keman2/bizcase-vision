@@ -131,7 +131,17 @@ export interface CaseOutputs {
   roi: number;
   totalInvestment: number;
   totalRevenue: number;
-  cashFlowSeries: { month: number; cumulative: number }[];
+  cashFlowSeries: {
+    month: number;
+    /** Net cash flow booked in this month. */
+    net: number;
+    revenue: number;
+    /** Revenue minus net cash flow (costs + investment outflows). */
+    cost: number;
+    /** Net cash flow discounted back to month 0. */
+    discounted: number;
+    cumulative: number;
+  }[];
   margins: Margins | null;
 }
 

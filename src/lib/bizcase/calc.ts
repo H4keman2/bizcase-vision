@@ -259,7 +259,15 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
   let cum = 0;
   const cashFlowSeries = flows.map((cf, month) => {
     cum += cf;
-    return { month, cumulative: cum };
+    const revenue = month === 0 ? 0 : monthlyBenefit(inputs, month).revenue;
+    return {
+      month,
+      net: cf,
+      revenue,
+      cost: revenue - cf,
+      discounted: cf / Math.pow(1 + monthlyRate, month),
+      cumulative: cum,
+    };
   });
 
   return {
