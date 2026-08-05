@@ -1,7 +1,6 @@
 import * as XLSX from "xlsx";
 import {
   describeManualTimeline,
-  GRANULARITY_LABEL,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,

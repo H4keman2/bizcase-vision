@@ -2,7 +2,6 @@ import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
   describeManualTimeline,
-  GRANULARITY_LABEL,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
