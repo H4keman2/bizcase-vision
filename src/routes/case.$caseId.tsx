@@ -5,7 +5,7 @@ import { Screen, PageHeader, Btn, Modal, SegToggle } from "@/components/bizcase/
 import { InfoTooltip } from "@/components/bizcase/InfoTooltip";
 import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
-import { ExecSummaryModal, buildContexts } from "@/components/bizcase/ExecSummaryModal";
+import { ExecSummaryModal, buildSummaryPayload } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
@@ -13,7 +13,7 @@ import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs, zeroInputs, applyScenario } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
 import { exportCaseExcel, downloadImportTemplate } from "@/lib/bizcase/excel";
-import { generateExecSummary } from "@/lib/bizcase/ai.functions";
+import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
 import { loadSettings } from "@/lib/bizcase/settings";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion, Scenario } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ function CaseEditor() {
   const [versionLabel, setVersionLabel] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
-  const [execSummary, setExecSummary] = useState<string | null>(null);
+  const [execSummary, setExecSummary] = useState<ExecSummary | null>(null);
   const [exporting, setExporting] = useState(false);
   const runSummary = useServerFn(generateExecSummary);
   const [scenarioAdjustments, setScenarioAdjustments] = useState(loadSettings().scenario);
@@ -141,25 +141,9 @@ function CaseEditor() {
     let summary = execSummary;
     if (!summary) {
       try {
-        const { revenueContext, timelineContext } = buildContexts(eff, outputs);
-        const res = await runSummary({
-          data: {
-            name: record.name,
-            horizonYears: eff.horizonYears,
-            discountRateAnnual: eff.discountRateAnnual,
-            nre: eff.investment.nre,
-            totalInvestment: outputs.totalInvestment,
-            totalRevenue: outputs.totalRevenue,
-            npv: outputs.npv,
-            irr: outputs.irr,
-            paybackMonths: outputs.paybackMonths,
-            roi: outputs.roi,
-            revenueContext,
-            timelineContext,
-          },
-        });
-        summary = res.summary;
-        setExecSummary(res.summary);
+        const res = await runSummary({ data: buildSummaryPayload(record.name, eff, outputs) });
+        summary = res;
+        setExecSummary(res);
       } catch {
         summary = null;
       }
