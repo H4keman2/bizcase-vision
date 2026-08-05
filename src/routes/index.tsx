@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Screen, Btn, Modal } from "@/components/bizcase/ui";
+import { Screen, Btn, Modal, LockedHover } from "@/components/bizcase/ui";
 import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { LicenseLimitError, isLicensed } from "@/lib/bizcase/license";
@@ -368,7 +368,13 @@ function CaseList() {
           <Btn variant="primary" onClick={onNew}>
             + New Case
           </Btn>
-          <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+          {!isLicensed() ? (
+            <LockedHover>
+              <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+            </LockedHover>
+          ) : (
+            <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+          )}
           <UpgradeCard />
           <button
             type="button"
