@@ -302,7 +302,22 @@ export function InputsPanel({
       <Card label="Timeline" info="timeline">
         <SegToggle<TimelineType>
           value={tl.type}
-          onChange={(v) => patch((d) => void (d.benefits.timeline.type = v))}
+          onChange={(v) => {
+            if (v === "manual" && !manualSchedule.values?.some((x) => x !== 0)) {
+              patch((d) => {
+                d.benefits.timeline.type = v;
+                d.benefits.timeline.manual = {
+                  granularity: manualGranularity,
+                  basis: manualBasis,
+                  values: new Array(periodCount(d.horizonYears, manualGranularity)).fill(
+                    runRatePerPeriod(manualGranularity, manualBasis),
+                  ),
+                };
+              });
+              return;
+            }
+            patch((d) => void (d.benefits.timeline.type = v));
+          }}
           options={[
             { value: "flat", label: "Flat" },
             { value: "manual", label: "Manual" },
