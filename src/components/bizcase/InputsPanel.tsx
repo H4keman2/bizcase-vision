@@ -239,7 +239,20 @@ export function InputsPanel({
                   info="unitsPerYear"
                   value={rm.unit.unitsPerYear}
                   onChange={(v) =>
-                    patch((d) => void (d.benefits.revenueModel.unit.unitsPerYear = v))
+                    patch((d) => {
+                      d.benefits.revenueModel.unit.unitsPerYear = v;
+                      // Keep a units-based manual schedule in sync: spread the
+                      // annual units evenly across every period.
+                      if (manualBasis === "units") {
+                        d.benefits.timeline.manual = {
+                          granularity: manualGranularity,
+                          basis: "units",
+                          values: new Array(
+                            periodCount(d.horizonYears, manualGranularity),
+                          ).fill(v / PERIODS_PER_YEAR[manualGranularity]),
+                        };
+                      }
+                    })
                   }
                 />
               </div>
