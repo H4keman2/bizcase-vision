@@ -14,7 +14,7 @@ import {
   type OverheadBasis,
   type ManualBasis,
 } from "@/lib/bizcase/types";
-import { resolveRevenueModel, computeOverheadAnnual } from "@/lib/bizcase/calc";
+import { resolveRevenueModel, computeOverheadAnnual, distributeEvenly } from "@/lib/bizcase/calc";
 
 type Patch = (fn: (draft: CaseInputs) => void) => void;
 
