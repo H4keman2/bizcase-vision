@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Screen, Btn, Modal } from "@/components/bizcase/ui";
+import { Screen, Btn, Modal, LockedHover } from "@/components/bizcase/ui";
 import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { LicenseLimitError, isLicensed } from "@/lib/bizcase/license";
