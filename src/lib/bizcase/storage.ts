@@ -1,4 +1,5 @@
 import { calculate } from "./calc";
+import { FREE_CASE_LIMIT, LicenseLimitError, isLicensed } from "./license";
 import { defaultInputs, type CaseDraft, type CaseRecord, type CaseVersion } from "./types";
 
 const INDEX_KEY = "cases:index";
