@@ -272,5 +272,23 @@ export function applyToInputs(inputs: CaseInputs, values: Extracted): CaseInputs
   set("horizonYears", (n) => (next.horizonYears = Math.max(1, Math.round(n))));
   set("discountRateAnnual", (n) => (next.discountRateAnnual = n));
 
+  const phased: { month: number; amount: number }[] = [];
+  for (let i = 1; i <= 4; i++) {
+    const m = numOf(values, `phasedMonth${i}` as FieldKey);
+    const a = numOf(values, `phasedAmount${i}` as FieldKey);
+    if (m === null && a === null) continue;
+    phased.push({ month: Math.max(0, Math.round(m ?? 0)), amount: a ?? 0 });
+  }
+  if (phased.length) next.investment.phased = phased;
+
+  const mode = values.timelineMode?.value?.trim().toLowerCase();
+  if (mode === "flat" || mode === "manual" || mode === "ramp") {
+    next.benefits.timeline.type = mode;
+    if (mode === "ramp") {
+      set("rampYear1Percent", (n) => (next.benefits.timeline.ramp.year1Percent = n));
+      set("rampGrowthRatePercent", (n) => (next.benefits.timeline.ramp.growthRatePercent = n));
+    }
+  }
+
   return next;
 }
