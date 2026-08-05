@@ -6,6 +6,9 @@ import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
 import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
+import { CashFlowChart } from "@/components/bizcase/CashFlowChart";
+import { aggregateCashFlowSeries } from "@/lib/bizcase/calc";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -85,17 +88,22 @@ function StatTile({
   tone?: "default" | "positive" | "negative";
 }) {
   const animated = useCountUp(value ?? 0);
+  const accent =
+    tone === "positive"
+      ? "var(--color-primary)"
+      : tone === "negative"
+        ? "var(--color-decline)"
+        : null;
   return (
     <div
-      className={`animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500 ${
-        tone === "positive"
-          ? "border-l-2 border-l-primary"
-          : tone === "negative"
-            ? "border-l-2 border-l-decline"
-            : ""
-      }`}
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "backwards" }}
+      className="animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500"
+      style={{
+        animationDelay: `${delay}ms`,
+        animationFillMode: "backwards",
+        ...(accent ? { borderLeft: `3px solid ${accent}` } : null),
+      }}
     >
+
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
@@ -148,14 +156,63 @@ function BackdropChart({ className = "" }: { className?: string }) {
 function PageBackdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <BackdropChart className="opacity-[0.05]" />
+      <BackdropChart className="opacity-[0.14]" />
       <div
-        className="absolute left-1/2 top-0 h-[480px] w-[900px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.08] blur-3xl"
+        className="absolute left-1/2 top-0 h-[520px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.16] blur-3xl"
         style={{ background: "var(--color-primary)" }}
       />
     </div>
   );
 }
+
+/** Aggregate cumulative cash flow across every saved case — real content and
+ *  real color for the space below the case list. */
+function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
+
+  const data = aggregateCashFlowSeries(cases.map((c) => c.draft.outputs.cashFlowSeries ?? []));
+  if (data.length < 2) return null;
+  const final = data[data.length - 1].a;
+  const breakEven = data.find((d) => d.a >= 0 && d.month > 0)?.month ?? null;
+
+  return (
+    <section className="surface-card mt-4 p-4 md:p-5">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">Portfolio</p>
+          <h2 className="text-base font-bold uppercase tracking-tight">
+            Aggregate Cumulative Cash Flow
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            All {cases.length} {cases.length === 1 ? "case" : "cases"} combined
+          </p>
+        </div>
+        <div className="flex gap-6">
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Net at horizon
+            </p>
+            <p
+              className={`data-mono text-lg font-bold ${final >= 0 ? "text-primary" : "text-decline"}`}
+            >
+              {fmtCompact(final)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Break-even
+            </p>
+            <p className="data-mono text-lg font-bold">
+              {breakEven === null ? "—" : fmtMonths(breakEven)}
+            </p>
+          </div>
+        </div>
+      </div>
+      <CashFlowChart data={data} labelA="Portfolio" />
+    </section>
+  );
+}
+
+
 
 function AboutSheet({ onClose }: { onClose: () => void }) {
   useEffect(() => {
@@ -299,14 +356,16 @@ function CaseList() {
             return (
               <div
                 key={c.id}
-                className={`group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 border-l-2 px-5 py-4 duration-500 hover:border-primary/50 ${
-                  positive ? "border-l-primary" : "border-l-decline"
-                }`}
+                className="group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 px-5 py-4 duration-500"
                 style={{
                   animationDelay: `${Math.min(i, 8) * 40}ms`,
                   animationFillMode: "backwards",
+                  borderLeft: `3px solid ${
+                    positive ? "var(--color-primary)" : "var(--color-decline)"
+                  }`,
                 }}
               >
+
                 <button
                   className="min-w-0 flex-1 text-left"
                   onClick={() => navigate({ to: "/case/$caseId", params: { caseId: c.id } })}
@@ -334,8 +393,10 @@ function CaseList() {
               </div>
             );
           })}
+          <PortfolioChart cases={cases} />
         </div>
       )}
+
 
       {pendingDelete && (
         <Modal title="Delete Case" onClose={() => setPendingDelete(null)}>

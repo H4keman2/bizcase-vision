@@ -238,3 +238,27 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
     margins: computeMargins(inputs),
   };
 }
+
+/**
+ * Aggregate cumulative cash flow across many cases into one portfolio series.
+ * Cases with different horizons are padded forward with their final cumulative
+ * value so the totals stay monotonic rather than dropping off a cliff.
+ */
+export function aggregateCashFlowSeries(
+  seriesList: { month: number; cumulative: number }[][],
+): { month: number; a: number }[] {
+  const valid = seriesList.filter((s) => s && s.length > 0);
+  if (valid.length === 0) return [];
+  const maxMonth = Math.max(...valid.map((s) => s[s.length - 1].month));
+  const out: { month: number; a: number }[] = [];
+  for (let m = 0; m <= maxMonth; m++) {
+    let total = 0;
+    for (const s of valid) {
+      const last = s[s.length - 1];
+      const point = m < s.length ? s[m] : last;
+      total += point?.cumulative ?? 0;
+    }
+    out.push({ month: m, a: total });
+  }
+  return out;
+}
