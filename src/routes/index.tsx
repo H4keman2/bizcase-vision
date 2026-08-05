@@ -342,8 +342,10 @@ function CaseList() {
               </div>
             );
           })}
+          <PortfolioChart cases={cases} />
         </div>
       )}
+
 
       {pendingDelete && (
         <Modal title="Delete Case" onClose={() => setPendingDelete(null)}>
