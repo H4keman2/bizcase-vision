@@ -15,11 +15,12 @@ import {
   hasCriticalFields,
   mapExtracted,
   validateFile,
+  validateImport,
   type Extracted,
 } from "@/lib/bizcase/import";
 import { cn } from "@/lib/utils";
 
-type RowStatus = "success" | "review" | "failed";
+type RowStatus = "success" | "review" | "invalid" | "failed";
 
 interface BulkRow {
   fileName: string;
@@ -33,6 +34,7 @@ interface BulkRow {
 const STATUS_LABEL: Record<RowStatus, string> = {
   success: "Success",
   review: "Needs Review",
+  invalid: "Invalid",
   failed: "Failed",
 };
 
@@ -79,13 +81,16 @@ export function BulkImportModal({
         const text = await fileToSheetText(file);
         const res = await run({ data: { sheetText: text } });
         const values = mapExtracted(res.fields);
+        const issues = validateImport(values);
         const complete = hasCriticalFields(values);
         out.push({
           ...base,
-          status: complete ? "success" : "review",
-          reason: complete
-            ? undefined
-            : "Missing investment or benefit data — case will show $0 returns until completed.",
+          status: issues.length ? "invalid" : complete ? "success" : "review",
+          reason: issues.length
+            ? issues.map((i) => i.message).join(" ")
+            : complete
+              ? undefined
+              : "Missing investment or benefit data — case will show $0 returns until completed.",
           mapped: countMapped(values),
           values,
         });
@@ -98,7 +103,9 @@ export function BulkImportModal({
     setStatus("review");
   };
 
-  const importable = rows.filter((r) => r.status !== "failed" && r.values);
+  const importable = rows.filter(
+    (r) => r.status !== "failed" && r.status !== "invalid" && r.values,
+  );
 
   const confirm = () => {
     importable.forEach((row) => {
@@ -141,7 +148,7 @@ export function BulkImportModal({
         <div>
           <p className="mb-4 text-sm text-muted-foreground">
             {importable.length} of {rows.length} file{rows.length === 1 ? "" : "s"} ready to import.
-            Failed files are skipped.
+            Files with errors are skipped — fix them in the workbook and re-import.
           </p>
           <div className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto pr-1">
             {rows.map((row, i) => (
@@ -155,13 +162,14 @@ export function BulkImportModal({
                       "shrink-0 font-mono text-[9px] font-bold uppercase tracking-widest",
                       row.status === "success" && "text-primary",
                       row.status === "review" && "text-warning",
+                      row.status === "invalid" && "text-decline",
                       row.status === "failed" && "text-decline",
                     )}
                   >
                     {STATUS_LABEL[row.status]}
                   </span>
                 </div>
-                {row.status !== "failed" ? (
+                {row.status !== "failed" && row.status !== "invalid" ? (
                   <>
                     <input
                       className="field-inset"
@@ -181,7 +189,9 @@ export function BulkImportModal({
                   <p
                     className={cn(
                       "mt-2 font-mono text-[11px]",
-                      row.status === "failed" ? "text-decline" : "text-warning",
+                      row.status === "failed" || row.status === "invalid"
+                        ? "text-decline"
+                        : "text-warning",
                     )}
                   >
                     {row.reason}
