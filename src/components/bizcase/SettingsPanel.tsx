@@ -1,6 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Modal, Btn, NumField, SegToggle } from "./ui";
 import { SettingsCtx } from "./settings-context";
+import { LicenseModal } from "./LicenseModals";
+import {
+  GUMROAD_URL,
+  LICENSE_PRICE,
+  clearLicenseKey,
+  isLicensed,
+  onLicenseChange,
+} from "@/lib/bizcase/license";
 import {
   loadSettings,
   saveSettings,
@@ -16,6 +24,13 @@ import {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [licenseOpen, setLicenseOpen] = useState(false);
+  const [licensed, setLicensed] = useState(false);
+
+  useEffect(() => {
+    setLicensed(isLicensed());
+    return onLicenseChange(() => setLicensed(isLicensed()));
+  }, []);
 
   useEffect(() => {
     const loaded = loadSettings();
@@ -35,6 +50,46 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       {open && (
         <Modal title="Settings" onClose={() => setOpen(false)}>
           <div className="flex flex-col gap-6">
+            <section>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                License
+              </p>
+              {licensed ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="border border-primary px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+                    Full version unlocked
+                  </span>
+                  <Btn
+                    onClick={() => {
+                      clearLicenseKey();
+                    }}
+                  >
+                    Remove Key
+                  </Btn>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="font-mono text-[11px] text-muted-foreground">
+                    Free version: 3 cases, no Excel import, watermarked exports. One-time{" "}
+                    {LICENSE_PRICE} unlock.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Btn variant="primary" onClick={() => setLicenseOpen(true)}>
+                      Enter License Key
+                    </Btn>
+                    <a
+                      href={GUMROAD_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground underline hover:text-primary"
+                    >
+                      Buy a key
+                    </a>
+                  </div>
+                </div>
+              )}
+            </section>
+
             <section>
               <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Appearance
@@ -162,6 +217,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           </div>
         </Modal>
       )}
+      {licenseOpen && <LicenseModal onClose={() => setLicenseOpen(false)} />}
     </SettingsCtx.Provider>
   );
 }
