@@ -53,6 +53,7 @@ function CaseEditor() {
   const [selected, setSelected] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [execSummary, setExecSummary] = useState<ExecSummary | null>(null);
+  const [upgrade, setUpgrade] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const runSummary = useServerFn(generateExecSummary);
   const [scenarioAdjustments, setScenarioAdjustments] = useState(loadSettings().scenario);
