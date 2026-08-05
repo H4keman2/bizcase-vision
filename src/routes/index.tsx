@@ -345,7 +345,10 @@ function CaseList() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-3xl font-bold uppercase tracking-tight text-primary md:text-4xl">
-              BizCase Builder
+              BizCase Builder{" "}
+              <span className="block font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground md:text-sm">
+                NPV, IRR &amp; ROI Modeling
+              </span>
             </h1>
             <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               {greetingText} —{" "}

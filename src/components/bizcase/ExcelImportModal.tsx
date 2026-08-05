@@ -83,6 +83,7 @@ export function ExcelImportModal({
             <input
               type="file"
               accept=".xlsx"
+              aria-label="Choose an .xlsx workbook to import"
               className="sr-only"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
@@ -152,6 +153,7 @@ export function ExcelImportModal({
                   </div>
                   <input
                     className="field-inset"
+                    aria-label={f.label}
                     value={v?.value ?? ""}
                     onChange={(e) =>
                       setValues((prev) => ({

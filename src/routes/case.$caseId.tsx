@@ -183,6 +183,7 @@ function CaseEditor() {
         titleSlot={
           <input
             value={record.name}
+            aria-label="Business case name"
             onChange={(e) => setRecord({ ...record, name: e.target.value })}
             onBlur={() => saveCase(record)}
             className="w-full max-w-lg border border-border/60 bg-card-inset/40 px-2 py-1 text-2xl font-bold tracking-tight text-foreground outline-none hover:border-border focus:border-primary focus:bg-card-inset md:text-3xl"
