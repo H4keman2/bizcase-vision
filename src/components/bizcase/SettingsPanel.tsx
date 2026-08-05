@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Modal, Btn, NumField, SegToggle } from "./ui";
+import { SettingsCtx } from "./settings-context";
 import {
   loadSettings,
   saveSettings,
@@ -11,8 +12,8 @@ import {
   type TextSize,
 } from "@/lib/bizcase/settings";
 
-/** Fixed corner gear icon + settings modal, rendered once at the app root so it's on every screen. */
-export function SettingsLauncher() {
+/** Provides the global settings modal + state. Render once near the app root. */
+export function SettingsProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
@@ -29,15 +30,8 @@ export function SettingsLauncher() {
   };
 
   return (
-    <>
-      <button
-        type="button"
-        aria-label="Settings"
-        onClick={() => setOpen(true)}
-        className="fixed top-4 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card font-mono text-base text-muted-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.4)] hover:border-primary hover:text-primary"
-      >
-        ⚙
-      </button>
+    <SettingsCtx.Provider value={{ open: () => setOpen(true) }}>
+      {children}
       {open && (
         <Modal title="Settings" onClose={() => setOpen(false)}>
           <div className="flex flex-col gap-6">
@@ -168,6 +162,6 @@ export function SettingsLauncher() {
           </div>
         </Modal>
       )}
-    </>
+    </SettingsCtx.Provider>
   );
 }
