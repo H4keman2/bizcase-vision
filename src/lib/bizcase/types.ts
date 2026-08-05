@@ -47,7 +47,12 @@ export interface CaseInputs {
       type: TimelineType;
       manual: {
         granularity: TimelineGranularity;
-        multipliers: number[];
+        /** "amount" = net benefit $ per period, "units" = units sold per period */
+        basis?: ManualBasis;
+        /** Actual per-period values the user typed. */
+        values?: number[];
+        /** @deprecated multiplier-era saves; read as a fallback, never written */
+        multipliers?: number[];
         /** @deprecated pre-granularity saves; read as a fallback, never written */
         yearlyMultipliers?: number[];
       };
@@ -63,16 +68,39 @@ export function periodCount(horizonYears: number, granularity: TimelineGranulari
   return Math.max(1, Math.ceil(horizonYears * PERIODS_PER_YEAR[granularity]));
 }
 
-/** The multiplier array to actually read, covering old (year-only) saves. */
-export function resolveManualMultipliers(manual: CaseInputs["benefits"]["timeline"]["manual"]): {
+export interface ManualSchedule {
   granularity: TimelineGranularity;
-  multipliers: number[];
-} {
-  if (manual.multipliers?.length) {
-    return { granularity: manual.granularity ?? "year", multipliers: manual.multipliers };
-  }
-  return { granularity: "year", multipliers: manual.yearlyMultipliers ?? [1] };
+  basis: ManualBasis;
+  /** Explicit per-period values, or null when only legacy multipliers exist. */
+  values: number[] | null;
+  /** Legacy multiplier array, present only for pre-update saves. */
+  legacyMultipliers: number[] | null;
 }
+
+/** Resolves a manual timeline, covering legacy multiplier-based saves. */
+export function resolveManualSchedule(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): ManualSchedule {
+  const granularity = manual?.granularity ?? "year";
+  if (manual?.values?.length) {
+    return {
+      granularity,
+      basis: manual.basis ?? "amount",
+      values: manual.values,
+      legacyMultipliers: null,
+    };
+  }
+  const legacy = manual?.multipliers?.length
+    ? manual.multipliers
+    : (manual?.yearlyMultipliers ?? null);
+  return {
+    granularity: manual?.multipliers?.length ? granularity : "year",
+    basis: "amount",
+    values: null,
+    legacyMultipliers: legacy?.length ? legacy : [1],
+  };
+}
+
 
 export interface Margins {
   grossMarginPercent: number | null;
