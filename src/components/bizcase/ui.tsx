@@ -225,27 +225,56 @@ export function SegToggle<T extends string>({
 }) {
   return (
     <div className="flex border border-border">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-disabled={o.disabled}
-          onClick={() => (o.disabled ? onLockedClick?.(o.value) : onChange(o.value))}
-          className={cn(
-            "flex-1 px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
-            o.disabled
-              ? "cursor-not-allowed bg-card-inset/30 text-muted-foreground/30"
-              : value === o.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-card-inset text-muted-foreground hover:bg-border/60 hover:text-foreground",
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+      {options.map((o) => {
+        const button = (
+          <button
+            key={o.value}
+            type="button"
+            aria-disabled={o.disabled}
+            onClick={() => (o.disabled ? onLockedClick?.(o.value) : onChange(o.value))}
+            className={cn(
+              "w-full px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+              o.disabled
+                ? "cursor-not-allowed bg-card-inset/30 text-muted-foreground/30"
+                : value === o.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card-inset text-muted-foreground hover:bg-border/60 hover:text-foreground",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+        return o.disabled ? (
+          <LockedHover key={o.value} className="flex-1">
+            {button}
+          </LockedHover>
+        ) : (
+          button
+        );
+      })}
     </div>
   );
 }
+
+export function LockedHover({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={cn("group relative inline-flex", className)}>
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 -translate-x-1/2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <span className="whitespace-nowrap border border-primary bg-background px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+          Unlock with Full Access
+        </span>
+      </span>
+    </span>
+  );
+}
+
 
 export function Metric({
   label,
