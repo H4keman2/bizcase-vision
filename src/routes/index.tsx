@@ -249,7 +249,7 @@ function UpgradeCard() {
   if (!show) return null;
 
   return (
-    <div className="mb-4 flex items-center gap-2">
+    <>
       <Btn variant="primary" onClick={() => setOpen(true)}>
         Unlock Full Access
       </Btn>
@@ -267,7 +267,7 @@ function UpgradeCard() {
           onClose={() => setOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }
 
