@@ -1,7 +1,7 @@
 import { DEFAULT_SCENARIO_ADJUSTMENTS, type ScenarioAdjustments } from "./types";
 
 export type Theme = "dark" | "light";
-export type TextSize = "small" | "default" | "large" | "xlarge";
+export type TextSize = "small" | "default" | "large";
 
 export interface AppSettings {
   theme: Theme;
@@ -13,14 +13,12 @@ export const TEXT_SIZE_SCALE: Record<TextSize, number> = {
   small: 90,
   default: 100,
   large: 112,
-  xlarge: 125,
 };
 
 export const TEXT_SIZE_LABEL: Record<TextSize, string> = {
   small: "Small",
   default: "Default",
   large: "Large",
-  xlarge: "X-Large",
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
