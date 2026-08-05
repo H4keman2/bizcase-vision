@@ -246,11 +246,11 @@ export function zeroInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 0 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0, 0, 0] },
         ramp: { year1Percent: 0, growthRatePercent: 0 },
       },
     },
-    horizonYears: 3,
+    horizonYears: 5,
     discountRateAnnual: 0,
   };
 }
@@ -274,11 +274,11 @@ export function defaultInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 15 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0, 0, 0] },
         ramp: { year1Percent: 60, growthRatePercent: 10 },
       },
     },
-    horizonYears: 3,
+    horizonYears: 5,
     discountRateAnnual: 8,
   };
 }
