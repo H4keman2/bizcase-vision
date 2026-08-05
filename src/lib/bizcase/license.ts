@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 /** Free-tier gating + local license storage for BizCase Builder. */
 
 export const GUMROAD_URL = "https://hakeman.gumroad.com/l/bizcase-builder";
@@ -57,4 +59,15 @@ export function onLicenseChange(fn: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   window.addEventListener(EVENT, fn);
   return () => window.removeEventListener(EVENT, fn);
+}
+
+/** Hydration-safe license state: false on the server and first client render,
+ *  then the real value. Prevents SSR/client markup mismatches. */
+export function useLicensed(): boolean {
+  const [licensed, setLicensed] = useState(false);
+  useEffect(() => {
+    setLicensed(isLicensed());
+    return onLicenseChange(() => setLicensed(isLicensed()));
+  }, []);
+  return licensed;
 }

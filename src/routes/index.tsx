@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Screen, Btn, Modal, LockedHover } from "@/components/bizcase/ui";
 import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
-import { LicenseLimitError, isLicensed } from "@/lib/bizcase/license";
+import { LicenseLimitError, isLicensed, useLicensed } from "@/lib/bizcase/license";
 import { UpgradeModal } from "@/components/bizcase/LicenseModals";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
@@ -322,6 +322,7 @@ function CaseList() {
   const [about, setAbout] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const licensed = useLicensed();
   const [upgrade, setUpgrade] = useState<string | null>(null);
   const [greetingText, setGreetingText] = useState(SSR_GREETING);
 
@@ -371,7 +372,7 @@ function CaseList() {
           <Btn variant="primary" onClick={onNew}>
             + New Case
           </Btn>
-          {!isLicensed() ? (
+          {!licensed ? (
             <LockedHover>
               <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
             </LockedHover>

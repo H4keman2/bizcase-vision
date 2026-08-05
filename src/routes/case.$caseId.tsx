@@ -8,7 +8,7 @@ import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal, buildSummaryPayload } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
 import { UpgradeModal } from "@/components/bizcase/LicenseModals";
-import { LicenseLimitError, isLicensed } from "@/lib/bizcase/license";
+import { LicenseLimitError, isLicensed, useLicensed } from "@/lib/bizcase/license";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
@@ -43,6 +43,7 @@ function CaseEditor() {
   const { caseId } = Route.useParams();
   const navigate = useNavigate();
   const [record, setRecord] = useState<CaseRecord | null>(null);
+  const licensed = useLicensed();
   const [inputs, setInputs] = useState<CaseInputs | null>(null);
   const [versions, setVersions] = useState<CaseVersion[]>([]);
   const [modal, setModal] = useState<null | "save" | "history" | "summary" | "import" | "reset">(
@@ -210,21 +211,21 @@ function CaseEditor() {
                   setUpgrade("Best and worst case scenarios are part of the full version.")
                 }
                 options={[
-                  { value: "worst", label: "Worst", disabled: !isLicensed() },
+                  { value: "worst", label: "Worst", disabled: !licensed },
                   { value: "expected", label: "Expected" },
-                  { value: "best", label: "Best", disabled: !isLicensed() },
+                  { value: "best", label: "Best", disabled: !licensed },
                 ]}
               />
             </div>
             <InfoTooltip field="scenario" className="self-center" />
-            {!isLicensed() ? (
+            {!licensed ? (
               <LockedHover>
                 <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
               </LockedHover>
             ) : (
               <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
             )}
-            {!isLicensed() ? (
+            {!licensed ? (
               <LockedHover>
                 <button
                   type="button"
