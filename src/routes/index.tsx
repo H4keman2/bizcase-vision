@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Screen, Btn, Modal } from "@/components/bizcase/ui";
+import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
@@ -65,6 +66,10 @@ function greeting(): string {
   if (h < 21) return "Good evening";
   return "Working late";
 }
+
+/** Stable SSR value; the real greeting is applied after hydration so the
+ *  server (UTC) and client (local) times don't cause a hydration mismatch. */
+const SSR_GREETING = "Welcome back";
 
 function StatTile({
   label,
