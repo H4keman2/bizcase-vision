@@ -268,8 +268,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
   });
   XLSX.utils.book_append_sheet(wb, ledger, "Metrics Ledger");
 
-  XLSX.utils.book_append_sheet(wb, cashFlowSheet(a), "Cash Flow A");
-  XLSX.utils.book_append_sheet(wb, cashFlowSheet(b), "Cash Flow B");
+  // Excel sheet names cap at 31 chars and reject several punctuation marks.
+  const sheetName = (side: string, label: string) =>
+    `CF ${side} ${label}`.replace(/[\\/?*[\]:]/g, "-").slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(a), sheetName("A", a.versionLabel));
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(b), sheetName("B", b.versionLabel));
 
   XLSX.writeFile(wb, `BizCase_Comparison_${slug(name)}_${today()}.xlsx`);
 }
