@@ -216,24 +216,38 @@ function CaseEditor() {
               />
             </div>
             <InfoTooltip field="scenario" className="self-center" />
-            <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
-            <button
-              type="button"
-              aria-disabled={!isLicensed()}
-              onClick={() =>
-                isLicensed()
-                  ? downloadImportTemplate()
-                  : setUpgrade("Downloading the import template is part of the full version.")
-              }
-              className={cn(
-                "px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
-                isLicensed()
-                  ? "text-muted-foreground hover:text-primary"
-                  : "cursor-not-allowed text-muted-foreground/30",
-              )}
-            >
-              Download Template
-            </button>
+            {!isLicensed() ? (
+              <LockedHover>
+                <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
+              </LockedHover>
+            ) : (
+              <Btn onClick={() => setModal("import")}>Import from Excel</Btn>
+            )}
+            {!isLicensed() ? (
+              <LockedHover>
+                <button
+                  type="button"
+                  aria-disabled={true}
+                  onClick={() =>
+                    setUpgrade("Downloading the import template is part of the full version.")
+                  }
+                  className={cn(
+                    "px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+                    "cursor-not-allowed text-muted-foreground/30",
+                  )}
+                >
+                  Download Template
+                </button>
+              </LockedHover>
+            ) : (
+              <button
+                type="button"
+                onClick={() => downloadImportTemplate()}
+                className="px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary"
+              >
+                Download Template
+              </button>
+            )}
             <Btn onClick={() => navigate({ to: "/" })}>Cases</Btn>
             <Btn onClick={() => setModal("history")}>History</Btn>
 
