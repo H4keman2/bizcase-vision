@@ -29,14 +29,77 @@ export function UpgradeNotice({ reason }: { reason: string }) {
   );
 }
 
+const FREE_FEATURES = [
+  "3 business cases",
+  "Watermarked PDF exports",
+  "No Excel import",
+  "Core metrics, charts & comparison",
+];
+
+const FULL_FEATURES = [
+  "Unlimited business cases",
+  "Watermark-free PDF exports",
+  "Excel import with AI field mapping",
+  "Everything in Free, forever, no subscription",
+];
+
 /** Standalone upgrade modal (used when a blocked action has no host modal). */
 export function UpgradeModal({ reason, onClose }: { reason: string; onClose: () => void }) {
+  const [licenseOpen, setLicenseOpen] = useState(false);
+
   return (
     <Modal title="Unlock BizCase Builder" onClose={onClose}>
-      <UpgradeNotice reason={reason} />
-      <div className="mt-5">
-        <Btn onClick={onClose}>Close</Btn>
+      {reason && (
+        <p className="mb-5 text-sm text-muted-foreground">
+          {reason} Unlock the full version for a one-time {LICENSE_PRICE} payment, then enter your
+          license key from Settings.
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border">
+        {/* Free column */}
+        <div className="bg-card p-4">
+          <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Free
+          </p>
+          <ul className="flex flex-col gap-2.5">
+            {FREE_FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-[13px] text-foreground">
+                <span className="mt-1 font-mono text-[10px] text-muted-foreground">—</span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {/* Full column */}
+        <div className="bg-card p-4">
+          <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+            Full
+          </p>
+          <ul className="flex flex-col gap-2.5">
+            {FULL_FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-2 text-[13px] text-foreground">
+                <span className="mt-1 font-mono text-[10px] text-primary">+</span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <a
+          href={GUMROAD_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground bg-primary hover:scale-[1.03] hover:opacity-90 active:scale-[0.97]"
+        >
+          Unlock for {LICENSE_PRICE}
+        </a>
+        <Btn onClick={() => setLicenseOpen(true)}>I already have a key</Btn>
+      </div>
+
+      {licenseOpen && <LicenseModal onClose={() => setLicenseOpen(false)} />}
     </Modal>
   );
 }
