@@ -4,7 +4,7 @@ import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { LicenseLimitError, LICENSE_PRICE, isLicensed } from "@/lib/bizcase/license";
-import { UpgradeModal, UpgradeCompare } from "@/components/bizcase/LicenseModals";
+import { UpgradeModal } from "@/components/bizcase/LicenseModals";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
 import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
