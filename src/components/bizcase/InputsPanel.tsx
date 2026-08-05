@@ -340,9 +340,7 @@ export function InputsPanel({
                 d.benefits.timeline.manual = {
                   granularity: manualGranularity,
                   basis: manualBasis,
-                  values: new Array(periodCount(d.horizonYears, manualGranularity)).fill(
-                    runRatePerPeriod(manualGranularity, manualBasis),
-                  ),
+                  values: seedValues(d.horizonYears, manualGranularity, manualBasis),
                 };
               });
               return;
