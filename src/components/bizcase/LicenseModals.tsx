@@ -29,33 +29,27 @@ export function UpgradeNotice({ reason }: { reason: string }) {
   );
 }
 
-const FREE_FEATURES = [
+export const FREE_FEATURES = [
   "3 business cases",
   "Watermarked PDF exports",
   "No Excel import",
   "Core metrics, charts & comparison",
 ];
 
-const FULL_FEATURES = [
+export const FULL_FEATURES = [
   "Unlimited business cases",
   "Watermark-free PDF exports",
   "Excel import with AI field mapping",
   "Everything in Free, forever, no subscription",
 ];
 
-/** Standalone upgrade modal (used when a blocked action has no host modal). */
-export function UpgradeModal({ reason, onClose }: { reason: string; onClose: () => void }) {
+/** The shared Free-vs-Full comparison columns plus the unlock / key buttons.
+ *  Reused by both the UpgradeModal and the home-screen upgrade card. */
+export function UpgradeCompare() {
   const [licenseOpen, setLicenseOpen] = useState(false);
 
   return (
-    <Modal title="Unlock BizCase Builder" onClose={onClose}>
-      {reason && (
-        <p className="mb-5 text-sm text-muted-foreground">
-          {reason} Unlock the full version for a one-time {LICENSE_PRICE} payment, then enter your
-          license key from Settings.
-        </p>
-      )}
-
+    <>
       <div className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border">
         {/* Free column */}
         <div className="bg-card p-4">
@@ -100,6 +94,21 @@ export function UpgradeModal({ reason, onClose }: { reason: string; onClose: () 
       </div>
 
       {licenseOpen && <LicenseModal onClose={() => setLicenseOpen(false)} />}
+    </>
+  );
+}
+
+/** Standalone upgrade modal (used when a blocked action has no host modal). */
+export function UpgradeModal({ reason, onClose }: { reason: string; onClose: () => void }) {
+  return (
+    <Modal title="Unlock BizCase Builder" onClose={onClose}>
+      {reason && (
+        <p className="mb-5 text-sm text-muted-foreground">
+          {reason} Unlock the full version for a one-time {LICENSE_PRICE} payment, then enter your
+          license key from Settings.
+        </p>
+      )}
+      <UpgradeCompare />
     </Modal>
   );
 }
