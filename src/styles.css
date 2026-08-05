@@ -71,6 +71,35 @@
   --ring: oklch(0.9149 0.2162 123.52);
 }
 
+/* Light theme — same industrial structure, inverted for readability on white.
+   Primary accent is darkened from the neon dark-mode green since that green
+   fails contrast as text/borders on a white surface. */
+:root.light {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.16 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0 0);
+  --card-inset: oklch(0.955 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0 0);
+  --primary: oklch(0.5 0.16 130);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.93 0 0);
+  --secondary-foreground: oklch(0.16 0 0);
+  --muted: oklch(0.93 0 0);
+  --muted-foreground: oklch(0.44 0 0);
+  --accent: oklch(0.93 0 0);
+  --accent-foreground: oklch(0.5 0.16 130);
+  --destructive: oklch(0.55 0.2 29);
+  --destructive-foreground: oklch(1 0 0);
+  --decline: oklch(0.55 0.2 29);
+  --warning: oklch(0.55 0.15 75);
+
+  --border: oklch(0.87 0 0);
+  --input: oklch(0.87 0 0);
+  --ring: oklch(0.5 0.16 130);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -103,7 +132,8 @@
       background-color 120ms ease,
       border-color 120ms ease,
       opacity 120ms ease,
-      box-shadow 120ms ease;
+      box-shadow 120ms ease,
+      transform 120ms ease;
   }
 
   /* Keyboard-visible focus ring everywhere; mouse clicks stay clean. */

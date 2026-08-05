@@ -149,9 +149,9 @@ export function Btn({
     <button
       {...props}
       className={cn(
-        "px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0",
+        "px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100",
         variant === "primary" &&
-          "bg-primary text-primary-foreground hover:opacity-85 active:opacity-75",
+          "bg-primary text-primary-foreground hover:scale-[1.03] hover:opacity-90 active:opacity-80",
         variant === "ghost" &&
           "border border-border text-foreground hover:border-primary hover:bg-card-inset",
         variant === "danger" &&

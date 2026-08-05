@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
@@ -26,13 +26,69 @@ export const Route = createFileRoute("/")({
   component: CaseList,
 });
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function useCountUp(target: number, duration = 900): number {
+  const [value, setValue] = useState(0);
+  const prefersReduced = useRef(false);
+
+  useEffect(() => {
+    prefersReduced.current =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  useEffect(() => {
+    if (!Number.isFinite(target)) return;
+    if (prefersReduced.current) {
+      setValue(target);
+      return;
+    }
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(target * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+
+  return value;
+}
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 5) return "Burning the midnight oil";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Working late";
+}
+
+function StatTile({
+  label,
+  value,
+  format,
+  delay = 0,
+}: {
+  label: string;
+  value: number | null;
+  format: (v: number) => string;
+  delay?: number;
+}) {
+  const animated = useCountUp(value ?? 0);
   return (
-    <div className="border border-border bg-card-inset px-3 py-3">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500"
+      style={{ animationDelay: `${delay}ms`, animationFillMode: "backwards" }}
+    >
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
-      <p className="data-mono text-lg font-bold text-foreground">{value}</p>
+      <p className="data-mono text-lg font-bold text-foreground">
+        {value === null ? "—" : format(animated)}
+      </p>
     </div>
   );
 }
@@ -74,18 +130,19 @@ function AboutSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-background/85"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background/85 p-4 py-10 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
-        className="surface-card w-full max-w-2xl animate-in slide-in-from-bottom duration-200"
+        className="surface-card w-full max-w-2xl animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <p className="label-eyebrow">About BizCase Builder</p>
           <button
             onClick={onClose}
-            className="font-mono text-xs text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+            className="border border-transparent px-2 py-1 font-mono text-xs text-muted-foreground hover:border-border hover:text-foreground"
           >
             ESC
           </button>
@@ -131,7 +188,8 @@ function CaseList() {
             BizCase Builder
           </h1>
           <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            Case Library
+            {greeting()} —{" "}
+            {cases.length === 0 ? "let's build your first case" : "ready when you are"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -153,8 +211,8 @@ function CaseList() {
       {cases.length === 0 ? (
         <div className="surface-card relative overflow-hidden p-10 text-center">
           <BackdropChart />
-          <div className="relative">
-            <p className="mb-2 text-base font-semibold">No cases yet</p>
+          <div className="relative animate-in fade-in zoom-in-95 duration-500">
+            <p className="mb-2 text-base font-semibold">Ready when you are</p>
             <p className="mb-6 text-sm text-muted-foreground">
               Create a case to model investment, benefits and returns.
             </p>
@@ -166,28 +224,34 @@ function CaseList() {
       ) : (
         <div className="flex flex-col gap-3">
           <div className="mb-1 grid grid-cols-3 gap-3">
-            <StatTile label="Cases" value={String(cases.length)} />
+            <StatTile label="Cases" value={cases.length} format={(v) => String(Math.round(v))} />
             <StatTile
               label="Avg ROI Modeled"
-              value={fmtPercent(
-                cases.reduce((s, c) => s + c.draft.outputs.roi, 0) / cases.length,
-                0,
-              )}
+              delay={60}
+              value={
+                cases.length
+                  ? cases.reduce((s, c) => s + c.draft.outputs.roi, 0) / cases.length
+                  : null
+              }
+              format={(v) => fmtPercent(v, 0)}
             />
             <StatTile
               label="Fastest Payback"
+              delay={120}
               value={(() => {
                 const paybacks = cases
                   .map((c) => c.draft.outputs.paybackMonths)
                   .filter((p): p is number => p !== null);
-                return paybacks.length ? fmtMonths(Math.min(...paybacks)) : "—";
+                return paybacks.length ? Math.min(...paybacks) : null;
               })()}
+              format={(v) => fmtMonths(v)}
             />
           </div>
-          {cases.map((c) => (
+          {cases.map((c, i) => (
             <div
               key={c.id}
-              className="group surface-card flex items-center justify-between gap-4 px-5 py-4 hover:border-primary/50"
+              className="group surface-card animate-in fade-in slide-in-from-bottom-2 flex items-center justify-between gap-4 px-5 py-4 duration-500 hover:border-primary/50"
+              style={{ animationDelay: `${Math.min(i, 8) * 40}ms`, animationFillMode: "backwards" }}
             >
               <button
                 className="min-w-0 flex-1 text-left"
