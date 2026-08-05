@@ -105,6 +105,54 @@ function outputRows(c: ExcelCase): SheetRow[] {
   return rows;
 }
 
+const CURRENCY_FMT = '$#,##0;($#,##0);-';
+const PERCENT_FMT = "0.0%";
+
+/** Bold, light-grey header row across the sheet's first row. */
+function styleHeaderRow(ws: XLSX.WorkSheet) {
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
+    if (!cell) continue;
+    cell.s = {
+      font: { bold: true },
+      fill: { patternType: "solid", fgColor: { rgb: "FFD9D9D9" } },
+    };
+  }
+}
+
+/** Applies a number format to every numeric cell in a column (skipping the header). */
+function formatColumn(ws: XLSX.WorkSheet, col: number, fmt: string) {
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let r = 1; r <= range.e.r; r++) {
+    const cell = ws[XLSX.utils.encode_cell({ r, c: col })];
+    if (cell && typeof cell.v === "number") cell.z = fmt;
+  }
+}
+
+/** Applies a number format to a single cell by row/column index. */
+function formatCell(ws: XLSX.WorkSheet, row: number, col: number, fmt: string) {
+  const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
+  if (cell && typeof cell.v === "number") cell.z = fmt;
+}
+
+/** Month-by-month cash flow sheet shared by the single-case and comparison exports. */
+function cashFlowSheet(c: ExcelCase): XLSX.WorkSheet {
+  const rows: SheetRow[] = c.outputs.cashFlowSeries.map((p) => ({
+    Month: p.month,
+    Revenue: p.revenue ?? 0,
+    Cost: p.cost ?? 0,
+    "Net Cash Flow": p.net ?? 0,
+    "Discounted Cash Flow": p.discounted ?? 0,
+    "Cumulative Cash Flow": p.cumulative,
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{ wch: 8 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 22 }, { wch: 22 }];
+  styleHeaderRow(ws);
+  for (let col = 1; col <= 5; col++) formatColumn(ws, col, CURRENCY_FMT);
+  return ws;
+}
+
 /** Builds an .xlsx workbook for a single case and triggers a download. */
 export function exportCaseExcel(c: ExcelCase) {
   const wb = XLSX.utils.book_new();
@@ -131,18 +179,99 @@ export function exportCaseExcel(c: ExcelCase) {
   }
   const summarySheet = XLSX.utils.json_to_sheet(summary);
   summarySheet["!cols"] = [{ wch: 34 }, { wch: 52 }];
-  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  styleHeaderRow(summarySheet);
 
-  // Cash flow sheet — monthly series.
-  const cf: SheetRow[] = c.outputs.cashFlowSeries.map((p) => ({
-    Month: p.month,
-    "Cumulative Cash Flow": p.cumulative,
-  }));
-  const cfSheet = XLSX.utils.json_to_sheet(cf);
-  cfSheet["!cols"] = [{ wch: 10 }, { wch: 22 }];
-  XLSX.utils.book_append_sheet(wb, cfSheet, "Cash Flow");
+  // Percent-based rows are stored as fractions — format them as percentages.
+  const percentLabels = new Set([
+    "Discount Rate (Annual)",
+    "Gross Margin",
+    "Contribution %",
+    "ROI",
+  ]);
+  summary.forEach((row, idx) => {
+    const label = String(row.Metric ?? "");
+    if (!percentLabels.has(label)) return;
+    const r = idx + 1; // +1 for the header row
+    if (label === "ROI") {
+      // ROI is stored as a whole-number percentage; convert so 0.0% renders right.
+      const cell = summarySheet[XLSX.utils.encode_cell({ r, c: 1 })];
+      if (cell && typeof cell.v === "number") cell.v = cell.v / 100;
+    }
+    formatCell(summarySheet, r, 1, PERCENT_FMT);
+  });
+
+  XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(c), "Cash Flow");
 
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
+}
+
+type LedgerKind = "currency" | "percent" | "number";
+
+/** Side-by-side comparison workbook: metrics ledger + one cash flow sheet per case. */
+export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: ExcelCase }) {
+  const { name, a, b } = opts;
+  const wb = XLSX.utils.book_new();
+
+  const defs: { label: string; kind: LedgerKind; get: (c: ExcelCase) => number | null }[] = [
+    { label: "NPV", kind: "currency", get: (c) => c.outputs.npv },
+    { label: "IRR", kind: "percent", get: (c) => (c.outputs.irr === null ? null : c.outputs.irr / 100) },
+    { label: "Payback (Months)", kind: "number", get: (c) => c.outputs.paybackMonths },
+    { label: "ROI", kind: "percent", get: (c) => c.outputs.roi / 100 },
+    { label: "Total Investment", kind: "currency", get: (c) => c.outputs.totalInvestment },
+    { label: "Total Revenue", kind: "currency", get: (c) => c.outputs.totalRevenue },
+    {
+      label: "Gross Margin",
+      kind: "percent",
+      get: (c) =>
+        c.outputs.margins?.grossMarginPercent == null
+          ? null
+          : c.outputs.margins.grossMarginPercent / 100,
+    },
+    {
+      label: "Contribution Margin %",
+      kind: "percent",
+      get: (c) =>
+        c.outputs.margins?.contributionMarginPercent == null
+          ? null
+          : c.outputs.margins.contributionMarginPercent / 100,
+    },
+    {
+      label: "Breakeven Units / Yr",
+      kind: "number",
+      get: (c) => c.outputs.margins?.breakevenUnitsPerYear ?? null,
+    },
+  ];
+
+  const rows: SheetRow[] = [];
+  const kinds: LedgerKind[] = [];
+  for (const d of defs) {
+    const va = d.get(a);
+    const vb = d.get(b);
+    if (va === null && vb === null) continue; // metric not applicable to either case
+    rows.push({
+      Metric: d.label,
+      [`A · ${a.versionLabel}`]: va ?? "",
+      [`B · ${b.versionLabel}`]: vb ?? "",
+      Delta: va !== null && vb !== null ? vb - va : "",
+    });
+    kinds.push(d.kind);
+  }
+
+  const ledger = XLSX.utils.json_to_sheet(rows);
+  ledger["!cols"] = [{ wch: 26 }, { wch: 24 }, { wch: 24 }, { wch: 18 }];
+  styleHeaderRow(ledger);
+  kinds.forEach((kind, i) => {
+    if (kind === "number") return;
+    const fmt = kind === "percent" ? PERCENT_FMT : CURRENCY_FMT;
+    for (let col = 1; col <= 3; col++) formatCell(ledger, i + 1, col, fmt);
+  });
+  XLSX.utils.book_append_sheet(wb, ledger, "Metrics Ledger");
+
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(a), "Cash Flow A");
+  XLSX.utils.book_append_sheet(wb, cashFlowSheet(b), "Cash Flow B");
+
+  XLSX.writeFile(wb, `BizCase_Comparison_${slug(name)}_${today()}.xlsx`);
 }
 
 /** Downloads a blank Excel template users can fill in and re-import.
