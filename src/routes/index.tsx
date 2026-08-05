@@ -208,8 +208,10 @@ function CaseList() {
   const [about, setAbout] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [greetingText, setGreetingText] = useState(SSR_GREETING);
 
   useEffect(() => setCases(listCases()), []);
+  useEffect(() => setGreetingText(greeting()), []);
 
   const onNew = () => {
     const record = createCase("Untitled Case");
@@ -225,7 +227,7 @@ function CaseList() {
             BizCase Builder
           </h1>
           <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            {greeting()} —{" "}
+            {greetingText} —{" "}
             {cases.length === 0 ? "let's build your first case" : "ready when you are"}
           </p>
         </div>
