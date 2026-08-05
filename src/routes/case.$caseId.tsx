@@ -7,6 +7,8 @@ import { InputsPanel } from "@/components/bizcase/InputsPanel";
 import { OutputsPanel } from "@/components/bizcase/OutputsPanel";
 import { ExecSummaryModal, buildSummaryPayload } from "@/components/bizcase/ExecSummaryModal";
 import { ExcelImportModal } from "@/components/bizcase/ExcelImportModal";
+import { UpgradeModal } from "@/components/bizcase/LicenseModals";
+import { LicenseLimitError } from "@/lib/bizcase/license";
 import { calculate } from "@/lib/bizcase/calc";
 import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
@@ -127,8 +129,13 @@ function CaseEditor() {
   const eff = applyScenario(effectiveInputs(inputs, mode), scenario, scenarioAdjustments);
 
   const handleNewCase = () => {
-    const created = createCase("Untitled Case");
-    navigate({ to: "/case/$caseId", params: { caseId: created.id } });
+    try {
+      const created = createCase("Untitled Case");
+      navigate({ to: "/case/$caseId", params: { caseId: created.id } });
+    } catch (e) {
+      if (e instanceof LicenseLimitError) setUpgrade(e.message);
+      else throw e;
+    }
   };
 
   const handleReset = () => {
@@ -352,6 +359,8 @@ function CaseEditor() {
           onClose={() => setModal(null)}
         />
       )}
+
+      {upgrade && <UpgradeModal reason={upgrade} onClose={() => setUpgrade(null)} />}
 
       {modal === "import" && (
         <ExcelImportModal
