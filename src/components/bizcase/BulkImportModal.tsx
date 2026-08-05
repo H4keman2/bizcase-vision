@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Modal, Btn, LoadingLine } from "./ui";
+import { UpgradeNotice } from "./LicenseModals";
+import { isLicensed } from "@/lib/bizcase/license";
 import { extractCaseFromSheet } from "@/lib/bizcase/ai.functions";
 import { calculate } from "@/lib/bizcase/calc";
 import { createCase, saveCase, saveVersion } from "@/lib/bizcase/storage";
@@ -50,6 +52,9 @@ export function BulkImportModal({
   const [batchError, setBatchError] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
   const [rows, setRows] = useState<BulkRow[]>([]);
+  const [licensed, setLicensed] = useState<boolean | null>(null);
+
+  useEffect(() => setLicensed(isLicensed()), []);
 
   const handleFiles = async (fileList: FileList) => {
     const files = Array.from(fileList);
@@ -119,6 +124,17 @@ export function BulkImportModal({
     });
     onImported();
   };
+
+  if (licensed === false) {
+    return (
+      <Modal title="Import Multiple Cases" onClose={onClose}>
+        <UpgradeNotice reason="Bulk Excel import is part of the full version." />
+        <div className="mt-5">
+          <Btn onClick={onClose}>Close</Btn>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title="Import Multiple Cases" onClose={onClose} wide>

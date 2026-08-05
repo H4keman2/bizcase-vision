@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Modal, Btn, LoadingLine } from "./ui";
+import { UpgradeNotice } from "./LicenseModals";
+import { isLicensed } from "@/lib/bizcase/license";
 import { extractCaseFromSheet } from "@/lib/bizcase/ai.functions";
 import type { CaseInputs } from "@/lib/bizcase/types";
 import {
@@ -29,6 +31,9 @@ export function ExcelImportModal({
   const [status, setStatus] = useState<"idle" | "parsing" | "review" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState<Extracted>({});
+  const [licensed, setLicensed] = useState<boolean | null>(null);
+
+  useEffect(() => setLicensed(isLicensed()), []);
 
   const handleFile = async (file: File) => {
     const invalid = validateFile(file);
@@ -53,6 +58,17 @@ export function ExcelImportModal({
   const incomplete = status === "review" && !hasCriticalFields(values);
   const issues = status === "review" ? validateImport(values) : [];
   const issueFor = (key: string) => issues.find((i) => i.field === key)?.message;
+
+  if (licensed === false) {
+    return (
+      <Modal title="Import from Excel" onClose={onClose}>
+        <UpgradeNotice reason="Excel import is part of the full version." />
+        <div className="mt-5">
+          <Btn onClick={onClose}>Close</Btn>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title="Import from Excel" onClose={onClose} wide>
