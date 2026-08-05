@@ -153,11 +153,12 @@ function BackdropChart({ className = "" }: { className?: string }) {
 function PageBackdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <BackdropChart className="opacity-[0.05]" />
+      <BackdropChart className="opacity-[0.14]" />
       <div
-        className="absolute left-1/2 top-0 h-[480px] w-[900px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.08] blur-3xl"
+        className="absolute left-1/2 top-0 h-[520px] w-[1000px] -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.16] blur-3xl"
         style={{ background: "var(--color-primary)" }}
       />
+
     </div>
   );
 }
