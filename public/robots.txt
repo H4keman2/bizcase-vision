@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://bizcasebuilder.lovable.app/sitemap.xml
+Sitemap: https://bizcasebuilder.dev/sitemap.xml

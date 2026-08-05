@@ -27,7 +27,9 @@ export const Route = createFileRoute("/")({
         content:
           "Model investment decisions with live NPV, IRR, payback and margin analysis. Save versions and compare business cases side by side.",
       },
+      { property: "og:url", content: "https://bizcasebuilder.dev/" },
     ],
+    links: [{ rel: "canonical", href: "https://bizcasebuilder.dev/" }],
   }),
   component: CaseList,
 });
