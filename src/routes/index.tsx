@@ -216,12 +216,13 @@ function PortfolioChart({ cases }: { cases: CaseRecord[] }) {
 
 
 
-/** Dismissible Free-vs-Full upgrade card shown on the home screen to
- *  unlicensed users who haven't dismissed it yet. */
+/** Dismissible compact upgrade pill shown on the home screen to unlicensed
+ *  users who haven't dismissed it yet. Opens the full UpgradeModal on click. */
 const LICENSE_CARD_KEY = "bizcase:license-card-dismissed";
 
 function UpgradeCard() {
   const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -236,8 +237,6 @@ function UpgradeCard() {
     }
   }, []);
 
-  if (!show) return null;
-
   const dismiss = () => {
     setShow(false);
     try {
@@ -247,24 +246,28 @@ function UpgradeCard() {
     }
   };
 
+  if (!show) return null;
+
   return (
-    <section className="surface-card relative mb-4 p-5">
+    <div className="mb-4 flex items-center gap-2">
+      <Btn variant="primary" onClick={() => setOpen(true)}>
+        Unlock Full Access
+      </Btn>
       <button
         type="button"
         aria-label="Dismiss"
         onClick={dismiss}
-        className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center border border-border font-mono text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+        className="flex h-7 w-7 shrink-0 items-center justify-center border border-border font-mono text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
       >
         ×
       </button>
-      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-primary">
-        Unlock the full version
-      </p>
-      <p className="mb-4 text-sm text-muted-foreground">
-        A one-time {LICENSE_PRICE} payment removes every limit. No subscription.
-      </p>
-      <UpgradeCompare />
-    </section>
+      {open && (
+        <UpgradeModal
+          reason="See what's included."
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
   );
 }
 
