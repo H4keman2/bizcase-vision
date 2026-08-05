@@ -153,6 +153,7 @@ export function ExcelImportModal({
                   </div>
                   <input
                     className="field-inset"
+                    aria-label={f.label}
                     value={v?.value ?? ""}
                     onChange={(e) =>
                       setValues((prev) => ({

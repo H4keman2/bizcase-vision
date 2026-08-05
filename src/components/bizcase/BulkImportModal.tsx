@@ -190,6 +190,7 @@ export function BulkImportModal({
                   <>
                     <input
                       className="field-inset"
+                      aria-label="Case name"
                       value={row.name}
                       onChange={(e) =>
                         setRows((prev) =>
