@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Screen, Btn, Modal } from "@/components/bizcase/ui";
 import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
+import { LicenseLimitError } from "@/lib/bizcase/license";
+import { UpgradeModal } from "@/components/bizcase/LicenseModals";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
 import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
@@ -265,14 +267,20 @@ function CaseList() {
   const [about, setAbout] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [upgrade, setUpgrade] = useState<string | null>(null);
   const [greetingText, setGreetingText] = useState(SSR_GREETING);
 
   useEffect(() => setCases(listCases()), []);
   useEffect(() => setGreetingText(greeting()), []);
 
   const onNew = () => {
-    const record = createCase("Untitled Case");
-    navigate({ to: "/case/$caseId", params: { caseId: record.id } });
+    try {
+      const record = createCase("Untitled Case");
+      navigate({ to: "/case/$caseId", params: { caseId: record.id } });
+    } catch (e) {
+      if (e instanceof LicenseLimitError) setUpgrade(e.message);
+      else throw e;
+    }
   };
 
   return (
@@ -444,6 +452,8 @@ function CaseList() {
           }}
         />
       )}
+
+      {upgrade && <UpgradeModal reason={upgrade} onClose={() => setUpgrade(null)} />}
 
       {about ? <AboutSheet onClose={() => setAbout(false)} /> : null}
     </Screen>

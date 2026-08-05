@@ -7,6 +7,7 @@ import {
   type CaseOutputs,
 } from "./types";
 import type { ExecSummary } from "./ai.functions";
+import { isLicensed } from "./license";
 
 const BLACK = "#0A0A0A";
 const GREEN = "#C7F92B";
@@ -346,6 +347,25 @@ function summaryBlock(doc: jsPDF, s: ExecSummary, y: number) {
   return y;
 }
 
+/** Diagonal "FREE VERSION" watermark on every page (free tier only). */
+function watermarkIfUnlicensed(doc: jsPDF) {
+  if (isLicensed()) return;
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    const gs = doc.GState({ opacity: 0.12 });
+    doc.saveGraphicsState();
+    doc.setGState(gs);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(64);
+    doc.setTextColor("#999999");
+    doc.text("FREE VERSION", W / 2, H / 2, { align: "center", angle: 45 });
+    doc.restoreGraphicsState();
+  }
+}
+
 /** Single-case export. */
 export function exportCasePdf(c: PdfCase) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -386,6 +406,7 @@ export function exportCasePdf(c: PdfCase) {
   }
 
   footer(doc);
+  watermarkIfUnlicensed(doc);
   doc.save(`BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.pdf`);
 }
 
@@ -517,5 +538,6 @@ export function exportComparisonPdf(opts: {
   rows(doc, inputRows(b), y, 2);
 
   footer(doc);
+  watermarkIfUnlicensed(doc);
   doc.save(`BizCase_${slug(opts.name)}_Comparison_${today()}.pdf`);
 }
