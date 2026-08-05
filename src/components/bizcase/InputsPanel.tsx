@@ -260,14 +260,13 @@ export function InputsPanel({
                     patch((d) => {
                       d.benefits.revenueModel.unit.unitsPerYear = v;
                       // Keep a units-based manual schedule in sync: spread the
-                      // annual units evenly across every period.
+                      // annual units evenly across every period, distributing
+                      // any remainder so the periods sum exactly to the total.
                       if (manualBasis === "units") {
                         d.benefits.timeline.manual = {
                           granularity: manualGranularity,
                           basis: "units",
-                          values: new Array(
-                            periodCount(d.horizonYears, manualGranularity),
-                          ).fill(v / PERIODS_PER_YEAR[manualGranularity]),
+                          values: seedValues(d.horizonYears, manualGranularity, "units", v),
                         };
                       }
                     })
