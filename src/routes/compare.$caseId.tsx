@@ -213,7 +213,9 @@ function Compare() {
         action={
           <>
             <Btn onClick={() => exportPdf()}>Export PDF</Btn>
-            <Btn onClick={() => exportComparisonExcel(excelCases())}>Export Excel</Btn>
+            <Btn onClick={handleExportExcel} disabled={exporting}>
+              {exporting ? "Exporting…" : "Export Excel"}
+            </Btn>
             <Btn onClick={() => navigate({ to: "/case/$caseId", params: { caseId } })}>
               Back to Editor
             </Btn>
