@@ -102,6 +102,10 @@ Map any values you can confidently identify to these fields:
 - unitsPerYear (Units / Yr, number)
 - overheadPercent (Overhead %, percent)
 - overheadBasis (Overhead Basis, either "cogs" or "revenue")
+- phasedMonth1 / phasedAmount1, phasedMonth2 / phasedAmount2, phasedMonth3 / phasedAmount3, phasedMonth4 / phasedAmount4 (Phased Capex rows: month number and currency amount; only fill pairs that are present)
+- timelineMode (Timeline Mode, one of "flat", "manual", or "ramp")
+- rampYear1Percent (Ramp Year 1 %, percent — only when timeline mode is ramp)
+- rampGrowthRatePercent (Ramp Growth Rate %/Yr, percent — only when timeline mode is ramp)
 - horizonYears (Horizon in years, number)
 - discountRateAnnual (Annual discount rate, percent)
 
