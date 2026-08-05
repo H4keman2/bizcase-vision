@@ -380,6 +380,7 @@ function CaseList() {
         </div>
       </div>
 
+      <UpgradeCard />
 
       {cases.length === 0 ? (
         <div className="surface-card relative overflow-hidden p-10 text-center">
