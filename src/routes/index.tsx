@@ -244,6 +244,7 @@ function CaseList() {
           >
             ?
           </button>
+          <SettingsGear />
         </div>
       </div>
 
