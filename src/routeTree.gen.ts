@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as IrrCalculatorRouteImport } from './routes/irr-calculator'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
 import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
@@ -17,6 +18,11 @@ import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IrrCalculatorRoute = IrrCalculatorRouteImport.update({
+  id: '/irr-calculator',
+  path: '/irr-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/irr-calculator': typeof IrrCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/irr-calculator': typeof IrrCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
@@ -50,20 +58,38 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/irr-calculator': typeof IrrCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
+  fullPaths:
+    | '/'
+    | '/irr-calculator'
+    | '/sitemap.xml'
+    | '/case/$caseId'
+    | '/compare/$caseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
-  id: '__root__' | '/' | '/sitemap.xml' | '/case/$caseId' | '/compare/$caseId'
+  to:
+    | '/'
+    | '/irr-calculator'
+    | '/sitemap.xml'
+    | '/case/$caseId'
+    | '/compare/$caseId'
+  id:
+    | '__root__'
+    | '/'
+    | '/irr-calculator'
+    | '/sitemap.xml'
+    | '/case/$caseId'
+    | '/compare/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  IrrCalculatorRoute: typeof IrrCalculatorRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CaseCaseIdRoute: typeof CaseCaseIdRoute
   CompareCaseIdRoute: typeof CompareCaseIdRoute
@@ -76,6 +102,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/irr-calculator': {
+      id: '/irr-calculator'
+      path: '/irr-calculator'
+      fullPath: '/irr-calculator'
+      preLoaderRoute: typeof IrrCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,6 +137,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  IrrCalculatorRoute: IrrCalculatorRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CaseCaseIdRoute: CaseCaseIdRoute,
   CompareCaseIdRoute: CompareCaseIdRoute,

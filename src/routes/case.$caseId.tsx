@@ -258,6 +258,7 @@ function CaseEditor() {
                 navigate({
                   to: "/compare/$caseId",
                   params: { caseId },
+                  search: { a: "draft", b: "draft" },
                 })
               }
             >
