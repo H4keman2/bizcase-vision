@@ -369,6 +369,7 @@ function CaseList() {
             + New Case
           </Btn>
           <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+          <UpgradeCard />
           <button
             type="button"
             aria-label="About BizCase Builder"
@@ -382,8 +383,6 @@ function CaseList() {
           </span>
         </div>
       </div>
-
-      <UpgradeCard />
 
       {cases.length === 0 ? (
         <div className="surface-card relative overflow-hidden p-10 text-center">
