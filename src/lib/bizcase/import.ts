@@ -274,7 +274,7 @@ export function validateImport(values: Extracted): ImportIssue[] {
         issues.push({ field: key, message: `${label} is required when Timeline Mode is "ramp".` });
         return;
       }
-      const n = numOf(values, key);
+      const n = strictNum(raw);
       if (n === null) {
         issues.push({ field: key, message: `${label} must be a number.` });
       } else if (n < min || n > max) {
