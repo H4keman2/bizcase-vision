@@ -53,29 +53,47 @@ export function InputsPanel({
   const manualValues = manualSchedule.values ?? [];
   const manualPeriods = periodCount(inputs.horizonYears, manualGranularity);
 
-  /** Run-rate benefit per period, used to seed a fresh manual schedule. */
-  const runRatePerPeriod = (granularity: TimelineGranularity, basis: ManualBasis) => {
-    if (basis === "units") return rm.unit.unitsPerYear / PERIODS_PER_YEAR[granularity];
+  /** Annual run-rate for a manual schedule basis. */
+  const annualRunRate = (basis: ManualBasis) => {
+    if (basis === "units") return rm.unit.unitsPerYear;
     const { revenueAnnual, cogsAnnual } = resolveRevenueModel(rm);
-    const baseAnnual =
+    return (
       inputs.benefits.costSavingsAnnual +
       inputs.benefits.timeSavingsAnnual +
       revenueAnnual -
       cogsAnnual -
-      computeOverheadAnnual(inputs);
-    return Math.round(baseAnnual / PERIODS_PER_YEAR[granularity]);
+      computeOverheadAnnual(inputs)
+    );
   };
+
+  /**
+   * Seed a manual schedule so the periods sum to exactly the annual run-rate
+   * times the horizon (remainder spread across the earliest periods).
+   */
+  const seedValues = (
+    horizonYears: number,
+    granularity: TimelineGranularity,
+    basis: ManualBasis,
+    annual = annualRunRate(basis),
+  ) => distributeEvenly(Math.round(annual * horizonYears), periodCount(horizonYears, granularity));
 
   const setManual = (granularity: TimelineGranularity, basis: ManualBasis) =>
     patch((d) => {
       d.benefits.timeline.manual = {
         granularity,
         basis,
-        values: new Array(periodCount(d.horizonYears, granularity)).fill(
-          runRatePerPeriod(granularity, basis),
-        ),
+        values: seedValues(d.horizonYears, granularity, basis),
       };
     });
+
+  const manualTotal = manualValues
+    .slice(0, manualPeriods)
+    .reduce((sum, v) => sum + (Number.isFinite(v) ? v : 0), 0);
+  const manualTarget = Math.round(annualRunRate(manualBasis) * years);
+  const manualDrift = manualTotal - manualTarget;
+  const manualOffTarget =
+    tl.type === "manual" && manualTarget !== 0 && Math.abs(manualDrift) >= 1;
+  const hasNegativeUnits = manualBasis === "units" && manualValues.some((v) => v < 0);
 
   return (
     <div className="flex flex-col gap-4">
