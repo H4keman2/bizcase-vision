@@ -150,6 +150,7 @@ export function BulkImportModal({
               type="file"
               accept=".xlsx"
               multiple
+              aria-label="Choose .xlsx workbooks to import"
               className="sr-only"
               onChange={(e) => e.target.files?.length && handleFiles(e.target.files)}
             />

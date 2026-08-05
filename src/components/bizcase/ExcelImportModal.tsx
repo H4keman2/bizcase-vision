@@ -83,6 +83,7 @@ export function ExcelImportModal({
             <input
               type="file"
               accept=".xlsx"
+              aria-label="Choose an .xlsx workbook to import"
               className="sr-only"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
