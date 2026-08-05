@@ -1,43 +1,33 @@
 import {
   PERIODS_PER_YEAR,
-  resolveManualMultipliers,
+  resolveManualSchedule,
   type CaseInputs,
   type CaseOutputs,
   type Margins,
 } from "./types";
 
-/**
- * Multiplier for the fraction of a year spanning [rangeStartYears, rangeEndYears),
- * computed as an overlap-weighted average across whichever manual periods
- * (year/quarter/month/week) intersect that range. Lets a manual timeline be
- * edited at any granularity while cash flow still resolves month by month.
- */
-function manualMultiplierForRange(
-  manual: CaseInputs["benefits"]["timeline"]["manual"],
-  rangeStartYears: number,
-  rangeEndYears: number,
+/** Value the user entered for whichever manual period contains this month. */
+function manualPeriodValueForMonth(
+  values: number[],
+  periodsPerYear: number,
+  monthIndex1Based: number,
 ): number {
-  const { granularity, multipliers } = resolveManualMultipliers(manual);
-  const periodsPerYear = PERIODS_PER_YEAR[granularity];
-  const fallback = multipliers[multipliers.length - 1] ?? 1;
+  const p = Math.floor(((monthIndex1Based - 1) / 12) * periodsPerYear + 1e-9);
+  if (values.length === 0) return 0;
+  return values[p] ?? values[values.length - 1] ?? 0;
+}
 
-  const pStart = Math.floor(rangeStartYears * periodsPerYear + 1e-9);
-  const pEndExclusive = Math.max(pStart + 1, Math.ceil(rangeEndYears * periodsPerYear - 1e-9));
-
-  let weightedSum = 0;
-  let totalWeight = 0;
-  for (let p = pStart; p < pEndExclusive; p++) {
-    const periodStart = p / periodsPerYear;
-    const periodEnd = (p + 1) / periodsPerYear;
-    const overlapStart = Math.max(rangeStartYears, periodStart);
-    const overlapEnd = Math.min(rangeEndYears, periodEnd);
-    const weight = Math.max(0, overlapEnd - overlapStart);
-    if (weight <= 0) continue;
-    const value = p < multipliers.length ? (multipliers[p] ?? fallback) : fallback;
-    weightedSum += value * weight;
-    totalWeight += weight;
-  }
-  return totalWeight > 0 ? weightedSum / totalWeight : fallback;
+/**
+ * Legacy multiplier lookup, kept only so cases saved before manual timelines
+ * became value-based still calculate the same way.
+ */
+function legacyMultiplierForMonth(
+  multipliers: number[],
+  periodsPerYear: number,
+  monthIndex1Based: number,
+): number {
+  const p = Math.floor(((monthIndex1Based - 1) / 12) * periodsPerYear + 1e-9);
+  return multipliers[p] ?? multipliers[multipliers.length - 1] ?? 1;
 }
 
 /** Timeline multiplier applying to cash-flow month `monthIndex1Based` (1 = first month). */
@@ -47,20 +37,74 @@ export function timelineMultiplierForMonth(
 ): number {
   if (!timeline || timeline.type === "flat") return 1;
 
-  const rangeStart = (monthIndex1Based - 1) / 12;
-  const rangeEnd = monthIndex1Based / 12;
-
   if (timeline.type === "manual") {
-    return manualMultiplierForRange(timeline.manual, rangeStart, rangeEnd);
+    const sched = resolveManualSchedule(timeline.manual);
+    if (sched.legacyMultipliers) {
+      return legacyMultiplierForMonth(
+        sched.legacyMultipliers,
+        PERIODS_PER_YEAR[sched.granularity],
+        monthIndex1Based,
+      );
+    }
+    return 1;
   }
 
   // Ramp compounds annually — one multiplier per full year, applied flat within it.
-  const yearIdx = Math.floor(rangeStart + 1e-9);
+  const yearIdx = Math.floor((monthIndex1Based - 1) / 12 + 1e-9);
   const { year1Percent, growthRatePercent } = timeline.ramp;
   let mult = year1Percent / 100;
   for (let y = 1; y <= yearIdx; y++) mult *= 1 + growthRatePercent / 100;
   return mult;
 }
+
+/** Net benefit and revenue booked in a given cash-flow month. */
+export function monthlyBenefit(
+  inputs: CaseInputs,
+  monthIndex1Based: number,
+): { net: number; revenue: number } {
+  const { revenueAnnual, cogsAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
+  const overheadAnnual = computeOverheadAnnual(inputs);
+  const savingsAnnual =
+    (inputs.benefits.costSavingsAnnual || 0) + (inputs.benefits.timeSavingsAnnual || 0);
+  const netRevenueAnnual = revenueAnnual - cogsAnnual - overheadAnnual;
+  const baseAnnual = savingsAnnual + netRevenueAnnual;
+
+  const timeline = inputs.benefits.timeline;
+  if (timeline?.type === "manual") {
+    const sched = resolveManualSchedule(timeline.manual);
+    if (sched.values) {
+      const ppy = PERIODS_PER_YEAR[sched.granularity];
+      const monthsPerPeriod = 12 / ppy;
+      const value = manualPeriodValueForMonth(sched.values, ppy, monthIndex1Based);
+
+      if (sched.basis === "units") {
+        const unitsPerMonth = value / monthsPerPeriod;
+        const rm = inputs.benefits.revenueModel.unit;
+        const overhead = inputs.benefits.overhead;
+        const overheadPerUnit =
+          overhead.enabled && inputs.benefits.revenueModel.type === "unit"
+            ? ((overhead.basis === "cogs" ? rm.variableCostPerUnit : rm.pricePerUnit) *
+                overhead.percent) /
+              100
+            : 0;
+        const revenue = unitsPerMonth * (rm.pricePerUnit || 0);
+        const net =
+          unitsPerMonth * ((rm.pricePerUnit || 0) - (rm.variableCostPerUnit || 0) - overheadPerUnit) +
+          savingsAnnual / 12;
+        return { net, revenue };
+      }
+
+      // Amount basis: the typed value IS the period's total net benefit.
+      const net = value / monthsPerPeriod;
+      const revenueShare = baseAnnual !== 0 ? (revenueAnnual / baseAnnual) * net : 0;
+      return { net, revenue: revenueShare };
+    }
+  }
+
+  const mult = timelineMultiplierForMonth(timeline, monthIndex1Based);
+  return { net: (baseAnnual * mult) / 12, revenue: (revenueAnnual * mult) / 12 };
+}
+
 
 export function resolveRevenueModel(rm: CaseInputs["benefits"]["revenueModel"]) {
   if (rm.type === "unit") {
@@ -96,20 +140,12 @@ export function buildCashFlowSeries(inputs: CaseInputs): number[] {
     if (month >= 0 && month <= horizonMonths) series[month] -= amount || 0;
   });
 
-  const { revenueAnnual, cogsAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
-  const overheadAnnual = computeOverheadAnnual(inputs);
-  const netRevenue = revenueAnnual - cogsAnnual - overheadAnnual;
-  const baseAnnual =
-    (inputs.benefits.costSavingsAnnual || 0) +
-    netRevenue +
-    (inputs.benefits.timeSavingsAnnual || 0);
-
   for (let m = 1; m <= horizonMonths; m++) {
-    const mult = timelineMultiplierForMonth(inputs.benefits.timeline, m);
-    series[m] += (baseAnnual * mult) / 12;
+    series[m] += monthlyBenefit(inputs, m).net;
   }
   return series;
 }
+
 
 export function npv(cashFlows: number[], monthlyRate: number): number {
   return cashFlows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + monthlyRate, t), 0);
@@ -214,11 +250,10 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
   const netTotal = flows.reduce((s, cf) => s + cf, 0);
   const roi = totalInvestment > 0 ? (netTotal / totalInvestment) * 100 : 0;
 
-  const { revenueAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
   const horizonMonths = Math.max(1, Math.round(inputs.horizonYears * 12));
   let totalRevenue = 0;
   for (let m = 1; m <= horizonMonths; m++) {
-    totalRevenue += (revenueAnnual * timelineMultiplierForMonth(inputs.benefits.timeline, m)) / 12;
+    totalRevenue += monthlyBenefit(inputs, m).revenue;
   }
 
   let cum = 0;

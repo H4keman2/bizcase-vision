@@ -39,8 +39,8 @@ export const fieldDefinitions: Record<string, string> = {
   // ---- Timeline ----
   timeline:
     "How benefits phase in over time. Flat applies them evenly, Manual sets a multiplier per year, quarter, month or week, Ramp grows them from a starting percentage.",
-  manualMultiplier:
-    "A multiplier applied to that period's benefits. 1.0 means full run rate, 0.5 means half.",
+  manualValue:
+    "The actual value for that period — either the net benefit in dollars, or units sold if you picked the Units basis. No multipliers: type what you expect, e.g. 20,000 units per quarter.",
   rampYear1:
     "The share of full run-rate benefits realized in year one while the solution is still ramping up.",
   rampGrowth: "How much the realized benefit grows each year after year one, as a percentage.",

@@ -3,6 +3,7 @@ export type TimelineType = "flat" | "manual" | "ramp";
 export type TimelineGranularity = "year" | "quarter" | "month" | "week";
 export type OverheadBasis = "cogs" | "revenue";
 export type CaseMode = "simple" | "detailed";
+export type ManualBasis = "amount" | "units";
 
 export const PERIODS_PER_YEAR: Record<TimelineGranularity, number> = {
   year: 1,
@@ -47,7 +48,12 @@ export interface CaseInputs {
       type: TimelineType;
       manual: {
         granularity: TimelineGranularity;
-        multipliers: number[];
+        /** "amount" = net benefit $ per period, "units" = units sold per period */
+        basis?: ManualBasis;
+        /** Actual per-period values the user typed. */
+        values?: number[];
+        /** @deprecated multiplier-era saves; read as a fallback, never written */
+        multipliers?: number[];
         /** @deprecated pre-granularity saves; read as a fallback, never written */
         yearlyMultipliers?: number[];
       };
@@ -63,15 +69,51 @@ export function periodCount(horizonYears: number, granularity: TimelineGranulari
   return Math.max(1, Math.ceil(horizonYears * PERIODS_PER_YEAR[granularity]));
 }
 
-/** The multiplier array to actually read, covering old (year-only) saves. */
-export function resolveManualMultipliers(manual: CaseInputs["benefits"]["timeline"]["manual"]): {
+export interface ManualSchedule {
   granularity: TimelineGranularity;
-  multipliers: number[];
-} {
-  if (manual.multipliers?.length) {
-    return { granularity: manual.granularity ?? "year", multipliers: manual.multipliers };
+  basis: ManualBasis;
+  /** Explicit per-period values, or null when only legacy multipliers exist. */
+  values: number[] | null;
+  /** Legacy multiplier array, present only for pre-update saves. */
+  legacyMultipliers: number[] | null;
+}
+
+/** Resolves a manual timeline, covering legacy multiplier-based saves. */
+export function resolveManualSchedule(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): ManualSchedule {
+  const granularity = manual?.granularity ?? "year";
+  if (manual?.values?.length) {
+    return {
+      granularity,
+      basis: manual.basis ?? "amount",
+      values: manual.values,
+      legacyMultipliers: null,
+    };
   }
-  return { granularity: "year", multipliers: manual.yearlyMultipliers ?? [1] };
+  const legacy = manual?.multipliers?.length
+    ? manual.multipliers
+    : (manual?.yearlyMultipliers ?? null);
+  return {
+    granularity: manual?.multipliers?.length ? granularity : "year",
+    basis: "amount",
+    values: null,
+    legacyMultipliers: legacy?.length ? legacy : [1],
+  };
+}
+
+
+/** Human-readable summary of a manual timeline, for exports and prompts. */
+export function describeManualTimeline(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): string {
+  const sched = resolveManualSchedule(manual);
+  const unit = GRANULARITY_LABEL[sched.granularity];
+  if (sched.values) {
+    const suffix = sched.basis === "units" ? " units" : "";
+    return `Manual by ${unit} (${sched.values.join(", ")}${suffix} per ${unit.toLowerCase()})`;
+  }
+  return `Manual by ${unit} (x${(sched.legacyMultipliers ?? []).join(", x")})`;
 }
 
 export interface Margins {
@@ -204,7 +246,7 @@ export function zeroInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 0 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", multipliers: [0, 0, 0] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
         ramp: { year1Percent: 0, growthRatePercent: 0 },
       },
     },
@@ -232,7 +274,7 @@ export function defaultInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 15 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", multipliers: [1, 1, 1] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
         ramp: { year1Percent: 60, growthRatePercent: 10 },
       },
     },

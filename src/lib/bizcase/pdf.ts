@@ -1,8 +1,7 @@
 import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
-  resolveManualMultipliers,
-  GRANULARITY_LABEL,
+  describeManualTimeline,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
@@ -202,10 +201,7 @@ function inputRows(c: PdfCase): [string, string][] {
     tl.type === "ramp"
       ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
       : tl.type === "manual"
-        ? (() => {
-            const { granularity, multipliers } = resolveManualMultipliers(tl.manual);
-            return `Manual by ${GRANULARITY_LABEL[granularity]} (${multipliers.join(", ")})`;
-          })()
+        ? describeManualTimeline(tl.manual)
         : "Flat",
   ]);
   if (mode === "detailed") {

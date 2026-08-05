@@ -1,7 +1,6 @@
 import * as XLSX from "xlsx";
 import {
-  resolveManualMultipliers,
-  GRANULARITY_LABEL,
+  describeManualTimeline,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
@@ -51,10 +50,7 @@ function inputRows(c: ExcelCase): SheetRow[] {
       tl.type === "ramp"
         ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
         : tl.type === "manual"
-          ? (() => {
-              const { granularity, multipliers } = resolveManualMultipliers(tl.manual);
-              return `Manual by ${GRANULARITY_LABEL[granularity]} (${multipliers.join(", ")})`;
-            })()
+          ? describeManualTimeline(tl.manual)
           : "Flat",
   });
   if (c.mode === "detailed") {
