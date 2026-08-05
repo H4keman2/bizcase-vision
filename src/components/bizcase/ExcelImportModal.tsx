@@ -11,6 +11,7 @@ import {
   hasCriticalFields,
   mapExtracted,
   validateFile,
+  validateImport,
   type Extracted,
 } from "@/lib/bizcase/import";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,8 @@ export function ExcelImportModal({
   };
 
   const incomplete = status === "review" && !hasCriticalFields(values);
+  const issues = status === "review" ? validateImport(values) : [];
+  const issueFor = (key: string) => issues.find((i) => i.field === key)?.message;
 
   return (
     <Modal title="Import from Excel" onClose={onClose} wide>
