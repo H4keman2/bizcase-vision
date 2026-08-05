@@ -5,6 +5,72 @@ export const SCHEMA_FIELDS = [
   { key: "nre", label: "NRE", type: "currency", note: "One-time non-recurring engineering cost" },
   { key: "upfront", label: "Upfront Capex", type: "currency", note: "Capital spent at month 0" },
   {
+    key: "phasedMonth1",
+    label: "Phased Capex 1 Month",
+    type: "number",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedAmount1",
+    label: "Phased Capex 1 Amount",
+    type: "currency",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedMonth2",
+    label: "Phased Capex 2 Month",
+    type: "number",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedAmount2",
+    label: "Phased Capex 2 Amount",
+    type: "currency",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedMonth3",
+    label: "Phased Capex 3 Month",
+    type: "number",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedAmount3",
+    label: "Phased Capex 3 Amount",
+    type: "currency",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedMonth4",
+    label: "Phased Capex 4 Month",
+    type: "number",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "phasedAmount4",
+    label: "Phased Capex 4 Amount",
+    type: "currency",
+    note: "Leave blank if not used.",
+  },
+  {
+    key: "timelineMode",
+    label: "Timeline Mode",
+    type: "text",
+    note: 'One of "flat", "manual", or "ramp". Leave blank for flat.',
+  },
+  {
+    key: "rampYear1Percent",
+    label: "Ramp Year 1 %",
+    type: "percent",
+    note: 'Only used when Timeline Mode is "ramp". Leave blank if not used.',
+  },
+  {
+    key: "rampGrowthRatePercent",
+    label: "Ramp Growth Rate %/Yr",
+    type: "percent",
+    note: 'Only used when Timeline Mode is "ramp". Leave blank if not used.',
+  },
+  {
     key: "costSavingsAnnual",
     label: "Cost Savings / Yr",
     type: "currency",
@@ -205,6 +271,24 @@ export function applyToInputs(inputs: CaseInputs, values: Extracted): CaseInputs
   if (basis === "cogs" || basis === "revenue") next.benefits.overhead.basis = basis;
   set("horizonYears", (n) => (next.horizonYears = Math.max(1, Math.round(n))));
   set("discountRateAnnual", (n) => (next.discountRateAnnual = n));
+
+  const phased: { month: number; amount: number }[] = [];
+  for (let i = 1; i <= 4; i++) {
+    const m = numOf(values, `phasedMonth${i}` as FieldKey);
+    const a = numOf(values, `phasedAmount${i}` as FieldKey);
+    if (m === null && a === null) continue;
+    phased.push({ month: Math.max(0, Math.round(m ?? 0)), amount: a ?? 0 });
+  }
+  if (phased.length) next.investment.phased = phased;
+
+  const mode = values.timelineMode?.value?.trim().toLowerCase();
+  if (mode === "flat" || mode === "manual" || mode === "ramp") {
+    next.benefits.timeline.type = mode;
+    if (mode === "ramp") {
+      set("rampYear1Percent", (n) => (next.benefits.timeline.ramp.year1Percent = n));
+      set("rampGrowthRatePercent", (n) => (next.benefits.timeline.ramp.growthRatePercent = n));
+    }
+  }
 
   return next;
 }

@@ -14,7 +14,7 @@ Dark, high-contrast, professional, not playful. This is a financial analysis too
 
 - Borders: `#2A2A2A`, hairline, no rounded corners on cards (sharp, geometric, industrial feel)
 
-- Accent: neon green-yellow `#C7F92B` (Zebra Technologies' brand accent), used for primary actions, positive deltas, active toggle states, and section labels
+- Accent: neon green-yellow `#C7F92B`, used for primary actions, positive deltas, active toggle states, and section labels
 
 - Negative/decline indicator: warm red-orange `#FF5A3C`
 
