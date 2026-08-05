@@ -3,14 +3,14 @@ import { z } from "zod";
 
 const Input = z.object({ key: z.string().min(4).max(200) });
 
-const PRODUCT_PERMALINK = "bizcase-builder";
+const PRODUCT_ID = "6tG_g_n57LnSvv1_IMgXiA==";
 
 /** Verifies a Gumroad license key. Returns { valid: true } or throws with a readable message. */
 export const verifyLicenseKey = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }) => {
     const body = new URLSearchParams({
-      product_permalink: PRODUCT_PERMALINK,
+      product_id: PRODUCT_ID,
       license_key: data.key.trim(),
       increment_uses_count: "false",
     });
