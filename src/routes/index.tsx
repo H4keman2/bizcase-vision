@@ -6,6 +6,9 @@ import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
 import { BulkImportModal } from "@/components/bizcase/BulkImportModal";
+import { CashFlowChart } from "@/components/bizcase/CashFlowChart";
+import { aggregateCashFlowSeries } from "@/lib/bizcase/calc";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
