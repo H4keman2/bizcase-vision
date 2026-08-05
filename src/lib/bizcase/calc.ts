@@ -297,3 +297,22 @@ export function aggregateCashFlowSeries(
   }
   return out;
 }
+
+/**
+ * Split a whole-unit total across `count` periods so the parts are as even as
+ * possible and sum back to exactly `total` (remainder spread one unit at a
+ * time across the earliest periods). Non-integer totals keep a fractional
+ * remainder on the final period so the sum still matches exactly.
+ */
+export function distributeEvenly(total: number, count: number): number[] {
+  if (count <= 0) return [];
+  const base = Math.floor(total / count);
+  const out = new Array(count).fill(base);
+  let remainder = total - base * count;
+  for (let i = 0; i < count && remainder >= 1; i++) {
+    out[i] += 1;
+    remainder -= 1;
+  }
+  if (remainder > 0) out[count - 1] += remainder;
+  return out;
+}
