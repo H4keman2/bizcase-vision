@@ -36,8 +36,14 @@ export function listCases(): CaseRecord[] {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
+/** True when a new case can be created under the current license state. */
+export function canCreateCase(): boolean {
+  return isLicensed() || listCaseIds().length < FREE_CASE_LIMIT;
+}
+
 export function createCase(name = "Untitled Case"): CaseRecord {
   const ids = listCaseIds();
+  if (!isLicensed() && ids.length >= FREE_CASE_LIMIT) throw new LicenseLimitError();
   const id = `case_${Date.now().toString(36)}`;
   const now = new Date().toISOString();
   const inputs = defaultInputs();
