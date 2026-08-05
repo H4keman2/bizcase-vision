@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { InfoTooltip } from "./InfoTooltip";
+import { SettingsGear } from "./settings-context";
 import { cn } from "@/lib/utils";
 
 const stripGrouping = (s: string) => s.replace(/,/g, "");
@@ -88,15 +89,18 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-8 border-b border-border pb-5">
-      {titleAction ? (
-        <div className="mb-3 flex items-start justify-between gap-4">
-          <p className="label-eyebrow">{eyebrow}</p>
-          <div className="shrink-0">{titleAction}</div>
+      {/* Top strip: eyebrow on the left, settings gear (+ optional action) on the right.
+          The gear lives in normal flow here so it can never overlap the title or
+          action buttons at any screen size. */}
+      <div className="mb-3 flex items-start justify-between gap-4">
+        <p className="label-eyebrow">{eyebrow}</p>
+        <div className="flex shrink-0 items-center gap-2">
+          {titleAction}
+          <SettingsGear />
         </div>
-      ) : null}
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          {titleAction ? null : <p className="label-eyebrow mb-2">{eyebrow}</p>}
           {titleSlot ?? (
             <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
           )}

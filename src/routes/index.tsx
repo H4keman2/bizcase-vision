@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Screen, Btn, Modal } from "@/components/bizcase/ui";
+import { SettingsGear } from "@/components/bizcase/settings-context";
 import { createCase, listCases, deleteCase } from "@/lib/bizcase/storage";
 import { fmtCompact, fmtDate, fmtPercent, fmtMonths } from "@/lib/bizcase/format";
 import type { CaseRecord } from "@/lib/bizcase/types";
@@ -65,6 +66,10 @@ function greeting(): string {
   if (h < 21) return "Good evening";
   return "Working late";
 }
+
+/** Stable SSR value; the real greeting is applied after hydration so the
+ *  server (UTC) and client (local) times don't cause a hydration mismatch. */
+const SSR_GREETING = "Welcome back";
 
 function StatTile({
   label,
@@ -203,8 +208,10 @@ function CaseList() {
   const [about, setAbout] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<CaseRecord | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [greetingText, setGreetingText] = useState(SSR_GREETING);
 
   useEffect(() => setCases(listCases()), []);
+  useEffect(() => setGreetingText(greeting()), []);
 
   const onNew = () => {
     const record = createCase("Untitled Case");
@@ -220,7 +227,7 @@ function CaseList() {
             BizCase Builder
           </h1>
           <p className="mt-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            {greeting()} —{" "}
+            {greetingText} —{" "}
             {cases.length === 0 ? "let's build your first case" : "ready when you are"}
           </p>
         </div>
@@ -237,6 +244,7 @@ function CaseList() {
           >
             ?
           </button>
+          <SettingsGear />
         </div>
       </div>
 
