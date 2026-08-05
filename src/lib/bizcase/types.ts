@@ -3,6 +3,7 @@ export type TimelineType = "flat" | "manual" | "ramp";
 export type TimelineGranularity = "year" | "quarter" | "month" | "week";
 export type OverheadBasis = "cogs" | "revenue";
 export type CaseMode = "simple" | "detailed";
+export type ManualBasis = "amount" | "units";
 
 export const PERIODS_PER_YEAR: Record<TimelineGranularity, number> = {
   year: 1,
@@ -232,7 +233,7 @@ export function zeroInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 0 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", multipliers: [0, 0, 0] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
         ramp: { year1Percent: 0, growthRatePercent: 0 },
       },
     },
@@ -260,7 +261,7 @@ export function defaultInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 15 },
       timeline: {
         type: "flat",
-        manual: { granularity: "year", multipliers: [1, 1, 1] },
+        manual: { granularity: "year", basis: "amount", values: [0, 0, 0] },
         ramp: { year1Percent: 60, growthRatePercent: 10 },
       },
     },
