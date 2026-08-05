@@ -103,6 +103,19 @@ export function resolveManualSchedule(
 }
 
 
+/** Human-readable summary of a manual timeline, for exports and prompts. */
+export function describeManualTimeline(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+): string {
+  const sched = resolveManualSchedule(manual);
+  const unit = GRANULARITY_LABEL[sched.granularity];
+  if (sched.values) {
+    const suffix = sched.basis === "units" ? " units" : "";
+    return `Manual by ${unit} (${sched.values.join(", ")}${suffix} per ${unit.toLowerCase()})`;
+  }
+  return `Manual by ${unit} (x${(sched.legacyMultipliers ?? []).join(", x")})`;
+}
+
 export interface Margins {
   grossMarginPercent: number | null;
   contributionMarginPerUnit: number | null;

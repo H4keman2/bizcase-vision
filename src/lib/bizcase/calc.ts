@@ -250,11 +250,10 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
   const netTotal = flows.reduce((s, cf) => s + cf, 0);
   const roi = totalInvestment > 0 ? (netTotal / totalInvestment) * 100 : 0;
 
-  const { revenueAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
   const horizonMonths = Math.max(1, Math.round(inputs.horizonYears * 12));
   let totalRevenue = 0;
   for (let m = 1; m <= horizonMonths; m++) {
-    totalRevenue += (revenueAnnual * timelineMultiplierForMonth(inputs.benefits.timeline, m)) / 12;
+    totalRevenue += monthlyBenefit(inputs, m).revenue;
   }
 
   let cum = 0;
