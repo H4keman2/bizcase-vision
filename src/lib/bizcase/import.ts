@@ -240,6 +240,52 @@ export function hasCriticalFields(values: Extracted): boolean {
   return INVESTMENT_KEYS.some(nonzero) && BENEFIT_KEYS.some(nonzero);
 }
 
+export interface ImportIssue {
+  field: FieldKey;
+  message: string;
+}
+
+const isRampMode = (values: Extracted) =>
+  (values.timelineMode?.value ?? "").trim().toLowerCase() === "ramp";
+
+/**
+ * Blocking validation. Ramp timelines cannot be imported without both ramp
+ * parameters, since the schedule is meaningless (and silently flat) without them.
+ */
+export function validateImport(values: Extracted): ImportIssue[] {
+  const issues: ImportIssue[] = [];
+
+  const mode = (values.timelineMode?.value ?? "").trim().toLowerCase();
+  if (mode !== "" && mode !== "flat" && mode !== "manual" && mode !== "ramp") {
+    issues.push({
+      field: "timelineMode",
+      message: `Unrecognized timeline mode "${values.timelineMode?.value}" — use flat, manual, or ramp.`,
+    });
+  }
+
+  if (isRampMode(values)) {
+    const checks: { key: FieldKey; label: string; min: number; max: number }[] = [
+      { key: "rampYear1Percent", label: "Ramp Year 1 %", min: 0, max: 100 },
+      { key: "rampGrowthRatePercent", label: "Ramp Growth Rate %/Yr", min: -100, max: 1000 },
+    ];
+    checks.forEach(({ key, label, min, max }) => {
+      const raw = (values[key]?.value ?? "").trim();
+      if (raw === "") {
+        issues.push({ field: key, message: `${label} is required when Timeline Mode is "ramp".` });
+        return;
+      }
+      const n = numOf(values, key);
+      if (n === null) {
+        issues.push({ field: key, message: `${label} must be a number.` });
+      } else if (n < min || n > max) {
+        issues.push({ field: key, message: `${label} must be between ${min} and ${max}.` });
+      }
+    });
+  }
+
+  return issues;
+}
+
 export function applyToInputs(inputs: CaseInputs, values: Extracted): CaseInputs {
   const next = JSON.parse(JSON.stringify(inputs)) as CaseInputs;
   const set = (k: FieldKey, apply: (n: number) => void) => {

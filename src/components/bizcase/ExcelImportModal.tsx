@@ -11,6 +11,7 @@ import {
   hasCriticalFields,
   mapExtracted,
   validateFile,
+  validateImport,
   type Extracted,
 } from "@/lib/bizcase/import";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,8 @@ export function ExcelImportModal({
   };
 
   const incomplete = status === "review" && !hasCriticalFields(values);
+  const issues = status === "review" ? validateImport(values) : [];
+  const issueFor = (key: string) => issues.find((i) => i.field === key)?.message;
 
   return (
     <Modal title="Import from Excel" onClose={onClose} wide>
@@ -84,16 +87,35 @@ export function ExcelImportModal({
               Missing investment or benefit data — case will show $0 returns until completed.
             </p>
           )}
+          {issues.length > 0 && (
+            <div className="mb-4 border border-decline bg-decline/10 px-3 py-2">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-decline">
+                Fix {issues.length} issue{issues.length === 1 ? "" : "s"} before importing
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {issues.map((i) => (
+                  <li key={i.field} className="font-mono text-[11px] text-decline">
+                    {i.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="grid max-h-[50vh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
             {SCHEMA_FIELDS.map((f) => {
               const v = values[f.key];
               const found = v?.value !== "";
+              const issue = issueFor(f.key);
               return (
                 <div
                   key={f.key}
                   className={cn(
                     "border p-3",
-                    found ? "border-border bg-card-inset" : "border-dashed border-border/70",
+                    issue
+                      ? "border-decline bg-decline/5"
+                      : found
+                        ? "border-border bg-card-inset"
+                        : "border-dashed border-border/70",
                   )}
                 >
                   <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -122,16 +144,22 @@ export function ExcelImportModal({
                       }))
                     }
                   />
+                  {issue && <p className="mt-1.5 font-mono text-[10px] text-decline">{issue}</p>}
                 </div>
               );
             })}
           </div>
           <div className="mt-5 flex gap-2">
-            <Btn variant="primary" onClick={() => onConfirm(applyToInputs(inputs, values))}>
+            <Btn
+              variant="primary"
+              disabled={issues.length > 0}
+              onClick={() => onConfirm(applyToInputs(inputs, values))}
+            >
               Confirm &amp; Populate Case
             </Btn>
             <Btn onClick={onClose}>Cancel</Btn>
           </div>
+
         </div>
       )}
     </Modal>
