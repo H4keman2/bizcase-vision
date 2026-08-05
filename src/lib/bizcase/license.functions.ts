@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const Input = z.object({ key: z.string().min(4).max(200) });
 
-const PRODUCT_ID = "6tG_g_n57Svv1_IMgXiA==";
+const PRODUCT_ID = "6tG_g_n57LnSvv1_IMgXiA==";
 
 /** Verifies a Gumroad license key. Returns { valid: true } or throws with a readable message. */
 export const verifyLicenseKey = createServerFn({ method: "POST" })
