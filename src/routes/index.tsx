@@ -85,17 +85,22 @@ function StatTile({
   tone?: "default" | "positive" | "negative";
 }) {
   const animated = useCountUp(value ?? 0);
+  const accent =
+    tone === "positive"
+      ? "var(--color-primary)"
+      : tone === "negative"
+        ? "var(--color-decline)"
+        : null;
   return (
     <div
-      className={`animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500 ${
-        tone === "positive"
-          ? "border-l-2 border-l-primary"
-          : tone === "negative"
-            ? "border-l-2 border-l-decline"
-            : ""
-      }`}
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "backwards" }}
+      className="animate-in fade-in slide-in-from-bottom-2 border border-border bg-card-inset px-3 py-3 duration-500"
+      style={{
+        animationDelay: `${delay}ms`,
+        animationFillMode: "backwards",
+        ...(accent ? { borderLeft: `3px solid ${accent}` } : null),
+      }}
     >
+
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
