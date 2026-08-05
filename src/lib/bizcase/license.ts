@@ -46,6 +46,13 @@ export function clearLicenseKey() {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/** Shows only the last 4 characters of a stored key, e.g. "••••-3F9A". */
+export function maskLicenseKey(key: string): string {
+  const t = key.trim();
+  if (t.length <= 4) return t;
+  return `••••-${t.slice(-4)}`;
+}
+
 export function onLicenseChange(fn: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   window.addEventListener(EVENT, fn);
