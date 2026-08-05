@@ -12,10 +12,11 @@ import {
 } from "recharts";
 import { fmtCompact } from "@/lib/bizcase/format";
 
-const AXIS = "#8A8A8A";
-const GRID = "#2A2A2A";
-const PRIMARY = "#C7F92B";
-const DECLINE = "#FF5A3C";
+const AXIS = "var(--color-muted-foreground)";
+const GRID = "var(--color-border)";
+const PRIMARY = "var(--color-primary)";
+const DECLINE = "var(--color-decline)";
+const SURFACE = "var(--color-card)";
 
 export function CashFlowChart({
   data,
@@ -67,12 +68,15 @@ export function CashFlowChart({
           <Tooltip
             cursor={{ stroke: PRIMARY, strokeWidth: 1, strokeDasharray: "3 3" }}
             contentStyle={{
-              backgroundColor: "#141414",
-              border: "1px solid #2A2A2A",
+              backgroundColor: SURFACE,
+              border: `1px solid ${GRID}`,
               borderRadius: 0,
               fontFamily: "monospace",
               fontSize: 12,
+              color: "var(--color-card-foreground)",
             }}
+            labelStyle={{ color: "var(--color-card-foreground)" }}
+            itemStyle={{ color: "var(--color-card-foreground)" }}
             labelFormatter={(m) => `Month ${m}`}
             formatter={(v, n) => [fmtCompact(Number(v)), n === "a" ? labelA : labelB]}
           />
@@ -87,7 +91,7 @@ export function CashFlowChart({
               strokeWidth={2}
               fill="url(#cashFlowSplit)"
               dot={false}
-              activeDot={{ r: 4, fill: PRIMARY, stroke: "#141414", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: PRIMARY, stroke: SURFACE, strokeWidth: 2 }}
             />
           )}
           {showA && seriesB && (
@@ -95,10 +99,10 @@ export function CashFlowChart({
               type="monotone"
               dataKey="a"
               name={labelA}
-              stroke="#8A8A8A"
+              stroke={AXIS}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, fill: "#8A8A8A", stroke: "#141414", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: AXIS, stroke: SURFACE, strokeWidth: 2 }}
             />
           )}
           {seriesB && (
@@ -109,7 +113,7 @@ export function CashFlowChart({
               stroke={PRIMARY}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, fill: PRIMARY, stroke: "#141414", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: PRIMARY, stroke: SURFACE, strokeWidth: 2 }}
             />
           )}
         </ComposedChart>

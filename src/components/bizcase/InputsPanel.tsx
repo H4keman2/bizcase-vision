@@ -1,17 +1,28 @@
 import { Card, NumField, SegToggle, Btn } from "./ui";
 import { InfoTooltip } from "./InfoTooltip";
-import type {
-  CaseInputs,
-  CaseMode,
-  RevenueModelType,
-  TimelineType,
-  OverheadBasis,
+import { cn } from "@/lib/utils";
+import {
+  periodCount,
+  resolveManualMultipliers,
+  GRANULARITY_LABEL,
+  type CaseInputs,
+  type CaseMode,
+  type RevenueModelType,
+  type TimelineType,
+  type TimelineGranularity,
+  type OverheadBasis,
 } from "@/lib/bizcase/types";
 
 type Patch = (fn: (draft: CaseInputs) => void) => void;
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
+}
+
+function periodLabel(granularity: TimelineGranularity, index: number): string {
+  const n = index + 1;
+  const prefix = { year: "Year", quarter: "Q", month: "M", week: "W" }[granularity];
+  return granularity === "year" ? `${prefix} ${n} ×` : `${prefix}${n} ×`;
 }
 
 export function InputsPanel({
@@ -33,6 +44,9 @@ export function InputsPanel({
   const rm = inputs.benefits.revenueModel;
   const tl = inputs.benefits.timeline;
   const years = Math.max(1, Math.ceil(inputs.horizonYears));
+  const { granularity: manualGranularity, multipliers: manualMultipliers } =
+    resolveManualMultipliers(tl.manual);
+  const manualPeriods = periodCount(inputs.horizonYears, manualGranularity);
 
   return (
     <div className="flex flex-col gap-4">
@@ -123,7 +137,15 @@ export function InputsPanel({
             </p>
             <SegToggle<RevenueModelType>
               value={rm.type}
-              onChange={(v) => patch((d) => void (d.benefits.revenueModel.type = v))}
+              onChange={(v) =>
+                patch((d) => {
+                  const wasNone = d.benefits.revenueModel.type === "none";
+                  d.benefits.revenueModel.type = v;
+                  // Turning on a revenue model for the first time defaults overhead
+                  // to enabled — the user can still switch it off if they don't want it.
+                  if (wasNone && v !== "none") d.benefits.overhead.enabled = true;
+                })
+              }
               options={[
                 { value: "none", label: "None" },
                 { value: "aggregate", label: "Aggregate" },
@@ -264,23 +286,68 @@ export function InputsPanel({
           </p>
         )}
         {tl.type === "manual" && (
-          <div className="mt-3 grid grid-cols-3 gap-3">
-            {Array.from({ length: years }).map((_, i) => (
-              <NumField
-                key={i}
-                label={`Year ${i + 1} ×`}
-                info="manualMultiplier"
-                step={0.1}
-                value={tl.manual.yearlyMultipliers[i] ?? 1}
-                onChange={(v) =>
-                  patch((d) => {
-                    const arr = d.benefits.timeline.manual.yearlyMultipliers;
-                    while (arr.length < years) arr.push(1);
-                    arr[i] = v;
-                  })
-                }
-              />
-            ))}
+          <div className="mt-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Breakdown
+              </p>
+              <div className="w-[280px]">
+                <SegToggle<TimelineGranularity>
+                  value={manualGranularity}
+                  onChange={(v) =>
+                    patch((d) => {
+                      d.benefits.timeline.manual = {
+                        granularity: v,
+                        multipliers: new Array(periodCount(d.horizonYears, v)).fill(1),
+                      };
+                    })
+                  }
+                  options={(["year", "quarter", "month", "week"] as const).map((g) => ({
+                    value: g,
+                    label: GRANULARITY_LABEL[g],
+                  }))}
+                />
+              </div>
+            </div>
+            <div
+              className={cn(
+                "grid gap-3",
+                manualGranularity === "week"
+                  ? "grid-cols-4 sm:grid-cols-6"
+                  : manualGranularity === "month"
+                    ? "grid-cols-4"
+                    : "grid-cols-3",
+                manualPeriods > 12 && "max-h-64 overflow-y-auto pr-1",
+              )}
+            >
+              {Array.from({ length: manualPeriods }).map((_, i) => (
+                <NumField
+                  key={i}
+                  label={periodLabel(manualGranularity, i)}
+                  info="manualMultiplier"
+                  step={0.1}
+                  value={manualMultipliers[i] ?? 1}
+                  onChange={(v) =>
+                    patch((d) => {
+                      const manual = d.benefits.timeline.manual;
+                      if (!manual.multipliers) {
+                        manual.multipliers = manual.yearlyMultipliers
+                          ? [...manual.yearlyMultipliers]
+                          : [];
+                        manual.granularity = manual.granularity ?? "year";
+                      }
+                      while (manual.multipliers.length <= i) manual.multipliers.push(1);
+                      manual.multipliers[i] = v;
+                    })
+                  }
+                />
+              ))}
+            </div>
+            <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+              {manualPeriods} {GRANULARITY_LABEL[manualGranularity].toLowerCase()}
+              {manualPeriods === 1 ? "" : "s"} across the {inputs.horizonYears}-year horizon. Each ×
+              scales that period's run-rate benefit.
+            </p>
           </div>
         )}
         {tl.type === "ramp" && (

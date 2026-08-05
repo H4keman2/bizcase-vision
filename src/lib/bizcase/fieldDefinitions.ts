@@ -8,8 +8,7 @@ export const fieldDefinitions: Record<string, string> = {
   nre: "Non-Recurring Engineering. One-time design, development or setup spend that happens before the benefits start.",
   upfront:
     "Upfront Capex. Capital spent at the start of the project, such as equipment, licenses or installation.",
-  phasedCapex:
-    "Additional capital spend scheduled for specific months instead of all at day one.",
+  phasedCapex: "Additional capital spend scheduled for specific months instead of all at day one.",
   phasedMonth: "The month number, counting from project start, when this capital is spent.",
   phasedAmount: "The amount of capital spent in that month.",
 
@@ -39,9 +38,9 @@ export const fieldDefinitions: Record<string, string> = {
 
   // ---- Timeline ----
   timeline:
-    "How benefits phase in over time. Flat applies them evenly, Manual sets a multiplier per year, Ramp grows them from a starting percentage.",
+    "How benefits phase in over time. Flat applies them evenly, Manual sets a multiplier per year, quarter, month or week, Ramp grows them from a starting percentage.",
   manualMultiplier:
-    "A multiplier applied to that year's benefits. 1.0 means full run rate, 0.5 means half.",
+    "A multiplier applied to that period's benefits. 1.0 means full run rate, 0.5 means half.",
   rampYear1:
     "The share of full run-rate benefits realized in year one while the solution is still ramping up.",
   rampGrowth: "How much the realized benefit grows each year after year one, as a percentage.",
@@ -55,8 +54,7 @@ export const fieldDefinitions: Record<string, string> = {
   // ---- Outputs ----
   npv: "Net Present Value. The total value of future cash flows, discounted back to today's dollars. A positive NPV means the investment is expected to add value.",
   irr: "Internal Rate of Return. The discount rate at which NPV equals zero. Compare this to your required rate of return to judge if the investment clears the bar.",
-  payback:
-    "How long it takes for cumulative cash flows to cover the initial investment.",
+  payback: "How long it takes for cumulative cash flows to cover the initial investment.",
   roi: "Return on Investment: total net cash return divided by total investment across the horizon. Undiscounted — unlike NPV and IRR, it ignores the time value of money.",
   scenario:
     "Sensitivity view. Worst Case applies -15% to benefits/revenue and +15% to costs; Best Case applies +15% benefits and -5% costs. Your saved inputs never change.",
@@ -77,10 +75,8 @@ export const fieldDefinitions: Record<string, string> = {
     "Simple shows only savings, timeline and horizon. Detailed adds revenue modeling, overhead and margin analysis.",
   cumulativeCashFlow:
     "Running total of money in minus money out, month by month. The point it crosses zero is your payback.",
-  versionLabel:
-    "A name for this saved snapshot of the case, so you can find and compare it later.",
-  versionHistory:
-    "Every saved snapshot of this case. Select two to compare them side by side.",
+  versionLabel: "A name for this saved snapshot of the case, so you can find and compare it later.",
+  versionHistory: "Every saved snapshot of this case. Select two to compare them side by side.",
   compareDelta:
     "The difference between Case B and Case A for that metric. Green means Case B is better.",
   compareSelect: "Pick which saved version or the current unsaved draft to place on this side.",

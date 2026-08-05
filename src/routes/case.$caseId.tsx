@@ -14,6 +14,7 @@ import { effectiveInputs, zeroInputs, applyScenario } from "@/lib/bizcase/types"
 import { exportCasePdf } from "@/lib/bizcase/pdf";
 import { exportCaseExcel, downloadImportTemplate } from "@/lib/bizcase/excel";
 import { generateExecSummary } from "@/lib/bizcase/ai.functions";
+import { loadSettings } from "@/lib/bizcase/settings";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion, Scenario } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,7 @@ function CaseEditor() {
   const [execSummary, setExecSummary] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const runSummary = useServerFn(generateExecSummary);
+  const [scenarioAdjustments, setScenarioAdjustments] = useState(loadSettings().scenario);
 
   useEffect(() => {
     const r = getCase(caseId);
@@ -62,13 +64,17 @@ function CaseEditor() {
     setRecord(r);
     setInputs(r.draft.inputs);
     setVersions(listVersions(caseId));
+    setScenarioAdjustments(loadSettings().scenario);
   }, [caseId]);
 
   const mode: CaseMode = record?.mode ?? "simple";
 
   const outputs = useMemo(
-    () => (inputs ? calculate(applyScenario(effectiveInputs(inputs, mode), scenario)) : null),
-    [inputs, mode, scenario],
+    () =>
+      inputs
+        ? calculate(applyScenario(effectiveInputs(inputs, mode), scenario, scenarioAdjustments))
+        : null,
+    [inputs, mode, scenario, scenarioAdjustments],
   );
 
   const baseOutputs = useMemo(
@@ -118,7 +124,7 @@ function CaseEditor() {
     );
   };
 
-  const eff = applyScenario(effectiveInputs(inputs, mode), scenario);
+  const eff = applyScenario(effectiveInputs(inputs, mode), scenario, scenarioAdjustments);
 
   const handleNewCase = () => {
     const created = createCase("Untitled Case");
@@ -183,7 +189,7 @@ function CaseEditor() {
             value={record.name}
             onChange={(e) => setRecord({ ...record, name: e.target.value })}
             onBlur={() => saveCase(record)}
-            className="w-full max-w-lg border border-transparent bg-transparent text-2xl font-bold tracking-tight outline-none hover:border-border/60 focus:border-primary focus:bg-card-inset md:text-3xl"
+            className="w-full max-w-lg border border-border/60 bg-card-inset/40 px-2 py-1 text-2xl font-bold tracking-tight text-foreground outline-none hover:border-border focus:border-primary focus:bg-card-inset md:text-3xl"
           />
         }
         action={

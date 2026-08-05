@@ -1,5 +1,12 @@
 import * as XLSX from "xlsx";
-import type { CaseInputs, CaseMode, CaseOutputs } from "./types";
+import {
+  resolveManualMultipliers,
+  GRANULARITY_LABEL,
+  type CaseInputs,
+  type CaseMode,
+  type CaseOutputs,
+} from "./types";
+import { SCHEMA_FIELDS } from "./import";
 
 export interface ExcelCase {
   name: string;
@@ -44,7 +51,10 @@ function inputRows(c: ExcelCase): SheetRow[] {
       tl.type === "ramp"
         ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
         : tl.type === "manual"
-          ? `Manual (${tl.manual.yearlyMultipliers.slice(0, Math.ceil(i.horizonYears)).join(", ")})`
+          ? (() => {
+              const { granularity, multipliers } = resolveManualMultipliers(tl.manual);
+              return `Manual by ${GRANULARITY_LABEL[granularity]} (${multipliers.join(", ")})`;
+            })()
           : "Flat",
   });
   if (c.mode === "detailed") {
@@ -84,13 +94,16 @@ function outputRows(c: ExcelCase): SheetRow[] {
   ];
   const m = o.margins;
   if (c.mode === "detailed" && m) {
-    if (m.grossMarginPercent !== null) rows.push({ Metric: "Gross Margin", Value: m.grossMarginPercent / 100 });
+    if (m.grossMarginPercent !== null)
+      rows.push({ Metric: "Gross Margin", Value: m.grossMarginPercent / 100 });
     if (m.contributionMarginPerUnit !== null)
       rows.push({ Metric: "Contribution / Unit", Value: m.contributionMarginPerUnit });
     if (m.contributionMarginPercent !== null)
       rows.push({ Metric: "Contribution %", Value: m.contributionMarginPercent / 100 });
-    if (m.breakevenUnitsPerYear !== null) rows.push({ Metric: "Breakeven Units / Yr", Value: m.breakevenUnitsPerYear });
-    if (c.inputs.benefits.overhead.enabled) rows.push({ Metric: "Overhead / Yr", Value: m.overheadAnnual });
+    if (m.breakevenUnitsPerYear !== null)
+      rows.push({ Metric: "Breakeven Units / Yr", Value: m.breakevenUnitsPerYear });
+    if (c.inputs.benefits.overhead.enabled)
+      rows.push({ Metric: "Overhead / Yr", Value: m.overheadAnnual });
   }
   return rows;
 }
@@ -132,21 +145,18 @@ export function exportCaseExcel(c: ExcelCase) {
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
 }
 
-/** Downloads a blank Excel template users can fill in and re-import. */
+/** Downloads a blank Excel template users can fill in and re-import.
+ *  Generated directly from SCHEMA_FIELDS so it can never drift out of sync
+ *  with what the import pipeline actually reads. Every field is optional —
+ *  leave a row blank and it's simply skipped on import. */
 export function downloadImportTemplate() {
-  const rows: SheetRow[] = [
-    { Field: "NRE", Value: 0, Notes: "One-time non-recurring engineering cost" },
-    { Field: "Upfront Capex", Value: 0, Notes: "Capital spent at month 0" },
-    { Field: "Phased Capex · Month", Value: 0, Notes: "Month number (add one row per phase)" },
-    { Field: "Phased Capex · Amount", Value: 0, Notes: "Amount spent in that month" },
-    { Field: "Cost Savings / Yr", Value: 0, Notes: "Annual hard cost savings" },
-    { Field: "Time Savings / Yr", Value: 0, Notes: "Annual value of time saved" },
-    { Field: "Timeline Mode", Value: "flat", Notes: "flat | ramp | manual" },
-    { Field: "Horizon (Years)", Value: 3, Notes: "Analysis horizon" },
-    { Field: "Discount Rate (Annual %)", Value: 10, Notes: "Annual discount rate, percent" },
-  ];
+  const rows: SheetRow[] = SCHEMA_FIELDS.map((f) => ({
+    Field: f.label,
+    Value: "",
+    Notes: `${f.note} (optional)`,
+  }));
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 46 }];
+  ws["!cols"] = [{ wch: 28 }, { wch: 14 }, { wch: 52 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "BizCase Template");
   XLSX.writeFile(wb, `BizCase_Import_Template_${today()}.xlsx`);

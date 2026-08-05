@@ -1,24 +1,65 @@
-import type { CaseInputs, CaseOutputs, Margins } from "./types";
+import {
+  PERIODS_PER_YEAR,
+  resolveManualMultipliers,
+  type CaseInputs,
+  type CaseOutputs,
+  type Margins,
+} from "./types";
 
-export function resolveTimelineMultipliers(
+/**
+ * Multiplier for the fraction of a year spanning [rangeStartYears, rangeEndYears),
+ * computed as an overlap-weighted average across whichever manual periods
+ * (year/quarter/month/week) intersect that range. Lets a manual timeline be
+ * edited at any granularity while cash flow still resolves month by month.
+ */
+function manualMultiplierForRange(
+  manual: CaseInputs["benefits"]["timeline"]["manual"],
+  rangeStartYears: number,
+  rangeEndYears: number,
+): number {
+  const { granularity, multipliers } = resolveManualMultipliers(manual);
+  const periodsPerYear = PERIODS_PER_YEAR[granularity];
+  const fallback = multipliers[multipliers.length - 1] ?? 1;
+
+  const pStart = Math.floor(rangeStartYears * periodsPerYear + 1e-9);
+  const pEndExclusive = Math.max(pStart + 1, Math.ceil(rangeEndYears * periodsPerYear - 1e-9));
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (let p = pStart; p < pEndExclusive; p++) {
+    const periodStart = p / periodsPerYear;
+    const periodEnd = (p + 1) / periodsPerYear;
+    const overlapStart = Math.max(rangeStartYears, periodStart);
+    const overlapEnd = Math.min(rangeEndYears, periodEnd);
+    const weight = Math.max(0, overlapEnd - overlapStart);
+    if (weight <= 0) continue;
+    const value = p < multipliers.length ? (multipliers[p] ?? fallback) : fallback;
+    weightedSum += value * weight;
+    totalWeight += weight;
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : fallback;
+}
+
+/** Timeline multiplier applying to cash-flow month `monthIndex1Based` (1 = first month). */
+export function timelineMultiplierForMonth(
   timeline: CaseInputs["benefits"]["timeline"],
-  totalYears: number,
-): number[] {
-  if (!timeline || timeline.type === "flat") return new Array(totalYears).fill(1);
+  monthIndex1Based: number,
+): number {
+  if (!timeline || timeline.type === "flat") return 1;
+
+  const rangeStart = (monthIndex1Based - 1) / 12;
+  const rangeEnd = monthIndex1Based / 12;
 
   if (timeline.type === "manual") {
-    const arr = timeline.manual.yearlyMultipliers ?? [];
-    return new Array(totalYears)
-      .fill(0)
-      .map((_, i) => (i < arr.length ? arr[i] : (arr[arr.length - 1] ?? 1)));
+    return manualMultiplierForRange(timeline.manual, rangeStart, rangeEnd);
   }
 
+  // Ramp compounds annually — one multiplier per full year, applied flat within it.
+  const yearIdx = Math.floor(rangeStart + 1e-9);
   const { year1Percent, growthRatePercent } = timeline.ramp;
-  const mults = [year1Percent / 100];
-  for (let y = 1; y < totalYears; y++) {
-    mults.push(mults[y - 1] * (1 + growthRatePercent / 100));
-  }
-  return mults;
+  let mult = year1Percent / 100;
+  for (let y = 1; y <= yearIdx; y++) mult *= 1 + growthRatePercent / 100;
+  return mult;
 }
 
 export function resolveRevenueModel(rm: CaseInputs["benefits"]["revenueModel"]) {
@@ -59,13 +100,13 @@ export function buildCashFlowSeries(inputs: CaseInputs): number[] {
   const overheadAnnual = computeOverheadAnnual(inputs);
   const netRevenue = revenueAnnual - cogsAnnual - overheadAnnual;
   const baseAnnual =
-    (inputs.benefits.costSavingsAnnual || 0) + netRevenue + (inputs.benefits.timeSavingsAnnual || 0);
+    (inputs.benefits.costSavingsAnnual || 0) +
+    netRevenue +
+    (inputs.benefits.timeSavingsAnnual || 0);
 
-  const years = Math.ceil(inputs.horizonYears);
-  const mults = resolveTimelineMultipliers(inputs.benefits.timeline, years);
   for (let m = 1; m <= horizonMonths; m++) {
-    const yearIdx = Math.floor((m - 1) / 12);
-    series[m] += (baseAnnual * (mults[yearIdx] ?? 1)) / 12;
+    const mult = timelineMultiplierForMonth(inputs.benefits.timeline, m);
+    series[m] += (baseAnnual * mult) / 12;
   }
   return series;
 }
@@ -75,7 +116,10 @@ export function npv(cashFlows: number[], monthlyRate: number): number {
 }
 
 function npvDerivative(cashFlows: number[], rate: number): number {
-  return cashFlows.reduce((sum, cf, t) => (t === 0 ? sum : sum - (t * cf) / Math.pow(1 + rate, t + 1)), 0);
+  return cashFlows.reduce(
+    (sum, cf, t) => (t === 0 ? sum : sum - (t * cf) / Math.pow(1 + rate, t + 1)),
+    0,
+  );
 }
 
 export function irr(cashFlows: number[]): number | null {
@@ -171,9 +215,11 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
   const roi = totalInvestment > 0 ? (netTotal / totalInvestment) * 100 : 0;
 
   const { revenueAnnual } = resolveRevenueModel(inputs.benefits.revenueModel);
-  const years = Math.ceil(inputs.horizonYears);
-  const mults = resolveTimelineMultipliers(inputs.benefits.timeline, years);
-  const totalRevenue = mults.reduce((s, m) => s + revenueAnnual * m, 0);
+  const horizonMonths = Math.max(1, Math.round(inputs.horizonYears * 12));
+  let totalRevenue = 0;
+  for (let m = 1; m <= horizonMonths; m++) {
+    totalRevenue += (revenueAnnual * timelineMultiplierForMonth(inputs.benefits.timeline, m)) / 12;
+  }
 
   let cum = 0;
   const cashFlowSeries = flows.map((cf, month) => {

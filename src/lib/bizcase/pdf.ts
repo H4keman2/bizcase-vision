@@ -1,6 +1,12 @@
 import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
-import type { CaseInputs, CaseMode, CaseOutputs } from "./types";
+import {
+  resolveManualMultipliers,
+  GRANULARITY_LABEL,
+  type CaseInputs,
+  type CaseMode,
+  type CaseOutputs,
+} from "./types";
 
 const BLACK = "#0A0A0A";
 const GREEN = "#C7F92B";
@@ -196,11 +202,17 @@ function inputRows(c: PdfCase): [string, string][] {
     tl.type === "ramp"
       ? `Ramp ${tl.ramp.year1Percent}% +${tl.ramp.growthRatePercent}%/yr`
       : tl.type === "manual"
-        ? `Manual (${tl.manual.yearlyMultipliers.slice(0, Math.ceil(i.horizonYears)).join(", ")})`
+        ? (() => {
+            const { granularity, multipliers } = resolveManualMultipliers(tl.manual);
+            return `Manual by ${GRANULARITY_LABEL[granularity]} (${multipliers.join(", ")})`;
+          })()
         : "Flat",
   ]);
   if (mode === "detailed") {
-    out.push(["Revenue Model", rm.type === "unit" ? "Unit-Level" : rm.type === "aggregate" ? "Aggregate" : "None"]);
+    out.push([
+      "Revenue Model",
+      rm.type === "unit" ? "Unit-Level" : rm.type === "aggregate" ? "Aggregate" : "None",
+    ]);
     if (rm.type === "aggregate") {
       out.push(["Revenue Lift / Yr", fmtCurrency(rm.aggregate.revenueLiftAnnual)]);
       out.push(["COGS / Yr", fmtCurrency(rm.aggregate.cogsAnnual)]);
@@ -234,7 +246,8 @@ function outputRows(c: PdfCase): [string, string][] {
     out.push(["Total Revenue", fmtCompact(o.totalRevenue)]);
     const m = o.margins;
     if (m) {
-      if (m.grossMarginPercent !== null) out.push(["Gross Margin", fmtPercent(m.grossMarginPercent)]);
+      if (m.grossMarginPercent !== null)
+        out.push(["Gross Margin", fmtPercent(m.grossMarginPercent)]);
       if (m.contributionMarginPerUnit !== null)
         out.push(["Contribution / Unit", fmtCurrency(m.contributionMarginPerUnit, 2)]);
       if (m.contributionMarginPercent !== null)
@@ -283,7 +296,11 @@ export function exportCasePdf(c: PdfCase) {
   y = rows(doc, inputRows(c), y, 2);
 
   const img = chartImage([
-    { label: "Cumulative Cash Flow", color: "#6E8F00", points: c.outputs.cashFlowSeries.map((p) => p.cumulative) },
+    {
+      label: "Cumulative Cash Flow",
+      color: "#6E8F00",
+      points: c.outputs.cashFlowSeries.map((p) => p.cumulative),
+    },
   ]);
   y = sectionLabel(doc, "Cumulative Cash Flow", y);
   if (img) {
@@ -345,10 +362,22 @@ export function exportComparisonPdf(opts: {
   y += 46;
 
   y = sectionLabel(doc, "Metrics Ledger", y);
-  const ledger: { label: string; va: number | null; vb: number | null; fmt: (v: number | null) => string; inverse?: boolean }[] = [
+  const ledger: {
+    label: string;
+    va: number | null;
+    vb: number | null;
+    fmt: (v: number | null) => string;
+    inverse?: boolean;
+  }[] = [
     { label: "NPV", va: a.outputs.npv, vb: b.outputs.npv, fmt: fmtCompact },
     { label: "IRR", va: a.outputs.irr, vb: b.outputs.irr, fmt: (v) => fmtPercent(v) },
-    { label: "Payback", va: a.outputs.paybackMonths, vb: b.outputs.paybackMonths, fmt: fmtMonths, inverse: true },
+    {
+      label: "Payback",
+      va: a.outputs.paybackMonths,
+      vb: b.outputs.paybackMonths,
+      fmt: fmtMonths,
+      inverse: true,
+    },
     { label: "ROI", va: a.outputs.roi, vb: b.outputs.roi, fmt: (v) => fmtPercent(v, 0) },
     {
       label: "Total Investment",
@@ -395,7 +424,11 @@ export function exportComparisonPdf(opts: {
     const better = diff === null || even ? null : row.inverse ? diff < 0 : diff > 0;
     doc.setTextColor(better === null ? GREY : better ? "#4F7A00" : "#D93A1C");
     doc.text(
-      diff === null ? "—" : even ? "EVEN" : `${better ? "+" : "-"}${row.fmt(Math.abs(diff)).replace("-", "")}`,
+      diff === null
+        ? "—"
+        : even
+          ? "EVEN"
+          : `${better ? "+" : "-"}${row.fmt(Math.abs(diff)).replace("-", "")}`,
       colX[3],
       y,
       { align: "right" },

@@ -1,8 +1,22 @@
 export type RevenueModelType = "none" | "aggregate" | "unit";
 export type TimelineType = "flat" | "manual" | "ramp";
+export type TimelineGranularity = "year" | "quarter" | "month" | "week";
 export type OverheadBasis = "cogs" | "revenue";
 export type CaseMode = "simple" | "detailed";
 
+export const PERIODS_PER_YEAR: Record<TimelineGranularity, number> = {
+  year: 1,
+  quarter: 4,
+  month: 12,
+  week: 52,
+};
+
+export const GRANULARITY_LABEL: Record<TimelineGranularity, string> = {
+  year: "Year",
+  quarter: "Quarter",
+  month: "Month",
+  week: "Week",
+};
 
 export interface PhasedCapex {
   month: number;
@@ -31,12 +45,33 @@ export interface CaseInputs {
     overhead: { enabled: boolean; basis: OverheadBasis; percent: number };
     timeline: {
       type: TimelineType;
-      manual: { yearlyMultipliers: number[] };
+      manual: {
+        granularity: TimelineGranularity;
+        multipliers: number[];
+        /** @deprecated pre-granularity saves; read as a fallback, never written */
+        yearlyMultipliers?: number[];
+      };
       ramp: { year1Percent: number; growthRatePercent: number };
     };
   };
   horizonYears: number;
   discountRateAnnual: number;
+}
+
+/** Number of editable periods a manual timeline needs for a given horizon + granularity. */
+export function periodCount(horizonYears: number, granularity: TimelineGranularity): number {
+  return Math.max(1, Math.ceil(horizonYears * PERIODS_PER_YEAR[granularity]));
+}
+
+/** The multiplier array to actually read, covering old (year-only) saves. */
+export function resolveManualMultipliers(manual: CaseInputs["benefits"]["timeline"]["manual"]): {
+  granularity: TimelineGranularity;
+  multipliers: number[];
+} {
+  if (manual.multipliers?.length) {
+    return { granularity: manual.granularity ?? "year", multipliers: manual.multipliers };
+  }
+  return { granularity: "year", multipliers: manual.yearlyMultipliers ?? [1] };
 }
 
 export interface Margins {
@@ -92,12 +127,15 @@ export function effectiveInputs(inputs: CaseInputs, mode: CaseMode): CaseInputs 
   };
 }
 
-
 export type Scenario = "worst" | "expected" | "best";
 
-const SCENARIO_ADJ: Record<Scenario, { revenue: number; cost: number }> = {
+export interface ScenarioAdjustments {
+  worst: { revenue: number; cost: number };
+  best: { revenue: number; cost: number };
+}
+
+export const DEFAULT_SCENARIO_ADJUSTMENTS: ScenarioAdjustments = {
   worst: { revenue: -15, cost: 15 },
-  expected: { revenue: 0, cost: 0 },
   best: { revenue: 15, cost: -5 },
 };
 
@@ -108,9 +146,13 @@ export const scenarioLabel: Record<Scenario, string> = {
 };
 
 /** Scales revenue/benefit and cost inputs for sensitivity analysis. Never mutates saved data. */
-export function applyScenario(inputs: CaseInputs, scenario: Scenario): CaseInputs {
+export function applyScenario(
+  inputs: CaseInputs,
+  scenario: Scenario,
+  adjustments: ScenarioAdjustments = DEFAULT_SCENARIO_ADJUSTMENTS,
+): CaseInputs {
   if (scenario === "expected") return inputs;
-  const { revenue, cost } = SCENARIO_ADJ[scenario];
+  const { revenue, cost } = adjustments[scenario];
   const r = 1 + revenue / 100;
   const c = 1 + cost / 100;
   const rm = inputs.benefits.revenueModel;
@@ -162,7 +204,7 @@ export function zeroInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 0 },
       timeline: {
         type: "flat",
-        manual: { yearlyMultipliers: [0, 0, 0] },
+        manual: { granularity: "year", multipliers: [0, 0, 0] },
         ramp: { year1Percent: 0, growthRatePercent: 0 },
       },
     },
@@ -190,7 +232,7 @@ export function defaultInputs(): CaseInputs {
       overhead: { enabled: false, basis: "cogs", percent: 15 },
       timeline: {
         type: "flat",
-        manual: { yearlyMultipliers: [1, 1, 1] },
+        manual: { granularity: "year", multipliers: [1, 1, 1] },
         ramp: { year1Percent: 60, growthRatePercent: 10 },
       },
     },

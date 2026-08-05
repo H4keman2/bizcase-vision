@@ -2,20 +2,75 @@ import readXlsxFile from "read-excel-file/browser";
 import type { CaseInputs } from "./types";
 
 export const SCHEMA_FIELDS = [
-  { key: "nre", label: "NRE", type: "currency" },
-  { key: "upfront", label: "Upfront Capex", type: "currency" },
-  { key: "costSavingsAnnual", label: "Cost Savings / Yr", type: "currency" },
-  { key: "timeSavingsAnnual", label: "Time Savings / Yr", type: "currency" },
-  { key: "revenueLiftAnnual", label: "Revenue Lift / Yr", type: "currency" },
-  { key: "cogsAnnual", label: "COGS / Yr", type: "currency" },
-  { key: "pricePerUnit", label: "Price / Unit", type: "currency" },
-  { key: "variableCostPerUnit", label: "Variable Cost / Unit", type: "currency" },
-  { key: "fixedCostsAnnual", label: "Fixed Costs / Yr", type: "currency" },
-  { key: "unitsPerYear", label: "Units / Yr", type: "number" },
-  { key: "overheadPercent", label: "Overhead %", type: "percent" },
-  { key: "overheadBasis", label: "Overhead Basis", type: "text" },
-  { key: "horizonYears", label: "Horizon (Years)", type: "number" },
-  { key: "discountRateAnnual", label: "Discount Rate (Annual)", type: "percent" },
+  { key: "nre", label: "NRE", type: "currency", note: "One-time non-recurring engineering cost" },
+  { key: "upfront", label: "Upfront Capex", type: "currency", note: "Capital spent at month 0" },
+  {
+    key: "costSavingsAnnual",
+    label: "Cost Savings / Yr",
+    type: "currency",
+    note: "Annual hard cost savings",
+  },
+  {
+    key: "timeSavingsAnnual",
+    label: "Time Savings / Yr",
+    type: "currency",
+    note: "Annual value of time saved",
+  },
+  {
+    key: "revenueLiftAnnual",
+    label: "Revenue Lift / Yr",
+    type: "currency",
+    note: "Aggregate revenue model — annual revenue added",
+  },
+  {
+    key: "cogsAnnual",
+    label: "COGS / Yr",
+    type: "currency",
+    note: "Aggregate revenue model — annual cost of goods sold",
+  },
+  {
+    key: "pricePerUnit",
+    label: "Price / Unit",
+    type: "currency",
+    note: "Unit-level revenue model — price per unit sold",
+  },
+  {
+    key: "variableCostPerUnit",
+    label: "Variable Cost / Unit",
+    type: "currency",
+    note: "Unit-level revenue model — variable cost per unit",
+  },
+  {
+    key: "fixedCostsAnnual",
+    label: "Fixed Costs / Yr",
+    type: "currency",
+    note: "Unit-level revenue model — annual fixed costs",
+  },
+  {
+    key: "unitsPerYear",
+    label: "Units / Yr",
+    type: "number",
+    note: "Unit-level revenue model — units sold annually",
+  },
+  {
+    key: "overheadPercent",
+    label: "Overhead %",
+    type: "percent",
+    note: "Optional — only applied if present",
+  },
+  {
+    key: "overheadBasis",
+    label: "Overhead Basis",
+    type: "text",
+    note: 'Optional — "cogs" or "revenue"',
+  },
+  { key: "horizonYears", label: "Horizon (Years)", type: "number", note: "Analysis horizon" },
+  {
+    key: "discountRateAnnual",
+    label: "Discount Rate (Annual)",
+    type: "percent",
+    note: "Annual discount rate, percent",
+  },
 ] as const;
 
 export type FieldKey = (typeof SCHEMA_FIELDS)[number]["key"];
@@ -62,7 +117,6 @@ export async function fileToSheetText(file: File): Promise<string> {
   if (rowCount === 0) throw new ImportError("File was empty — no readable rows were found.");
   return text.slice(0, 12000);
 }
-
 
 type RawFields = Record<string, { value: number | string | null; confidence: string | null }>;
 
