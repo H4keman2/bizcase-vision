@@ -60,7 +60,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                   <SegToggle<TextSize>
                     value={settings.textSize}
                     onChange={(v) => update({ ...settings, textSize: v })}
-                    options={(["small", "default", "large", "xlarge"] as const).map((s) => ({
+                    options={(["small", "default", "large"] as const).map((s) => ({
                       value: s,
                       label: TEXT_SIZE_LABEL[s],
                     }))}
