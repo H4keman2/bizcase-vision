@@ -248,6 +248,14 @@ export interface ImportIssue {
 const isRampMode = (values: Extracted) =>
   (values.timelineMode?.value ?? "").trim().toLowerCase() === "ramp";
 
+/** Parses a number strictly: anything that is not a plain numeric literal is rejected. */
+const strictNum = (raw: string): number | null => {
+  const cleaned = raw.replace(/[\s,%$]/g, "");
+  if (!/^-?(\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+};
+
 /**
  * Blocking validation. Ramp timelines cannot be imported without both ramp
  * parameters, since the schedule is meaningless (and silently flat) without them.
