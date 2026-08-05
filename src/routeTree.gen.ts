@@ -9,29 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
+import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompareCaseIdRoute = CompareCaseIdRouteImport.update({
-  id: '/compare/$caseId',
-  path: '/compare/$caseId',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
   id: '/case/$caseId',
   path: '/case/$caseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareCaseIdRoute = CompareCaseIdRouteImport.update({
+  id: '/compare/$caseId',
+  path: '/compare/$caseId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -71,13 +71,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -85,11 +78,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/compare/$caseId': {
-      id: '/compare/$caseId'
-      path: '/compare/$caseId'
-      fullPath: '/compare/$caseId'
-      preLoaderRoute: typeof CompareCaseIdRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/case/$caseId': {
@@ -97,6 +90,13 @@ declare module '@tanstack/react-router' {
       path: '/case/$caseId'
       fullPath: '/case/$caseId'
       preLoaderRoute: typeof CaseCaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare/$caseId': {
+      id: '/compare/$caseId'
+      path: '/compare/$caseId'
+      fullPath: '/compare/$caseId'
+      preLoaderRoute: typeof CompareCaseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
