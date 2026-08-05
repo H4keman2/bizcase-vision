@@ -5,6 +5,7 @@ import {
   type CaseMode,
   type CaseOutputs,
 } from "./types";
+import type { ExecSummary } from "./ai.functions";
 import { SCHEMA_FIELDS } from "./import";
 
 export interface ExcelCase {
@@ -13,7 +14,7 @@ export interface ExcelCase {
   inputs: CaseInputs;
   outputs: CaseOutputs;
   mode: CaseMode;
-  summary?: string | null;
+  summary?: ExecSummary | null;
 }
 
 function slug(s: string) {
@@ -123,7 +124,10 @@ export function exportCaseExcel(c: ExcelCase) {
   if (c.summary) {
     summary.push({ Metric: "", Value: "" });
     summary.push({ Metric: "— Executive Summary —", Value: "" });
-    summary.push({ Metric: "Narrative", Value: c.summary });
+    summary.push({ Metric: "Verdict", Value: c.summary.verdict });
+    c.summary.drivers.forEach((d) => summary.push({ Metric: "Driver:", Value: d }));
+    c.summary.risks.forEach((r) => summary.push({ Metric: "Risk:", Value: r }));
+    summary.push({ Metric: "Next Step", Value: c.summary.nextStep });
   }
   const summarySheet = XLSX.utils.json_to_sheet(summary);
   summarySheet["!cols"] = [{ wch: 34 }, { wch: 52 }];

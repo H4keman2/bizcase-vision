@@ -6,6 +6,7 @@ import {
   type CaseMode,
   type CaseOutputs,
 } from "./types";
+import type { ExecSummary } from "./ai.functions";
 
 const BLACK = "#0A0A0A";
 const GREEN = "#C7F92B";
@@ -19,7 +20,7 @@ export interface PdfCase {
   inputs: CaseInputs;
   outputs: CaseOutputs;
   mode: CaseMode;
-  summary?: string | null;
+  summary?: ExecSummary | null;
 }
 
 /** Renders a cumulative cash-flow chart to a PNG data URL (no DOM capture needed). */
@@ -277,6 +278,74 @@ function footer(doc: jsPDF) {
   doc.text(`GENERATED ${today()} · BIZCASE BUILDER`, 40, H - 28);
 }
 
+/** Renders the structured executive summary: verdict banner, driver/risk bullets, next step. */
+function summaryBlock(doc: jsPDF, s: ExecSummary, y: number) {
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const wrap = (text: string, indent = 0) => doc.splitTextToSize(text, W - 80 - indent) as string[];
+  const page = (needed: number) => {
+    if (y + needed > H - 60) {
+      footer(doc);
+      doc.addPage();
+      y = 60;
+    }
+  };
+
+  if (s.verdict) {
+    const lines = wrap(s.verdict, 20);
+    const boxH = lines.length * 15 + 18;
+    page(boxH);
+    doc.setFillColor(GREEN);
+    doc.rect(40, y - 10, W - 80, boxH, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(BLACK);
+    doc.text(lines, 50, y + 5);
+    y += boxH + 14;
+  }
+
+  const bullets = (label: string, items: string[]) => {
+    if (!items.length) return;
+    page(30);
+    doc.setFont("courier", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(GREY);
+    doc.text(label.toUpperCase(), 40, y);
+    y += 14;
+    items.forEach((item) => {
+      const lines = wrap(item, 18);
+      page(lines.length * 13 + 6);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(TEXT);
+      doc.text("-", 42, y);
+      doc.text(lines, 56, y);
+      y += lines.length * 13 + 4;
+    });
+    y += 8;
+  };
+
+  bullets("Key Drivers", s.drivers);
+  bullets("Risks & Sensitivities", s.risks);
+
+  if (s.nextStep) {
+    page(34);
+    doc.setFont("courier", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(GREY);
+    doc.text("RECOMMENDED NEXT STEP", 40, y);
+    y += 14;
+    const lines = wrap(s.nextStep);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(TEXT);
+    doc.text(lines, 40, y);
+    y += lines.length * 13 + 6;
+  }
+
+  return y;
+}
+
 /** Single-case export. */
 export function exportCasePdf(c: PdfCase) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -313,11 +382,7 @@ export function exportCasePdf(c: PdfCase) {
       y = 60;
     }
     y = sectionLabel(doc, "Executive Summary", y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
-    doc.setTextColor(TEXT);
-    const lines = doc.splitTextToSize(c.summary, W - 80) as string[];
-    doc.text(lines, 40, y);
+    y = summaryBlock(doc, c.summary, y);
   }
 
   footer(doc);
@@ -329,7 +394,7 @@ export function exportComparisonPdf(opts: {
   name: string;
   a: PdfCase;
   b: PdfCase;
-  summary?: string | null;
+  summary?: ExecSummary | null;
 }) {
   const { a, b } = opts;
   const doc = new jsPDF({ unit: "pt", format: "a4" });

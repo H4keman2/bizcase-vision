@@ -14,7 +14,7 @@ async function callGateway(messages: { role: string; content: string }[]) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${key}`,
     },
-    body: JSON.stringify({ model: MODEL, messages, max_tokens: 1000 }),
+    body: JSON.stringify({ model: MODEL, messages, max_tokens: 4000 }),
   });
 
   if (res.status === 429) throw new Error("Rate limit reached. Try again in a moment.");
@@ -38,48 +38,78 @@ const SummaryInput = z.object({
   roi: z.number(),
   revenueContext: z.string(),
   timelineContext: z.string(),
+  npvWorst: z.number().nullable().optional(),
+  npvBest: z.number().nullable().optional(),
+  marginContext: z.string().optional(),
+  phasedCapexContext: z.string().optional(),
 });
+
+export interface ExecSummary {
+  verdict: string;
+  drivers: string[];
+  risks: string[];
+  nextStep: string;
+}
+
+const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
 export const generateExecSummary = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SummaryInput.parse(d))
-  .handler(async ({ data }) => {
-    const prompt = `You are helping a product manager translate a business case into a short executive summary for non-financial stakeholders.
+  .handler(async ({ data }): Promise<ExecSummary> => {
+    const range =
+      data.npvWorst === null || data.npvWorst === undefined || data.npvBest === null || data.npvBest === undefined
+        ? "Scenario range: not available."
+        : `Scenario range: worst-case NPV ${money(data.npvWorst)}, best-case NPV ${money(data.npvBest)}.`;
+
+    const prompt = `You are helping a product manager translate a business case into a structured executive summary for non-financial stakeholders.
 
 Case name: ${data.name}
 Horizon: ${data.horizonYears} years
-Total investment: $${Math.round(data.totalInvestment).toLocaleString()} (including $${Math.round(data.nre).toLocaleString()} NRE)
-Total revenue over horizon: $${Math.round(data.totalRevenue).toLocaleString()}
-NPV: $${Math.round(data.npv).toLocaleString()} at an ${data.discountRateAnnual}% annual discount rate
+Total investment: ${money(data.totalInvestment)} (including ${money(data.nre)} NRE)
+Total revenue over horizon: ${money(data.totalRevenue)}
+NPV: ${money(data.npv)} at an ${data.discountRateAnnual}% annual discount rate
 IRR: ${data.irr === null ? "not solvable" : `${data.irr.toFixed(1)}%`}
 Payback period: ${data.paybackMonths === null ? "not reached within the horizon" : `${data.paybackMonths.toFixed(1)} months`}
 ROI: ${data.roi.toFixed(0)}%
+${range}
+${data.marginContext ?? ""}
+${data.phasedCapexContext ?? ""}
 ${data.revenueContext}
 ${data.timelineContext}
 
-Write a 3 to 4 sentence plain-English executive summary. Lead with the bottom-line recommendation. No jargon, no bullet points, no em dashes, no headings. Plain prose only.
+Ground every risk in the real numbers above: reference the worst-case NPV, the payback timing, margin or breakeven figures, and phased capex timing where they exist. Do not write generic hedging that could apply to any project.
 
-Output ONLY the finished summary text itself. Do not include a header, a title, numbered steps, multiple draft options, markdown formatting like asterisks, or any commentary about your approach. Do not say things like "Draft 1" or "Here is a summary." The very first character of your response must be the first word of the summary.`;
+Keep each entry to one short plain-English sentence. No jargon, no markdown, no em dashes, no bullet characters.
+
+Respond ONLY with a JSON object, no markdown fences, no preamble. Shape:
+{"verdict": "one punchy sentence with the bottom-line recommendation", "drivers": ["driver 1", "driver 2", "driver 3"], "risks": ["risk 1", "risk 2"], "nextStep": "one sentence recommended next action"}`;
 
     const text = await callGateway([{ role: "user", content: prompt }]);
-    return { summary: cleanSummaryText(text) };
+    const cleaned = extractJson(text);
+    try {
+      const parsed = JSON.parse(cleaned) as Partial<ExecSummary>;
+      return {
+        verdict: String(parsed.verdict ?? "").trim(),
+        drivers: Array.isArray(parsed.drivers) ? parsed.drivers.map((d) => String(d)) : [],
+        risks: Array.isArray(parsed.risks) ? parsed.risks.map((r) => String(r)) : [],
+        nextStep: String(parsed.nextStep ?? "").trim(),
+      };
+    } catch {
+      throw new Error("Could not read the AI response. Try again.");
+    }
   });
 
-/** Defensive cleanup if the model still wraps the summary in headers, draft labels or markdown. */
-function cleanSummaryText(raw: string): string {
-  return raw
-    .split("\n")
-    .filter((line) => {
-      const t = line.trim();
-      if (!t) return false;
-      if (/^(\*\*|#|\d+\.\s*\*\*|draft\s*\d+:?)/i.test(t)) return false;
-      if (/^\*\s*\*draft/i.test(t)) return false;
-      return true;
-    })
-    .join(" ")
-    .replace(/\*\*/g, "")
-    .replace(/^\*+\s*/, "")
-    .replace(/\s+/g, " ")
+
+/** Strips code fences and any preamble so a JSON body can be parsed. */
+function extractJson(raw: string): string {
+  const t = raw
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
     .trim();
+  const start = t.indexOf("{");
+  const end = t.lastIndexOf("}");
+  return start !== -1 && end > start ? t.slice(start, end + 1) : t;
 }
 
 const ExtractInput = z.object({ sheetText: z.string().min(1).max(20000) });
