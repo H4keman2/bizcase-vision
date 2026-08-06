@@ -48,6 +48,37 @@ export function clearLicenseKey() {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/** Free-tier cap: one AI executive summary per case for unlicensed users. */
+export const FREE_EXEC_SUMMARY_LIMIT = 1;
+
+function execSummaryKey(caseId: string) {
+  return `execSummaryCount:${caseId}`;
+}
+
+export function getExecSummaryCount(caseId: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    return Number(window.localStorage.getItem(execSummaryKey(caseId)) ?? 0) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Licensed users are never tracked or capped. */
+export function incrementExecSummaryCount(caseId: string): void {
+  if (typeof window === "undefined" || isLicensed()) return;
+  try {
+    window.localStorage.setItem(execSummaryKey(caseId), String(getExecSummaryCount(caseId) + 1));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function canGenerateExecSummary(caseId: string): boolean {
+  if (isLicensed()) return true;
+  return getExecSummaryCount(caseId) < FREE_EXEC_SUMMARY_LIMIT;
+}
+
 /** Shows only the last 4 characters of a stored key, e.g. "••••-3F9A". */
 export function maskLicenseKey(key: string): string {
   const t = key.trim();

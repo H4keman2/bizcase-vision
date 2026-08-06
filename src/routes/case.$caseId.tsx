@@ -400,6 +400,7 @@ function CaseEditor() {
 
       {modal === "summary" && (
         <ExecSummaryModal
+          caseId={caseId}
           name={record.name}
           inputs={eff}
           outputs={outputs}
