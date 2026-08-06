@@ -4,7 +4,12 @@ import { Modal, Btn, LoadingLine } from "./ui";
 import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
 import { calculate } from "@/lib/bizcase/calc";
 import { loadSettings } from "@/lib/bizcase/settings";
-import { isLicensed } from "@/lib/bizcase/license";
+import {
+  isLicensed,
+  canGenerateExecSummary,
+  incrementExecSummaryCount,
+} from "@/lib/bizcase/license";
+import { UpgradeNotice } from "./LicenseModals";
 import {
   applyScenario,
   REGIONS,
@@ -143,12 +148,14 @@ function SectionLabel({ children, tone }: { children: string; tone?: "risk" }) {
 }
 
 export function ExecSummaryModal({
+  caseId,
   name,
   inputs,
   outputs,
   onClose,
   onGenerated,
 }: {
+  caseId: string;
   name: string;
   inputs: CaseInputs;
   outputs: CaseOutputs;
@@ -160,13 +167,19 @@ export function ExecSummaryModal({
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ExecSummary | null>(null);
   const [copied, setCopied] = useState(false);
+  const [capped, setCapped] = useState(false);
 
   const generate = async () => {
+    if (!canGenerateExecSummary(caseId)) {
+      setCapped(true);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await run({ data: buildSummaryPayload(name, inputs, outputs) });
       setSummary(res);
+      incrementExecSummaryCount(caseId);
       onGenerated?.(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -175,16 +188,24 @@ export function ExecSummaryModal({
     }
   };
 
+  const locked = !isLicensed() && (capped || !canGenerateExecSummary(caseId));
+
   return (
     <Modal title="Executive Summary" onClose={onClose} wide>
       {!summary && !loading && !error && (
         <div>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Generate a plain-English summary of this case for non-financial stakeholders.
-          </p>
-          <Btn variant="primary" onClick={generate}>
-            Generate
-          </Btn>
+          {locked ? (
+            <UpgradeNotice reason="You've used your free executive summary for this case. Unlock the full version for unlimited summaries on all cases." />
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Generate a plain-English summary of this case for non-financial stakeholders.
+              </p>
+              <Btn variant="primary" onClick={generate}>
+                Generate
+              </Btn>
+            </>
+          )}
         </div>
       )}
 
@@ -196,6 +217,7 @@ export function ExecSummaryModal({
           <Btn onClick={generate}>Retry</Btn>
         </div>
       )}
+
 
       {summary && !loading && (
         <div>
@@ -257,8 +279,14 @@ export function ExecSummaryModal({
             >
               {copied ? "Copied" : "Copy"}
             </Btn>
-            <Btn onClick={generate}>Regenerate</Btn>
+            {!locked && <Btn onClick={generate}>Regenerate</Btn>}
           </div>
+
+          {locked && (
+            <div className="mt-5">
+              <UpgradeNotice reason="You've used your free executive summary for this case. Unlock the full version for unlimited summaries on all cases." />
+            </div>
+          )}
         </div>
       )}
     </Modal>
