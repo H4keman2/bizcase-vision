@@ -4,7 +4,12 @@ import { Modal, Btn, LoadingLine } from "./ui";
 import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
 import { calculate } from "@/lib/bizcase/calc";
 import { loadSettings } from "@/lib/bizcase/settings";
-import { isLicensed } from "@/lib/bizcase/license";
+import {
+  isLicensed,
+  canGenerateExecSummary,
+  incrementExecSummaryCount,
+} from "@/lib/bizcase/license";
+import { UpgradeNotice } from "./LicenseModals";
 import {
   applyScenario,
   REGIONS,
@@ -143,12 +148,14 @@ function SectionLabel({ children, tone }: { children: string; tone?: "risk" }) {
 }
 
 export function ExecSummaryModal({
+  caseId,
   name,
   inputs,
   outputs,
   onClose,
   onGenerated,
 }: {
+  caseId: string;
   name: string;
   inputs: CaseInputs;
   outputs: CaseOutputs;
@@ -160,13 +167,19 @@ export function ExecSummaryModal({
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ExecSummary | null>(null);
   const [copied, setCopied] = useState(false);
+  const [capped, setCapped] = useState(false);
 
   const generate = async () => {
+    if (!canGenerateExecSummary(caseId)) {
+      setCapped(true);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await run({ data: buildSummaryPayload(name, inputs, outputs) });
       setSummary(res);
+      incrementExecSummaryCount(caseId);
       onGenerated?.(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
