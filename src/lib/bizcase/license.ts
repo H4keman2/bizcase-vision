@@ -39,7 +39,25 @@ export function getLicenseKey(): string | null {
 export function saveLicenseKey(key: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, key);
+  clearExecSummaryCounts();
   window.dispatchEvent(new Event(EVENT));
+}
+
+/** Clear all per-case exec summary counters when the user upgrades.
+ *  Licensed users should never hit a stale locked state. */
+export function clearExecSummaryCounts() {
+  if (typeof window === "undefined") return;
+  try {
+    const prefix = "execSummaryCount:";
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(prefix)) keys.push(k);
+    }
+    keys.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearLicenseKey() {
