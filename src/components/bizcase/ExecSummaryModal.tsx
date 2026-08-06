@@ -188,16 +188,24 @@ export function ExecSummaryModal({
     }
   };
 
+  const locked = !isLicensed() && (capped || !canGenerateExecSummary(caseId));
+
   return (
     <Modal title="Executive Summary" onClose={onClose} wide>
       {!summary && !loading && !error && (
         <div>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Generate a plain-English summary of this case for non-financial stakeholders.
-          </p>
-          <Btn variant="primary" onClick={generate}>
-            Generate
-          </Btn>
+          {locked ? (
+            <UpgradeNotice reason="You've used your free executive summary for this case. Unlock the full version for unlimited summaries on all cases." />
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Generate a plain-English summary of this case for non-financial stakeholders.
+              </p>
+              <Btn variant="primary" onClick={generate}>
+                Generate
+              </Btn>
+            </>
+          )}
         </div>
       )}
 
@@ -209,6 +217,7 @@ export function ExecSummaryModal({
           <Btn onClick={generate}>Retry</Btn>
         </div>
       )}
+
 
       {summary && !loading && (
         <div>
