@@ -87,30 +87,6 @@ export function OutputsPanel({
         </div>
       </Card>
 
-      {scenarioRange &&
-        (licensed ? (
-          <Card label="Scenario Range">
-            <div className="grid grid-cols-2 gap-3">
-              <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} tone={scenarioRange.worst >= 0 ? "positive" : "negative"} />
-              <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} tone={scenarioRange.best >= 0 ? "positive" : "negative"} />
-            </div>
-          </Card>
-        ) : (
-          <Card label="Scenario Range">
-            <LockedOverlay
-              label="Unlock best & worst case"
-              onClick={() =>
-                onLockedFeature?.("Best and worst case scenarios are part of the full version.")
-              }
-            >
-              <div className="grid grid-cols-2 gap-3">
-                <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} />
-                <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} />
-              </div>
-            </LockedOverlay>
-          </Card>
-        ))}
-
       <Card label="Cumulative Cash Flow" info="cumulativeCashFlow">
         {showChart && <CashFlowChart data={chartData} />}
       </Card>
@@ -127,26 +103,6 @@ export function OutputsPanel({
             valueFormatter={fmtCompact}
             seriesLabel="Revenue"
           />
-        </Card>
-      )}
-
-      {mode === "detailed" && rmType !== "none" && !licensed && (
-        <Card label="Regional Breakdown">
-          <LockedOverlay
-            label="Unlock regional breakdown"
-            onClick={() =>
-              onLockedFeature?.(
-                "Regional revenue and unit breakdowns are part of the full version.",
-              )
-            }
-          >
-            <SeriesChart
-              data={sampleRegional}
-              regional
-              valueFormatter={fmtCompact}
-              seriesLabel="Revenue"
-            />
-          </LockedOverlay>
         </Card>
       )}
 
@@ -205,6 +161,52 @@ export function OutputsPanel({
           </div>
         </Card>
       )}
+
+      {/* Locked/paid previews grouped together after all free content. */}
+      {scenarioRange &&
+        (licensed ? (
+          <Card label="Scenario Range">
+            <div className="grid grid-cols-2 gap-3">
+              <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} tone={scenarioRange.worst >= 0 ? "positive" : "negative"} />
+              <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} tone={scenarioRange.best >= 0 ? "positive" : "negative"} />
+            </div>
+          </Card>
+        ) : (
+          <Card label="Scenario Range">
+            <LockedOverlay
+              label="Unlock best & worst case"
+              onClick={() =>
+                onLockedFeature?.("Best and worst case scenarios are part of the full version.")
+              }
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} />
+                <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} />
+              </div>
+            </LockedOverlay>
+          </Card>
+        ))}
+
+      {mode === "detailed" && rmType !== "none" && !licensed && (
+        <Card label="Regional Breakdown">
+          <LockedOverlay
+            label="Unlock regional breakdown"
+            onClick={() =>
+              onLockedFeature?.(
+                "Regional revenue and unit breakdowns are part of the full version.",
+              )
+            }
+          >
+            <SeriesChart
+              data={sampleRegional}
+              regional
+              valueFormatter={fmtCompact}
+              seriesLabel="Revenue"
+            />
+          </LockedOverlay>
+        </Card>
+      )}
+
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Btn variant="primary" onClick={onExecSummary}>
