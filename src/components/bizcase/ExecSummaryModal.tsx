@@ -279,8 +279,14 @@ export function ExecSummaryModal({
             >
               {copied ? "Copied" : "Copy"}
             </Btn>
-            <Btn onClick={generate}>Regenerate</Btn>
+            {!locked && <Btn onClick={generate}>Regenerate</Btn>}
           </div>
+
+          {locked && (
+            <div className="mt-5">
+              <UpgradeNotice reason="You've used your free executive summary for this case. Unlock the full version for unlimited summaries on all cases." />
+            </div>
+          )}
         </div>
       )}
     </Modal>
