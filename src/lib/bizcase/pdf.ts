@@ -2,6 +2,8 @@ import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
   describeManualTimelineShort,
+  REGIONS,
+  REGION_LABEL,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
@@ -231,6 +233,20 @@ function inputRows(c: PdfCase): [string, string][] {
   return out;
 }
 
+/** Region · units/yr · revenue/yr rows — paid feature, only rendered for licensed exports. */
+function regionalRows(c: PdfCase): [string, string][] {
+  const rm = c.inputs.benefits.revenueModel;
+  if (rm.type !== "unit" || !rm.unit.regional?.enabled || !isLicensed()) return [];
+  const pricePerUnit = rm.unit.pricePerUnit || 0;
+  return REGIONS.map((r) => {
+    const units = rm.unit.regional!.unitsPerYear[r] || 0;
+    return [REGION_LABEL[r], `${fmtNumber(units)} U · ${fmtCompact(units * pricePerUnit)}`] as [
+      string,
+      string,
+    ];
+  });
+}
+
 function outputRows(c: PdfCase): [string, string][] {
   const o = c.outputs;
   const out: [string, string][] = [
@@ -379,6 +395,12 @@ export function exportCasePdf(c: PdfCase) {
 
   y = sectionLabel(doc, "Assumptions", y);
   y = rows(doc, inputRows(c), y, 2);
+
+  const regRows = regionalRows(c);
+  if (regRows.length) {
+    y = sectionLabel(doc, "Regional Breakdown", y);
+    y = rows(doc, regRows, y, 2);
+  }
 
   const img = chartImage([
     {
@@ -535,7 +557,18 @@ export function exportComparisonPdf(opts: {
   }
 
   y = sectionLabel(doc, "Assumptions · Case B", y);
-  rows(doc, inputRows(b), y, 2);
+  y = rows(doc, inputRows(b), y, 2);
+
+  const regRowsB = regionalRows(b);
+  if (regRowsB.length) {
+    if (y > doc.internal.pageSize.getHeight() - 140) {
+      footer(doc);
+      doc.addPage();
+      y = 60;
+    }
+    y = sectionLabel(doc, "Regional Breakdown · Case B", y);
+    rows(doc, regRowsB, y, 2);
+  }
 
   footer(doc);
   watermarkIfUnlicensed(doc);

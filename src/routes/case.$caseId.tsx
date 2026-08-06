@@ -272,7 +272,12 @@ function CaseEditor() {
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
-        <InputsPanel inputs={inputs} onChange={setInputs} mode={mode} />
+        <InputsPanel
+          inputs={inputs}
+          onChange={setInputs}
+          mode={mode}
+          onLockedFeature={(reason) => setUpgrade(reason)}
+        />
         <div className="lg:sticky lg:top-6 lg:self-start">
           <OutputsPanel
             inputs={inputs}

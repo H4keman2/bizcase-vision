@@ -4,7 +4,11 @@ import { cn } from "@/lib/utils";
 import {
   periodCount,
   PERIODS_PER_YEAR,
+  REGIONS,
+  REGION_LABEL,
   resolveManualSchedule,
+  effectiveUnitsPerYear,
+  zeroRegionalUnits,
   GRANULARITY_LABEL,
   type CaseInputs,
   type CaseMode,
@@ -15,6 +19,7 @@ import {
   type ManualBasis,
 } from "@/lib/bizcase/types";
 import { resolveRevenueModel, computeOverheadAnnual, distributeEvenly } from "@/lib/bizcase/calc";
+import { isLicensed } from "@/lib/bizcase/license";
 
 type Patch = (fn: (draft: CaseInputs) => void) => void;
 
@@ -32,10 +37,13 @@ export function InputsPanel({
   inputs,
   onChange,
   mode = "detailed",
+  onLockedFeature,
 }: {
   inputs: CaseInputs;
   onChange: (next: CaseInputs) => void;
   mode?: CaseMode;
+  /** Called instead of the change when the person interacts with a paid-only control. */
+  onLockedFeature?: (reason: string) => void;
 }) {
   const patch: Patch = (fn) => {
     const next = clone(inputs);
@@ -44,6 +52,7 @@ export function InputsPanel({
   };
 
   const detailed = mode === "detailed";
+  const licensed = isLicensed();
   const rm = inputs.benefits.revenueModel;
   const tl = inputs.benefits.timeline;
   const years = Math.max(1, Math.ceil(inputs.horizonYears));
@@ -55,7 +64,7 @@ export function InputsPanel({
 
   /** Annual run-rate for a manual schedule basis. */
   const annualRunRate = (basis: ManualBasis) => {
-    if (basis === "units") return rm.unit.unitsPerYear;
+    if (basis === "units") return effectiveUnitsPerYear(rm.unit);
     const { revenueAnnual, cogsAnnual } = resolveRevenueModel(rm);
     return (
       inputs.benefits.costSavingsAnnual +
@@ -91,8 +100,7 @@ export function InputsPanel({
     .reduce((sum, v) => sum + (Number.isFinite(v) ? v : 0), 0);
   const manualTarget = Math.round(annualRunRate(manualBasis) * years);
   const manualDrift = manualTotal - manualTarget;
-  const manualOffTarget =
-    tl.type === "manual" && manualTarget !== 0 && Math.abs(manualDrift) >= 1;
+  const manualOffTarget = tl.type === "manual" && manualTarget !== 0 && Math.abs(manualDrift) >= 1;
   const hasNegativeUnits = manualBasis === "units" && manualValues.some((v) => v < 0);
 
   return (
@@ -224,54 +232,143 @@ export function InputsPanel({
             )}
 
             {rm.type === "unit" && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <NumField
-                  label="Price / Unit"
-                  info="pricePerUnit"
-                  prefix="$"
-                  value={rm.unit.pricePerUnit}
-                  onChange={(v) =>
-                    patch((d) => void (d.benefits.revenueModel.unit.pricePerUnit = v))
-                  }
-                />
-                <NumField
-                  label="Variable Cost / Unit"
-                  info="variableCostPerUnit"
-                  prefix="$"
-                  value={rm.unit.variableCostPerUnit}
-                  onChange={(v) =>
-                    patch((d) => void (d.benefits.revenueModel.unit.variableCostPerUnit = v))
-                  }
-                />
-                <NumField
-                  label="Fixed Costs / Yr"
-                  info="fixedCostsAnnual"
-                  prefix="$"
-                  value={rm.unit.fixedCostsAnnual}
-                  onChange={(v) =>
-                    patch((d) => void (d.benefits.revenueModel.unit.fixedCostsAnnual = v))
-                  }
-                />
-                <NumField
-                  label="Units / Yr"
-                  info="unitsPerYear"
-                  value={rm.unit.unitsPerYear}
-                  onChange={(v) =>
-                    patch((d) => {
-                      d.benefits.revenueModel.unit.unitsPerYear = v;
-                      // Keep a units-based manual schedule in sync: spread the
-                      // annual units evenly across every period, distributing
-                      // any remainder so the periods sum exactly to the total.
-                      if (manualBasis === "units") {
-                        d.benefits.timeline.manual = {
-                          granularity: manualGranularity,
-                          basis: "units",
-                          values: seedValues(d.horizonYears, manualGranularity, "units", v),
-                        };
+              <div className="mt-3 flex flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <NumField
+                    label="Price / Unit"
+                    info="pricePerUnit"
+                    prefix="$"
+                    value={rm.unit.pricePerUnit}
+                    onChange={(v) =>
+                      patch((d) => void (d.benefits.revenueModel.unit.pricePerUnit = v))
+                    }
+                  />
+                  <NumField
+                    label="Variable Cost / Unit"
+                    info="variableCostPerUnit"
+                    prefix="$"
+                    value={rm.unit.variableCostPerUnit}
+                    onChange={(v) =>
+                      patch((d) => void (d.benefits.revenueModel.unit.variableCostPerUnit = v))
+                    }
+                  />
+                  <NumField
+                    label="Fixed Costs / Yr"
+                    info="fixedCostsAnnual"
+                    prefix="$"
+                    value={rm.unit.fixedCostsAnnual}
+                    onChange={(v) =>
+                      patch((d) => void (d.benefits.revenueModel.unit.fixedCostsAnnual = v))
+                    }
+                  />
+                  {!rm.unit.regional?.enabled && (
+                    <NumField
+                      label="Units / Yr"
+                      info="unitsPerYear"
+                      value={rm.unit.unitsPerYear}
+                      onChange={(v) =>
+                        patch((d) => {
+                          d.benefits.revenueModel.unit.unitsPerYear = v;
+                          // Keep a units-based manual schedule in sync: spread the
+                          // annual units evenly across every period, distributing
+                          // any remainder so the periods sum exactly to the total.
+                          if (manualBasis === "units") {
+                            d.benefits.timeline.manual = {
+                              granularity: manualGranularity,
+                              basis: "units",
+                              values: seedValues(d.horizonYears, manualGranularity, "units", v),
+                            };
+                          }
+                        })
                       }
-                    })
-                  }
-                />
+                    />
+                  )}
+                </div>
+
+                <div className="border-t border-border pt-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Regional Breakdown
+                      <InfoTooltip field="regionalBreakdown" />
+                    </span>
+                    <button
+                      type="button"
+                      aria-disabled={!licensed}
+                      onClick={() => {
+                        if (!licensed) {
+                          onLockedFeature?.(
+                            "Regional revenue and unit breakdowns are part of the full version.",
+                          );
+                          return;
+                        }
+                        patch((d) => {
+                          const cur = d.benefits.revenueModel.unit.regional;
+                          const nextEnabled = !cur?.enabled;
+                          d.benefits.revenueModel.unit.regional = {
+                            enabled: nextEnabled,
+                            unitsPerYear: cur?.unitsPerYear ?? zeroRegionalUnits(),
+                          };
+                        });
+                      }}
+                      className={cn(
+                        "border px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+                        !licensed
+                          ? "cursor-not-allowed border-border text-muted-foreground/30"
+                          : rm.unit.regional?.enabled
+                            ? "border-primary bg-primary text-primary-foreground hover:opacity-85"
+                            : "border-border text-muted-foreground hover:border-foreground hover:text-foreground",
+                      )}
+                    >
+                      {!licensed ? "Locked" : rm.unit.regional?.enabled ? "Enabled" : "Disabled"}
+                    </button>
+                  </div>
+
+                  {licensed && rm.unit.regional?.enabled ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        {REGIONS.map((region) => (
+                          <NumField
+                            key={region}
+                            label={REGION_LABEL[region]}
+                            value={rm.unit.regional!.unitsPerYear[region]}
+                            onChange={(v) =>
+                              patch((d) => {
+                                const regional = d.benefits.revenueModel.unit.regional!;
+                                regional.unitsPerYear[region] = v;
+                                // Units / Yr stays in sync with the regional total so the
+                                // rest of the calc engine (and a units-based manual
+                                // schedule) always sees the same number either way.
+                                const total = effectiveUnitsPerYear(d.benefits.revenueModel.unit);
+                                d.benefits.revenueModel.unit.unitsPerYear = total;
+                                if (manualBasis === "units") {
+                                  d.benefits.timeline.manual = {
+                                    granularity: manualGranularity,
+                                    basis: "units",
+                                    values: seedValues(
+                                      d.horizonYears,
+                                      manualGranularity,
+                                      "units",
+                                      total,
+                                    ),
+                                  };
+                                }
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+                        Total: {effectiveUnitsPerYear(rm.unit).toLocaleString("en-US")} units / yr
+                      </p>
+                    </>
+                  ) : (
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      {licensed
+                        ? "Split annual units across NA, LA, APAC and EMEA to see a regional breakdown on the Units and Revenue charts."
+                        : "Unlock the full version to split annual units across NA, LA, APAC and EMEA."}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </>

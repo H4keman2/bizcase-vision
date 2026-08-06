@@ -1,6 +1,10 @@
 import {
   PERIODS_PER_YEAR,
+  REGIONS,
   resolveManualSchedule,
+  effectiveUnitsPerYear,
+  regionalShares,
+  zeroRegionalUnits,
   type CaseInputs,
   type CaseOutputs,
   type Margins,
@@ -89,7 +93,8 @@ export function monthlyBenefit(
             : 0;
         const revenue = unitsPerMonth * (rm.pricePerUnit || 0);
         const net =
-          unitsPerMonth * ((rm.pricePerUnit || 0) - (rm.variableCostPerUnit || 0) - overheadPerUnit) +
+          unitsPerMonth *
+            ((rm.pricePerUnit || 0) - (rm.variableCostPerUnit || 0) - overheadPerUnit) +
           savingsAnnual / 12;
         return { net, revenue };
       }
@@ -105,10 +110,10 @@ export function monthlyBenefit(
   return { net: (baseAnnual * mult) / 12, revenue: (revenueAnnual * mult) / 12 };
 }
 
-
 export function resolveRevenueModel(rm: CaseInputs["benefits"]["revenueModel"]) {
   if (rm.type === "unit") {
-    const { pricePerUnit, variableCostPerUnit, unitsPerYear } = rm.unit;
+    const { pricePerUnit, variableCostPerUnit } = rm.unit;
+    const unitsPerYear = effectiveUnitsPerYear(rm.unit);
     return {
       revenueAnnual: pricePerUnit * unitsPerYear,
       cogsAnnual: variableCostPerUnit * unitsPerYear,
@@ -145,7 +150,6 @@ export function buildCashFlowSeries(inputs: CaseInputs): number[] {
   }
   return series;
 }
-
 
 export function npv(cashFlows: number[], monthlyRate: number): number {
   return cashFlows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + monthlyRate, t), 0);
@@ -224,7 +228,8 @@ export function computeMargins(inputs: CaseInputs): Margins | null {
     };
   }
 
-  const { pricePerUnit, variableCostPerUnit, fixedCostsAnnual, unitsPerYear } = rm.unit;
+  const { pricePerUnit, variableCostPerUnit, fixedCostsAnnual } = rm.unit;
+  const unitsPerYear = effectiveUnitsPerYear(rm.unit);
   const perUnitOverhead = unitsPerYear > 0 ? overheadAnnual / unitsPerYear : 0;
   const cm = pricePerUnit - variableCostPerUnit - perUnitOverhead;
   return {
@@ -270,6 +275,28 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
     };
   });
 
+  // Regional split assumes each region holds a constant share of annual unit
+  // volume over time — the timeline (ramp/manual) still drives the month-to-month
+  // shape, it's just applied uniformly across regions.
+  const rm = inputs.benefits.revenueModel;
+  const isUnitModel = rm.type === "unit";
+  const regionalEnabled = isUnitModel && Boolean(rm.unit.regional?.enabled);
+  const shares = isUnitModel ? regionalShares(rm.unit) : zeroRegionalUnits();
+  const pricePerUnit = isUnitModel ? rm.unit.pricePerUnit : 0;
+
+  const unitsSeries = cashFlowSeries.map(({ month, revenue }) => {
+    const units = isUnitModel && pricePerUnit > 0 ? revenue / pricePerUnit : 0;
+    const byRegion = zeroRegionalUnits();
+    if (regionalEnabled) for (const r of REGIONS) byRegion[r] = units * shares[r];
+    return { month, units, byRegion };
+  });
+
+  const revenueSeries = cashFlowSeries.map(({ month, revenue }) => {
+    const byRegion = zeroRegionalUnits();
+    if (regionalEnabled) for (const r of REGIONS) byRegion[r] = revenue * shares[r];
+    return { month, revenue, byRegion };
+  });
+
   return {
     npv: npv(flows, monthlyRate),
     irr: annualIrr,
@@ -278,6 +305,9 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
     totalInvestment,
     totalRevenue,
     cashFlowSeries,
+    unitsSeries,
+    revenueSeries,
+    regionalEnabled,
     margins: computeMargins(inputs),
   };
 }

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Card, Metric, Btn } from "./ui";
 import { CashFlowChart } from "./CashFlowChart";
+import { SeriesChart } from "./SeriesChart";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
+import { isLicensed } from "@/lib/bizcase/license";
 import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
 export function OutputsPanel({
@@ -28,6 +30,9 @@ export function OutputsPanel({
   const chartData = outputs.cashFlowSeries.map((p) => ({ month: p.month, a: p.cumulative }));
   const m = mode === "simple" ? null : outputs.margins;
   const rmType = inputs.benefits.revenueModel.type;
+  // Regional is a paid feature — fall back to the flat series if the license
+  // was removed after regional data was set (e.g. after signing out).
+  const regionalUnlocked = outputs.regionalEnabled && isLicensed();
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,6 +74,36 @@ export function OutputsPanel({
       <Card label="Cumulative Cash Flow" info="cumulativeCashFlow">
         {showChart && <CashFlowChart data={chartData} />}
       </Card>
+
+      {mode === "detailed" && rmType !== "none" && (
+        <Card label="Revenue Over Time" info="revenueOverTime">
+          <SeriesChart
+            data={outputs.revenueSeries.map((p) => ({
+              month: p.month,
+              value: p.revenue,
+              byRegion: p.byRegion,
+            }))}
+            regional={regionalUnlocked}
+            valueFormatter={fmtCompact}
+            seriesLabel="Revenue"
+          />
+        </Card>
+      )}
+
+      {mode === "detailed" && rmType === "unit" && (
+        <Card label="Units Over Time" info="unitsOverTime">
+          <SeriesChart
+            data={outputs.unitsSeries.map((p) => ({
+              month: p.month,
+              value: p.units,
+              byRegion: p.byRegion,
+            }))}
+            regional={regionalUnlocked}
+            valueFormatter={(v) => fmtNumber(v, 0)}
+            seriesLabel="Units"
+          />
+        </Card>
+      )}
 
       {m && (
         <Card label="Margin Analysis">

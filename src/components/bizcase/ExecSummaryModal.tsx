@@ -4,7 +4,14 @@ import { Modal, Btn, LoadingLine } from "./ui";
 import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
 import { calculate } from "@/lib/bizcase/calc";
 import { loadSettings } from "@/lib/bizcase/settings";
-import { applyScenario, type CaseInputs, type CaseOutputs } from "@/lib/bizcase/types";
+import { isLicensed } from "@/lib/bizcase/license";
+import {
+  applyScenario,
+  REGIONS,
+  REGION_LABEL,
+  type CaseInputs,
+  type CaseOutputs,
+} from "@/lib/bizcase/types";
 
 export function buildContexts(inputs: CaseInputs, outputs: CaseOutputs) {
   const rm = inputs.benefits.revenueModel;
@@ -53,6 +60,21 @@ function phasedCapexContext(inputs: CaseInputs): string {
   return `Phased capex: ${list}.`;
 }
 
+/** Regional unit mix, when a regional breakdown is enabled — paid feature, only
+ *  included for licensed users even if the case data has it set. */
+function regionalContext(inputs: CaseInputs): string {
+  const rm = inputs.benefits.revenueModel;
+  if (rm.type !== "unit" || !rm.unit.regional?.enabled || !isLicensed()) return "";
+  const total = REGIONS.reduce((s, r) => s + (rm.unit.regional!.unitsPerYear[r] || 0), 0);
+  if (total <= 0) return "";
+  const parts = REGIONS.map((r) => {
+    const units = rm.unit.regional!.unitsPerYear[r] || 0;
+    const pct = Math.round((units / total) * 100);
+    return `${REGION_LABEL[r]} ${pct}%`;
+  });
+  return `Regional mix (share of annual units): ${parts.join(", ")}.`;
+}
+
 /** Full model payload for a case, including worst/best case NPV from the saved scenario adjustments. */
 export function buildSummaryPayload(name: string, inputs: CaseInputs, outputs: CaseOutputs) {
   const { revenueContext, timelineContext } = buildContexts(inputs, outputs);
@@ -84,6 +106,7 @@ export function buildSummaryPayload(name: string, inputs: CaseInputs, outputs: C
     npvBest,
     marginContext: marginContext(outputs),
     phasedCapexContext: phasedCapexContext(inputs),
+    regionalContext: regionalContext(inputs),
   };
 }
 

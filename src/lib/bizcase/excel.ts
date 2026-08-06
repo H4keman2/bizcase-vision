@@ -3,12 +3,15 @@ import {
   describeManualTimelineShort,
   manualTimelinePeriods,
   resolveManualSchedule,
+  REGIONS,
+  REGION_LABEL,
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
 } from "./types";
 import type { ExecSummary } from "./ai.functions";
 import { SCHEMA_FIELDS } from "./import";
+import { isLicensed } from "./license";
 
 export interface ExcelCase {
   name: string;
@@ -175,6 +178,34 @@ function timelineSheet(c: ExcelCase): XLSX.WorkSheet | null {
   return ws;
 }
 
+/** Regional units/revenue breakdown, one row per region, when the unit-level
+ *  revenue model has a regional split enabled. */
+function regionalSheet(c: ExcelCase): XLSX.WorkSheet | null {
+  const rm = c.inputs.benefits.revenueModel;
+  if (rm.type !== "unit" || !rm.unit.regional?.enabled || !isLicensed()) return null;
+
+  const pricePerUnit = rm.unit.pricePerUnit || 0;
+  const totalUnits = REGIONS.reduce((s, r) => s + (rm.unit.regional!.unitsPerYear[r] || 0), 0);
+
+  const rows: SheetRow[] = REGIONS.map((r) => {
+    const units = rm.unit.regional!.unitsPerYear[r] || 0;
+    return {
+      Region: REGION_LABEL[r],
+      "Units / Yr": units,
+      "Revenue / Yr": units * pricePerUnit,
+      Share: totalUnits > 0 ? units / totalUnits : 0,
+    };
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{ wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 10 }];
+  styleHeaderRow(ws);
+  formatColumn(ws, 1, "#,##0");
+  formatColumn(ws, 2, CURRENCY_FMT);
+  formatColumn(ws, 3, PERCENT_FMT);
+  return ws;
+}
+
 /** Builds an .xlsx workbook for a single case and triggers a download. */
 export function exportCaseExcel(c: ExcelCase) {
   const wb = XLSX.utils.book_new();
@@ -217,6 +248,8 @@ export function exportCaseExcel(c: ExcelCase) {
   XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
   const tlSheet = timelineSheet(c);
   if (tlSheet) XLSX.utils.book_append_sheet(wb, tlSheet, "Timeline");
+  const regSheet = regionalSheet(c);
+  if (regSheet) XLSX.utils.book_append_sheet(wb, regSheet, "Regional");
   XLSX.utils.book_append_sheet(wb, cashFlowSheet(c), "Cash Flow");
 
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
@@ -427,6 +460,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
   if (tlA) XLSX.utils.book_append_sheet(wb, tlA, sheetName("TL", "A", a.versionLabel));
   const tlB = timelineSheet(b);
   if (tlB) XLSX.utils.book_append_sheet(wb, tlB, sheetName("TL", "B", b.versionLabel));
+
+  const regA = regionalSheet(a);
+  if (regA) XLSX.utils.book_append_sheet(wb, regA, sheetName("Reg", "A", a.versionLabel));
+  const regB = regionalSheet(b);
+  if (regB) XLSX.utils.book_append_sheet(wb, regB, sheetName("Reg", "B", b.versionLabel));
 
   XLSX.writeFile(wb, `BizCase_Comparison_${slug(name)}_${today()}.xlsx`);
 }

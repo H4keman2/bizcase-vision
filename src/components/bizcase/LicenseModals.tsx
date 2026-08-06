@@ -35,6 +35,7 @@ export const FREE_FEATURES = [
   "No Excel import",
   "No best/worst case scenarios",
   "No import template download",
+  "No regional revenue/unit breakdown",
   "Core metrics, charts & comparison",
 ];
 
@@ -44,6 +45,7 @@ export const FULL_FEATURES = [
   "Excel import with AI field mapping",
   "Best & worst case scenario modeling",
   "Downloadable import template",
+  "Regional revenue & unit breakdown (NA, LA, APAC, EMEA)",
   "Everything in Free, forever, no subscription",
 ];
 

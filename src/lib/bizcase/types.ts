@@ -4,6 +4,21 @@ export type TimelineGranularity = "year" | "quarter" | "month" | "week";
 export type OverheadBasis = "cogs" | "revenue";
 export type CaseMode = "simple" | "detailed";
 export type ManualBasis = "amount" | "units";
+export type Region = "NA" | "LA" | "APAC" | "EMEA";
+
+export const REGIONS: Region[] = ["NA", "LA", "APAC", "EMEA"];
+
+export const REGION_LABEL: Record<Region, string> = {
+  NA: "North America",
+  LA: "Latin America",
+  APAC: "APAC",
+  EMEA: "EMEA",
+};
+
+/** All-zero regional units map, used as a default/reset value. */
+export function zeroRegionalUnits(): Record<Region, number> {
+  return { NA: 0, LA: 0, APAC: 0, EMEA: 0 };
+}
 
 export const PERIODS_PER_YEAR: Record<TimelineGranularity, number> = {
   year: 1,
@@ -41,6 +56,13 @@ export interface CaseInputs {
         variableCostPerUnit: number;
         fixedCostsAnnual: number;
         unitsPerYear: number;
+        /** Optional regional split of unitsPerYear. When enabled, the regional
+         *  values are summed to determine the effective annual unit volume —
+         *  unitsPerYear above is ignored but kept in sync for backward compat. */
+        regional?: {
+          enabled: boolean;
+          unitsPerYear: Record<Region, number>;
+        };
       };
     };
     overhead: { enabled: boolean; basis: OverheadBasis; percent: number };
@@ -154,6 +176,28 @@ export function manualTimelinePeriods(
   }));
 }
 
+/** Total annual units, accounting for a regional breakdown when one is enabled. */
+export function effectiveUnitsPerYear(
+  unit: CaseInputs["benefits"]["revenueModel"]["unit"],
+): number {
+  if (unit.regional?.enabled) {
+    return REGIONS.reduce((sum, r) => sum + (unit.regional!.unitsPerYear[r] || 0), 0);
+  }
+  return unit.unitsPerYear || 0;
+}
+
+/** Each region's share (0–1) of total annual units. All zero when regional is off or empty. */
+export function regionalShares(
+  unit: CaseInputs["benefits"]["revenueModel"]["unit"],
+): Record<Region, number> {
+  const total = effectiveUnitsPerYear(unit);
+  const out = zeroRegionalUnits();
+  if (unit.regional?.enabled && total > 0) {
+    for (const r of REGIONS) out[r] = (unit.regional.unitsPerYear[r] || 0) / total;
+  }
+  return out;
+}
+
 export interface Margins {
   grossMarginPercent: number | null;
   contributionMarginPerUnit: number | null;
@@ -180,6 +224,12 @@ export interface CaseOutputs {
     discounted: number;
     cumulative: number;
   }[];
+  /** Units sold per month. Zero throughout unless the revenue model is Unit-Level. */
+  unitsSeries: { month: number; units: number; byRegion: Record<Region, number> }[];
+  /** Revenue per month, broken out by region when a regional split is enabled. */
+  revenueSeries: { month: number; revenue: number; byRegion: Record<Region, number> }[];
+  /** True when the case has a regional unit breakdown enabled (drives regional chart series). */
+  regionalEnabled: boolean;
   margins: Margins | null;
 }
 
@@ -289,6 +339,7 @@ export function zeroInputs(): CaseInputs {
           variableCostPerUnit: 0,
           fixedCostsAnnual: 0,
           unitsPerYear: 0,
+          regional: { enabled: false, unitsPerYear: zeroRegionalUnits() },
         },
       },
       overhead: { enabled: false, basis: "cogs", percent: 0 },
@@ -317,6 +368,7 @@ export function defaultInputs(): CaseInputs {
           variableCostPerUnit: 18,
           fixedCostsAnnual: 60000,
           unitsPerYear: 2000,
+          regional: { enabled: false, unitsPerYear: zeroRegionalUnits() },
         },
       },
       overhead: { enabled: false, basis: "cogs", percent: 15 },

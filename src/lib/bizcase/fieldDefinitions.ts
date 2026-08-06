@@ -27,6 +27,8 @@ export const fieldDefinitions: Record<string, string> = {
   fixedCostsAnnual:
     "Yearly costs that stay the same regardless of volume, such as salaries, tooling or subscriptions.",
   unitsPerYear: "How many units you expect to sell each year at full run rate.",
+  regionalBreakdown:
+    "Split annual units across NA, LA, APAC and EMEA. When enabled, the Units and Revenue charts show a region-by-region breakdown instead of one combined line.",
 
   // ---- Overhead ----
   overhead:
@@ -75,6 +77,10 @@ export const fieldDefinitions: Record<string, string> = {
     "Simple shows only savings, timeline and horizon. Detailed adds revenue modeling, overhead and margin analysis.",
   cumulativeCashFlow:
     "Running total of money in minus money out, month by month. The point it crosses zero is your payback.",
+  revenueOverTime:
+    "Revenue booked each month. Shows a single line, or a stacked breakdown by region when a regional split is enabled on the Unit-Level revenue model.",
+  unitsOverTime:
+    "Units sold each month, derived from monthly revenue divided by price per unit. Shows a single line, or a stacked breakdown by region when a regional split is enabled.",
   versionLabel: "A name for this saved snapshot of the case, so you can find and compare it later.",
   versionHistory: "Every saved snapshot of this case. Select two to compare them side by side.",
   compareDelta:

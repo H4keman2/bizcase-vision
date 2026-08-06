@@ -42,6 +42,7 @@ const SummaryInput = z.object({
   npvBest: z.number().nullable().optional(),
   marginContext: z.string().optional(),
   phasedCapexContext: z.string().optional(),
+  regionalContext: z.string().optional(),
 });
 
 export interface ExecSummary {
@@ -57,7 +58,10 @@ export const generateExecSummary = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SummaryInput.parse(d))
   .handler(async ({ data }): Promise<ExecSummary> => {
     const range =
-      data.npvWorst === null || data.npvWorst === undefined || data.npvBest === null || data.npvBest === undefined
+      data.npvWorst === null ||
+      data.npvWorst === undefined ||
+      data.npvBest === null ||
+      data.npvBest === undefined
         ? "Scenario range: not available."
         : `Scenario range: worst-case NPV ${money(data.npvWorst)}, best-case NPV ${money(data.npvBest)}.`;
 
@@ -74,10 +78,11 @@ ROI: ${data.roi.toFixed(0)}%
 ${range}
 ${data.marginContext ?? ""}
 ${data.phasedCapexContext ?? ""}
+${data.regionalContext ?? ""}
 ${data.revenueContext}
 ${data.timelineContext}
 
-Ground every risk in the real numbers above: reference the worst-case NPV, the payback timing, margin or breakeven figures, and phased capex timing where they exist. Do not write generic hedging that could apply to any project.
+Ground every risk in the real numbers above: reference the worst-case NPV, the payback timing, margin or breakeven figures, regional mix, and phased capex timing where they exist. Do not write generic hedging that could apply to any project.
 
 Keep each entry to one short plain-English sentence. No jargon, no markdown, no em dashes, no bullet characters.
 
@@ -98,7 +103,6 @@ Respond ONLY with a JSON object, no markdown fences, no preamble. Shape:
       throw new Error("Could not read the AI response. Try again.");
     }
   });
-
 
 /** Strips code fences and any preamble so a JSON body can be parsed. */
 function extractJson(raw: string): string {
@@ -130,6 +134,10 @@ Map any values you can confidently identify to these fields:
 - variableCostPerUnit (Variable Cost / Unit, currency)
 - fixedCostsAnnual (Fixed Costs / Yr, currency)
 - unitsPerYear (Units / Yr, number)
+- regionalUnitsNA (Units / Yr — NA, number — only fill if the sheet breaks units down by region)
+- regionalUnitsLA (Units / Yr — LA, number — only fill if the sheet breaks units down by region)
+- regionalUnitsAPAC (Units / Yr — APAC, number — only fill if the sheet breaks units down by region)
+- regionalUnitsEMEA (Units / Yr — EMEA, number — only fill if the sheet breaks units down by region)
 - overheadPercent (Overhead %, percent)
 - overheadBasis (Overhead Basis, either "cogs" or "revenue")
 - phasedMonth1 / phasedAmount1, phasedMonth2 / phasedAmount2, phasedMonth3 / phasedAmount3, phasedMonth4 / phasedAmount4 (Phased Capex rows: month number and currency amount; only fill pairs that are present)

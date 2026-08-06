@@ -1,5 +1,7 @@
 import readXlsxFile from "read-excel-file/browser";
-import type { CaseInputs } from "./types";
+import type { CaseInputs, Region } from "./types";
+import { effectiveUnitsPerYear, zeroRegionalUnits } from "./types";
+import { isLicensed } from "./license";
 
 export const SCHEMA_FIELDS = [
   { key: "nre", label: "NRE", type: "currency", note: "One-time non-recurring engineering cost" },
@@ -117,6 +119,30 @@ export const SCHEMA_FIELDS = [
     label: "Units / Yr",
     type: "number",
     note: "Unit-level revenue model — units sold annually",
+  },
+  {
+    key: "regionalUnitsNA",
+    label: "Units / Yr — NA",
+    type: "number",
+    note: "Unit-level regional breakdown (paid feature) — units sold in North America. Leave blank if not used.",
+  },
+  {
+    key: "regionalUnitsLA",
+    label: "Units / Yr — LA",
+    type: "number",
+    note: "Unit-level regional breakdown (paid feature) — units sold in Latin America. Leave blank if not used.",
+  },
+  {
+    key: "regionalUnitsAPAC",
+    label: "Units / Yr — APAC",
+    type: "number",
+    note: "Unit-level regional breakdown (paid feature) — units sold in APAC. Leave blank if not used.",
+  },
+  {
+    key: "regionalUnitsEMEA",
+    label: "Units / Yr — EMEA",
+    type: "number",
+    note: "Unit-level regional breakdown (paid feature) — units sold in EMEA. Leave blank if not used.",
   },
   {
     key: "overheadPercent",
@@ -317,6 +343,29 @@ export function applyToInputs(inputs: CaseInputs, values: Extracted): CaseInputs
   set("variableCostPerUnit", (n) => (next.benefits.revenueModel.unit.variableCostPerUnit = n));
   set("fixedCostsAnnual", (n) => (next.benefits.revenueModel.unit.fixedCostsAnnual = n));
   set("unitsPerYear", (n) => (next.benefits.revenueModel.unit.unitsPerYear = n));
+
+  // Regional breakdown is a paid feature — only apply it if the importer is licensed,
+  // even if the sheet happens to contain regional columns.
+  if (isLicensed()) {
+    const regionalFields: [FieldKey, Region][] = [
+      ["regionalUnitsNA", "NA"],
+      ["regionalUnitsLA", "LA"],
+      ["regionalUnitsAPAC", "APAC"],
+      ["regionalUnitsEMEA", "EMEA"],
+    ];
+    const regionalValues = regionalFields
+      .map(([key, region]) => [region, numOf(values, key)] as const)
+      .filter(([, n]) => n !== null);
+    if (regionalValues.length) {
+      const unitsPerYear = zeroRegionalUnits();
+      for (const [region, n] of regionalValues) unitsPerYear[region] = n as number;
+      next.benefits.revenueModel.unit.regional = { enabled: true, unitsPerYear };
+      next.benefits.revenueModel.unit.unitsPerYear = effectiveUnitsPerYear(
+        next.benefits.revenueModel.unit,
+      );
+      next.benefits.revenueModel.type = "unit";
+    }
+  }
   set("overheadPercent", (n) => {
     next.benefits.overhead.percent = n;
     next.benefits.overhead.enabled = true;
