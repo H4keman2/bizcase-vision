@@ -34,6 +34,7 @@ export const Route = createFileRoute("/case/$caseId")({
         property: "og:description",
         content: "Live NPV, IRR, payback and margin analysis for your business case.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: CaseEditor,

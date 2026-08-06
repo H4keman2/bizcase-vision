@@ -33,6 +33,7 @@ export const Route = createFileRoute("/compare/$caseId")({
         property: "og:description",
         content: "Compare two business case versions on NPV, IRR, payback, ROI and cash flow.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: Compare,

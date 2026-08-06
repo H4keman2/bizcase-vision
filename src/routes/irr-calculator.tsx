@@ -18,7 +18,9 @@ export const Route = createFileRoute("/irr-calculator")({
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { property: "og:url", content: URL },
+      { property: "og:image", content: "https://bizcasebuilder.dev/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://bizcasebuilder.dev/og-image.png" },
     ],
     links: [{ rel: "canonical", href: URL }],
     scripts: [

@@ -28,8 +28,28 @@ export const Route = createFileRoute("/")({
           "Model investment decisions with live NPV, IRR, payback and margin analysis. Save versions and compare business cases side by side.",
       },
       { property: "og:url", content: "https://bizcasebuilder.dev/" },
+      { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://bizcasebuilder.dev/og-image.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://bizcasebuilder.dev/og-image.png" },
     ],
     links: [{ rel: "canonical", href: "https://bizcasebuilder.dev/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "BizCase Builder",
+          description:
+            "Model investment decisions with live NPV, IRR, payback and margin analysis. Save versions and compare business cases side by side.",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          url: "https://bizcasebuilder.dev/",
+          image: "https://bizcasebuilder.dev/og-image.png",
+        }),
+      },
+    ],
   }),
   component: CaseList,
 });
