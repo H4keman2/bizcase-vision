@@ -7,6 +7,7 @@ import {
   type CaseInputs,
   type CaseMode,
   type CaseOutputs,
+  type Region,
 } from "./types";
 import type { ExecSummary } from "./ai.functions";
 import { isLicensed } from "./license";
@@ -122,6 +123,104 @@ function chartImage(
       lx += 30 + ctx.measureText(label).width + 34;
     });
   }
+
+  return canvas.toDataURL("image/png");
+}
+
+/** Matches the region colors used in the app's own Units/Revenue Over Time charts. */
+const REGION_COLORS_PDF: Record<Region, string> = {
+  NA: GREEN,
+  LA: "#6E8F00",
+  APAC: "#8A8A8A",
+  EMEA: "#4F7A00",
+};
+
+/** Renders a stacked bar chart (one bar per month, one color per region) to a PNG data URL. */
+function stackedBarChartImage(
+  regions: { label: string; color: string; points: number[] }[],
+  valueFormatter: (v: number) => string,
+  width = 1200,
+  height = 420,
+): string | null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const pad = { l: 110, r: 24, t: 24, b: 46 };
+  const w = width - pad.l - pad.r;
+  const h = height - pad.t - pad.b;
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, width, height);
+
+  const maxMonth = Math.max(1, ...regions.map((r) => r.points.length - 1));
+  const monthCount = maxMonth + 1;
+  const totals = new Array(monthCount).fill(0);
+  for (let m = 0; m < monthCount; m++) {
+    for (const r of regions) totals[m] += r.points[m] ?? 0;
+  }
+  let max = Math.max(0, ...totals);
+  if (max === 0) max = 1;
+  max *= 1.08;
+
+  const x = (m: number) => pad.l + (m / maxMonth) * w;
+  const y = (v: number) => pad.t + h - (v / max) * h;
+
+  // grid + y labels
+  ctx.strokeStyle = LINE;
+  ctx.lineWidth = 1;
+  ctx.fillStyle = GREY;
+  ctx.font = "18px monospace";
+  ctx.textAlign = "right";
+  for (let i = 0; i <= 4; i++) {
+    const v = (max * i) / 4;
+    const yy = Math.round(y(v)) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, yy);
+    ctx.lineTo(pad.l + w, yy);
+    ctx.stroke();
+    ctx.fillText(valueFormatter(v), pad.l - 10, yy + 6);
+  }
+
+  // x labels
+  ctx.textAlign = "center";
+  ctx.fillStyle = GREY;
+  for (let i = 0; i <= 6; i++) {
+    const m = Math.round((maxMonth * i) / 6);
+    ctx.fillText(`M${m}`, x(m), height - 16);
+  }
+
+  // stacked bars — one bar per month, one segment per region
+  const barW = Math.max(1, (w / monthCount) * 0.72);
+  for (let m = 0; m < monthCount; m++) {
+    let cum = 0;
+    const bx = x(m) - barW / 2;
+    for (const r of regions) {
+      const v = r.points[m] ?? 0;
+      if (v <= 0) continue;
+      const yTop = y(cum + v);
+      const yBase = y(cum);
+      ctx.fillStyle = r.color;
+      ctx.fillRect(bx, yTop, barW, Math.max(0.5, yBase - yTop));
+      cum += v;
+    }
+  }
+
+  // legend
+  let lx = pad.l;
+  ctx.textAlign = "left";
+  ctx.font = "18px monospace";
+  regions.forEach((r) => {
+    ctx.fillStyle = r.color;
+    ctx.fillRect(lx, pad.t - 14, 22, 6);
+    ctx.fillStyle = TEXT;
+    const label = r.label.slice(0, 26);
+    ctx.fillText(label, lx + 30, pad.t - 6);
+    lx += 30 + ctx.measureText(label).width + 34;
+  });
 
   return canvas.toDataURL("image/png");
 }
@@ -400,6 +499,47 @@ export function exportCasePdf(c: PdfCase) {
   if (regRows.length) {
     y = sectionLabel(doc, "Regional Breakdown", y);
     y = rows(doc, regRows, y, 2);
+
+    const regionSeries = (points: (r: Region) => number[]) =>
+      REGIONS.map((r) => ({
+        label: REGION_LABEL[r],
+        color: REGION_COLORS_PDF[r],
+        points: points(r),
+      }));
+
+    const pageBreakIfNeeded = (needed: number) => {
+      if (y > doc.internal.pageSize.getHeight() - needed) {
+        footer(doc);
+        doc.addPage();
+        y = 60;
+      }
+    };
+
+    const unitsImg = stackedBarChartImage(
+      regionSeries((r) => c.outputs.unitsSeries.map((p) => p.byRegion[r])),
+      (v) => fmtNumber(v, 0),
+    );
+    if (unitsImg) {
+      pageBreakIfNeeded(220);
+      y = sectionLabel(doc, "Units Over Time · Regional", y);
+      const iw = W - 80;
+      const ih = iw * (420 / 1200);
+      doc.addImage(unitsImg, "PNG", 40, y - 8, iw, ih);
+      y += ih + 18;
+    }
+
+    const revenueImg = stackedBarChartImage(
+      regionSeries((r) => c.outputs.revenueSeries.map((p) => p.byRegion[r])),
+      fmtCompact,
+    );
+    if (revenueImg) {
+      pageBreakIfNeeded(220);
+      y = sectionLabel(doc, "Revenue Over Time · Regional", y);
+      const iw = W - 80;
+      const ih = iw * (420 / 1200);
+      doc.addImage(revenueImg, "PNG", 40, y - 8, iw, ih);
+      y += ih + 18;
+    }
   }
 
   const img = chartImage([
@@ -567,7 +707,47 @@ export function exportComparisonPdf(opts: {
       y = 60;
     }
     y = sectionLabel(doc, "Regional Breakdown · Case B", y);
-    rows(doc, regRowsB, y, 2);
+    y = rows(doc, regRowsB, y, 2);
+
+    const regionSeriesB = (points: (r: Region) => number[]) =>
+      REGIONS.map((r) => ({
+        label: REGION_LABEL[r],
+        color: REGION_COLORS_PDF[r],
+        points: points(r),
+      }));
+    const pageBreakIfNeededB = (needed: number) => {
+      if (y > doc.internal.pageSize.getHeight() - needed) {
+        footer(doc);
+        doc.addPage();
+        y = 60;
+      }
+    };
+
+    const unitsImgB = stackedBarChartImage(
+      regionSeriesB((r) => b.outputs.unitsSeries.map((p) => p.byRegion[r])),
+      (v) => fmtNumber(v, 0),
+    );
+    if (unitsImgB) {
+      pageBreakIfNeededB(220);
+      y = sectionLabel(doc, "Units Over Time · Regional · Case B", y);
+      const iw = W - 80;
+      const ih = iw * (420 / 1200);
+      doc.addImage(unitsImgB, "PNG", 40, y - 8, iw, ih);
+      y += ih + 18;
+    }
+
+    const revenueImgB = stackedBarChartImage(
+      regionSeriesB((r) => b.outputs.revenueSeries.map((p) => p.byRegion[r])),
+      fmtCompact,
+    );
+    if (revenueImgB) {
+      pageBreakIfNeededB(220);
+      y = sectionLabel(doc, "Revenue Over Time · Regional · Case B", y);
+      const iw = W - 80;
+      const ih = iw * (420 / 1200);
+      doc.addImage(revenueImgB, "PNG", 40, y - 8, iw, ih);
+      y += ih + 18;
+    }
   }
 
   footer(doc);

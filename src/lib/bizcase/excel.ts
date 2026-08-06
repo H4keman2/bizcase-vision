@@ -73,6 +73,14 @@ function inputRows(c: ExcelCase): SheetRow[] {
       rows.push({ Metric: "Variable Cost / Unit", Value: rm.unit.variableCostPerUnit });
       rows.push({ Metric: "Fixed Costs / Yr", Value: rm.unit.fixedCostsAnnual });
       rows.push({ Metric: "Units / Yr", Value: rm.unit.unitsPerYear });
+      if (rm.unit.regional?.enabled && isLicensed()) {
+        const pricePerUnit = rm.unit.pricePerUnit || 0;
+        REGIONS.forEach((r) => {
+          const units = rm.unit.regional!.unitsPerYear[r] || 0;
+          rows.push({ Metric: `Units / Yr — ${REGION_LABEL[r]}`, Value: units });
+          rows.push({ Metric: `Revenue / Yr — ${REGION_LABEL[r]}`, Value: units * pricePerUnit });
+        });
+      }
     }
     if (i.benefits.overhead.enabled) {
       rows.push({
@@ -235,7 +243,8 @@ export function exportCaseExcel(c: ExcelCase) {
   ]);
   summary.forEach((row, idx) => {
     const label = String(row.Metric ?? "");
-    if (!percentLabels.has(label)) return;
+    const isPercent = percentLabels.has(label) || label.startsWith("Overhead (");
+    if (!isPercent) return;
     const r = idx + 1; // +1 for the header row
     if (label === "ROI") {
       // ROI is stored as a whole-number percentage; convert so 0.0% renders right.
