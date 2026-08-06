@@ -89,7 +89,7 @@ export function OutputsPanel({
 
       {scenarioRange &&
         (licensed ? (
-          <Card label="Scenario Range" >
+          <Card label="Scenario Range">
             <div className="grid grid-cols-2 gap-3">
               <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} tone={scenarioRange.worst >= 0 ? "positive" : "negative"} />
               <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} tone={scenarioRange.best >= 0 ? "positive" : "negative"} />
