@@ -186,7 +186,9 @@ export function NumField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      {/* Fixed min-height so a label wrapping to two lines keeps its input box
+          aligned with single-line neighbours in the same grid row. */}
+      <span className="mb-1.5 flex min-h-[2.25rem] items-end gap-1.5 font-mono text-[10px] uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
         {label}
         {info ? <InfoTooltip field={info} /> : null}
       </span>
