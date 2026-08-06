@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Card, Metric, Btn } from "./ui";
+import { Lock } from "lucide-react";
+import { Card, Metric, Btn, LockedOverlay } from "./ui";
 import { CashFlowChart } from "./CashFlowChart";
 import { SeriesChart } from "./SeriesChart";
 import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
-import { isLicensed } from "@/lib/bizcase/license";
+import { useLicensed } from "@/lib/bizcase/license";
+import { REGIONS } from "@/lib/bizcase/types";
 import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
 export function OutputsPanel({
@@ -16,6 +18,8 @@ export function OutputsPanel({
   onExportExcel,
   onReset,
   mode = "detailed",
+  scenarioRange,
+  onLockedFeature,
 }: {
   inputs: CaseInputs;
   outputs: CaseOutputs;
@@ -25,6 +29,8 @@ export function OutputsPanel({
   onExportExcel: () => void;
   onReset?: () => void;
   mode?: CaseMode;
+  scenarioRange?: { best: number; worst: number } | null;
+  onLockedFeature?: (reason: string) => void;
 }) {
   const [showChart] = useState(true);
   const chartData = outputs.cashFlowSeries.map((p) => ({ month: p.month, a: p.cumulative }));
@@ -32,7 +38,17 @@ export function OutputsPanel({
   const rmType = inputs.benefits.revenueModel.type;
   // Regional is a paid feature — fall back to the flat series if the license
   // was removed after regional data was set (e.g. after signing out).
-  const regionalUnlocked = outputs.regionalEnabled && isLicensed();
+  const licensed = useLicensed();
+  const regionalUnlocked = outputs.regionalEnabled && licensed;
+  // Sample even NA/LA/APAC/EMEA split used purely for the blurred locked preview.
+  const sampleRegional = outputs.revenueSeries.map((p) => ({
+    month: p.month,
+    value: p.revenue,
+    byRegion: Object.fromEntries(REGIONS.map((r) => [r, p.revenue / REGIONS.length])) as Record<
+      (typeof REGIONS)[number],
+      number
+    >,
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,6 +87,30 @@ export function OutputsPanel({
         </div>
       </Card>
 
+      {scenarioRange &&
+        (licensed ? (
+          <Card label="Scenario Range">
+            <div className="grid grid-cols-2 gap-3">
+              <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} tone={scenarioRange.worst >= 0 ? "positive" : "negative"} />
+              <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} tone={scenarioRange.best >= 0 ? "positive" : "negative"} />
+            </div>
+          </Card>
+        ) : (
+          <Card label="Scenario Range">
+            <LockedOverlay
+              label="Unlock best & worst case"
+              onClick={() =>
+                onLockedFeature?.("Best and worst case scenarios are part of the full version.")
+              }
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} />
+                <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} />
+              </div>
+            </LockedOverlay>
+          </Card>
+        ))}
+
       <Card label="Cumulative Cash Flow" info="cumulativeCashFlow">
         {showChart && <CashFlowChart data={chartData} />}
       </Card>
@@ -87,6 +127,26 @@ export function OutputsPanel({
             valueFormatter={fmtCompact}
             seriesLabel="Revenue"
           />
+        </Card>
+      )}
+
+      {mode === "detailed" && rmType !== "none" && !licensed && (
+        <Card label="Regional Breakdown">
+          <LockedOverlay
+            label="Unlock regional breakdown"
+            onClick={() =>
+              onLockedFeature?.(
+                "Regional revenue and unit breakdowns are part of the full version.",
+              )
+            }
+          >
+            <SeriesChart
+              data={sampleRegional}
+              regional
+              valueFormatter={fmtCompact}
+              seriesLabel="Revenue"
+            />
+          </LockedOverlay>
         </Card>
       )}
 
@@ -154,6 +214,12 @@ export function OutputsPanel({
           <Btn onClick={onExport} disabled={exporting}>
             {exporting ? "Exporting…" : "Export to PDF"}
           </Btn>
+          {!licensed && (
+            <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              Free plan exports include a watermark
+            </p>
+          )}
           <Btn onClick={onExportExcel}>Export to Excel</Btn>
           {onReset && <Btn onClick={onReset}>Reset</Btn>}
         </div>

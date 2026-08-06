@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Lock } from "lucide-react";
 import { InfoTooltip } from "./InfoTooltip";
 import { SettingsGear } from "./settings-context";
 import { cn } from "@/lib/utils";
@@ -275,6 +276,36 @@ export function LockedHover({
   );
 }
 
+
+/** Blurred preview of a paid feature with a centered unlock affordance.
+ *  Matches the LockedHover styling (border-primary, bg-background, mono caps). */
+export function LockedOverlay({
+  children,
+  label,
+  onClick,
+}: {
+  children: ReactNode;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div className="relative">
+      <div aria-hidden className="pointer-events-none select-none opacity-40 blur-[3px]">
+        {children}
+      </div>
+      <button
+        type="button"
+        onClick={onClick}
+        className="absolute inset-0 z-10 flex items-center justify-center bg-background/40"
+      >
+        <span className="inline-flex items-center gap-2 border border-primary bg-background px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+          <Lock className="h-3 w-3" />
+          {label}
+        </span>
+      </button>
+    </div>
+  );
+}
 
 export function Metric({
   label,
