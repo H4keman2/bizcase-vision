@@ -40,13 +40,13 @@ export const FREE_FEATURES = [
 ];
 
 export const FULL_FEATURES = [
+  "One-time purchase — no subscription, ever",
   "Unlimited business cases",
   "Watermark-free PDF exports",
   "Excel import with AI field mapping",
   "Best & worst case scenario modeling",
   "Downloadable import template",
   "Regional revenue & unit breakdown (NA, LA, APAC, EMEA)",
-  "Everything in Free, forever, no subscription",
 ];
 
 /** The shared Free-vs-Full comparison columns plus the unlock / key buttons.

@@ -82,6 +82,15 @@ function CaseEditor() {
     [inputs, mode, scenario, scenarioAdjustments],
   );
 
+  const scenarioRange = useMemo(() => {
+    if (!inputs) return null;
+    const base = effectiveInputs(inputs, mode);
+    return {
+      best: calculate(applyScenario(base, "best", scenarioAdjustments)).npv,
+      worst: calculate(applyScenario(base, "worst", scenarioAdjustments)).npv,
+    };
+  }, [inputs, mode, scenarioAdjustments]);
+
   const baseOutputs = useMemo(
     () => (inputs ? calculate(effectiveInputs(inputs, mode)) : null),
     [inputs, mode],
@@ -286,6 +295,8 @@ function CaseEditor() {
             mode={mode}
             onExecSummary={() => setModal("summary")}
             onExport={handleExport}
+            scenarioRange={scenarioRange}
+            onLockedFeature={(reason) => setUpgrade(reason)}
             exporting={exporting}
             onExportExcel={() =>
               exportCaseExcel({

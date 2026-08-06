@@ -273,7 +273,7 @@ function UpgradeCard() {
   return (
     <>
       <Btn variant="primary" onClick={() => setOpen(true)}>
-        Unlock Full Access
+        Unlock Full Access — Pay Once
       </Btn>
       <button
         type="button"
@@ -327,6 +327,10 @@ function AboutSheet({ onClose }: { onClose: () => void }) {
           <p>
             It is built for product managers and business leads who need a defensible case without
             wrestling a spreadsheet.
+          </p>
+          <p>
+            It is a one-time purchase with no subscription — unlike most ROI and business case
+            tools that bill you every month, you pay once and keep it.
           </p>
           <p>
             Save named versions as your thinking changes, then compare them side by side to show
