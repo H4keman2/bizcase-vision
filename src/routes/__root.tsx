@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SettingsProvider } from "../components/bizcase/SettingsPanel";
 import { Toaster } from "../components/ui/sonner";
+import { useLicenseRevalidation } from "../lib/bizcase/license";
 
 function NotFoundComponent() {
   return (
@@ -133,6 +134,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useLicenseRevalidation();
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -19,6 +19,17 @@ export const fmtCompact = (v: number | null | undefined) => {
 export const fmtPercent = (v: number | null | undefined, digits = 1) =>
   v === null || v === undefined || !isFinite(v) ? "—" : `${v.toFixed(digits)}%`;
 
+/** IRR-specific percent formatter — shows '>100,000%' instead of a literal
+ *  huge number once the value hits calc.ts's IRR_DISPLAY_CAP_PERCENT. */
+export const fmtIrr = (v: number | null | undefined, capMagnitude = 100_000) => {
+  if (v === null || v === undefined || !isFinite(v)) return "—";
+  if (Math.abs(v) >= capMagnitude) {
+    const sign = v > 0 ? ">" : "<-";
+    return `${sign}${Math.round(capMagnitude).toLocaleString("en-US")}%`;
+  }
+  return fmtPercent(v);
+};
+
 export const fmtMonths = (v: number | null | undefined) =>
   v === null || v === undefined || !isFinite(v) ? "NEVER" : `${v.toFixed(1)} MO`;
 

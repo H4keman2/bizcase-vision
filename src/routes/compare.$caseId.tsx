@@ -7,7 +7,7 @@ import { getCase, listCases, listVersions } from "@/lib/bizcase/storage";
 import { calculate } from "@/lib/bizcase/calc";
 import { exportComparisonPdf } from "@/lib/bizcase/pdf";
 import { exportComparisonExcel } from "@/lib/bizcase/excel";
-import { fmtCompact, fmtDate, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
+import { fmtCompact, fmtDate, fmtIrr, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
 import { effectiveInputs } from "@/lib/bizcase/types";
 import type { CaseDraft, CaseRecord } from "@/lib/bizcase/types";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ type Option = { id: string; label: string; draft: CaseDraft };
 
 const METRICS = [
   { key: "npv", label: "NPV", info: "npv", fmt: (v: number | null) => fmtCompact(v) },
-  { key: "irr", label: "IRR", info: "irr", fmt: (v: number | null) => fmtPercent(v) },
+  { key: "irr", label: "IRR", info: "irr", fmt: (v: number | null) => fmtIrr(v) },
   {
     key: "payback",
     label: "Payback",

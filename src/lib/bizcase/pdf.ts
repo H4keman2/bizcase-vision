@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "./format";
+import { fmtCompact, fmtCurrency, fmtIrr, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
   describeManualTimelineShort,
   REGIONS,
@@ -350,7 +350,7 @@ function outputRows(c: PdfCase): [string, string][] {
   const o = c.outputs;
   const out: [string, string][] = [
     ["NPV", fmtCompact(o.npv)],
-    ["IRR", fmtPercent(o.irr)],
+    ["IRR", fmtIrr(o.irr)],
     ["Payback", fmtMonths(o.paybackMonths)],
     ["ROI", fmtPercent(o.roi, 0)],
     ["Total Investment", fmtCompact(o.totalInvestment)],
@@ -614,7 +614,7 @@ export function exportComparisonPdf(opts: {
     inverse?: boolean;
   }[] = [
     { label: "NPV", va: a.outputs.npv, vb: b.outputs.npv, fmt: fmtCompact },
-    { label: "IRR", va: a.outputs.irr, vb: b.outputs.irr, fmt: (v) => fmtPercent(v) },
+    { label: "IRR", va: a.outputs.irr, vb: b.outputs.irr, fmt: (v) => fmtIrr(v) },
     {
       label: "Payback",
       va: a.outputs.paybackMonths,

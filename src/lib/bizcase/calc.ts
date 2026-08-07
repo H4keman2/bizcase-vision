@@ -163,28 +163,38 @@ function npvDerivative(cashFlows: number[], rate: number): number {
 }
 
 export function irr(cashFlows: number[]): number | null {
+  // Absolute tolerance (1e-6) breaks down once cash flows run into the
+  // millions — "close to zero" needs to scale with the size of the numbers
+  // involved, or the solver can report a false convergence at a wrong rate.
+  const scale = Math.max(1, ...cashFlows.map((cf) => Math.abs(cf)));
+  const tol = scale * 1e-9;
+  // A generous safety bound so Newton-Raphson can still find genuine (if
+  // extreme) roots for very fast-payback cases — this only guards against
+  // infinite/NaN divergence, it is NOT the display cap (see annualizeIrr).
+  const SOLVER_MAX_MONTHLY_RATE = 10_000;
+
   // Newton-Raphson
   let rate = 0.01;
   for (let i = 0; i < 60; i++) {
     const f = npv(cashFlows, rate);
-    if (Math.abs(f) < 1e-6) return rate;
+    if (Math.abs(f) < tol) return rate;
     const d = npvDerivative(cashFlows, rate);
     if (!isFinite(d) || Math.abs(d) < 1e-12) break;
     const next = rate - f / d;
-    if (!isFinite(next) || next <= -0.999) break;
+    if (!isFinite(next) || next <= -0.999 || next > SOLVER_MAX_MONTHLY_RATE) break;
     if (Math.abs(next - rate) < 1e-10) return next;
     rate = next;
   }
-  // Bisection fallback
+  // Bisection fallback, bounded to the same safety range
   let low = -0.99;
-  let high = 5;
+  let high = SOLVER_MAX_MONTHLY_RATE;
   let fLow = npv(cashFlows, low);
   let fHigh = npv(cashFlows, high);
   if (fLow * fHigh > 0) return null;
   for (let i = 0; i < 200; i++) {
     const mid = (low + high) / 2;
     const fMid = npv(cashFlows, mid);
-    if (Math.abs(fMid) < 1e-6) return mid;
+    if (Math.abs(fMid) < tol) return mid;
     if (fLow * fMid < 0) {
       high = mid;
       fHigh = fMid;
@@ -194,6 +204,22 @@ export function irr(cashFlows: number[]): number | null {
     }
   }
   return (low + high) / 2;
+}
+
+// Once payback is fast enough, the annualized IRR becomes an astronomically
+// large number that's mathematically correct but not practically meaningful —
+// nobody makes a different decision between "100,000% IRR" and "9 trillion%
+// IRR," both just mean "pays back almost instantly." Capping here keeps every
+// consumer (UI, PDF, Excel, AI summary) consistent without each one needing
+// to remember to guard against it separately.
+export const IRR_DISPLAY_CAP_PERCENT = 100_000;
+
+/** Converts a monthly IRR to an annualized percentage, capped at a sane display magnitude. */
+export function annualizeIrr(monthlyIrr: number | null): number | null {
+  if (monthlyIrr === null) return null;
+  const raw = (Math.pow(1 + monthlyIrr, 12) - 1) * 100;
+  if (!Number.isFinite(raw)) return null;
+  return Math.sign(raw) * Math.min(Math.abs(raw), IRR_DISPLAY_CAP_PERCENT);
 }
 
 export function paybackMonths(cashFlows: number[]): number | null {
@@ -245,7 +271,7 @@ export function calculate(inputs: CaseInputs): CaseOutputs {
   const flows = buildCashFlowSeries(inputs);
   const monthlyRate = Math.pow(1 + inputs.discountRateAnnual / 100, 1 / 12) - 1;
   const monthlyIrr = irr(flows);
-  const annualIrr = monthlyIrr === null ? null : (Math.pow(1 + monthlyIrr, 12) - 1) * 100;
+  const annualIrr = annualizeIrr(monthlyIrr);
 
   const totalInvestment =
     (inputs.investment.nre || 0) +

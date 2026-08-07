@@ -145,7 +145,13 @@ export function LicenseModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await verify({ data: { key: trimmed } });
+      const result = await verify({ data: { key: trimmed, incrementUses: true } });
+      if (!result.valid) {
+        setError(
+          result.message ?? "That license key could not be verified. Check the key and try again.",
+        );
+        return;
+      }
       saveLicenseKey(trimmed);
       toast.success("License activated — full version unlocked.");
       onClose();

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Screen, Card, Btn } from "@/components/bizcase/ui";
-import { irr, npv, paybackMonths } from "@/lib/bizcase/calc";
-import { fmtCurrency, fmtPercent } from "@/lib/bizcase/format";
+import { annualizeIrr, irr, npv, paybackMonths } from "@/lib/bizcase/calc";
+import { fmtCurrency, fmtIrr } from "@/lib/bizcase/format";
 
 const TITLE = "IRR Calculator — Internal Rate of Return, NPV & Payback";
 const DESCRIPTION =
@@ -82,7 +82,7 @@ function IrrCalculatorPage() {
     const monthlyRate = parseNum(discount) / 100 / 12;
     const monthlyIrr = irr(monthly);
     return {
-      irr: monthlyIrr === null ? null : (1 + monthlyIrr) ** 12 - 1,
+      irr: annualizeIrr(monthlyIrr),
       npv: npv(monthly, monthlyRate),
       payback: paybackMonths(monthly),
       total: yearly.reduce((a, b) => a + b, 0) - Math.abs(parseNum(investment)),
@@ -153,7 +153,7 @@ function IrrCalculatorPage() {
             <div className="flex items-baseline justify-between py-3">
               <dt className="label-eyebrow">IRR</dt>
               <dd className="font-mono text-2xl font-bold text-primary">
-                {result.irr === null ? "n/a" : fmtPercent(result.irr * 100)}
+                {result.irr === null ? "n/a" : fmtIrr(result.irr)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between py-3">

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyLicenseKey } from "./license.functions";
 
 /** Free-tier gating + local license storage for BizCase Builder. */
 
@@ -8,6 +10,9 @@ export const FREE_CASE_LIMIT = 2;
 
 const KEY = "bizcase:license";
 const EVENT = "bizcase:license-changed";
+// Don't re-ping Gumroad more than this often — just enough to catch a
+// refunded/revoked key within a reasonable window without hammering the API.
+const REVALIDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 export class LicenseLimitError extends Error {
   constructor() {
@@ -18,27 +23,54 @@ export class LicenseLimitError extends Error {
   }
 }
 
-export function isLicensed(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return Boolean(window.localStorage.getItem(KEY));
-  } catch {
-    return false;
-  }
+interface LicenseRecord {
+  key: string;
+  lastCheckedAt: number;
 }
 
-export function getLicenseKey(): string | null {
+function readRecord(): LicenseRecord | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(KEY);
+    if (!raw) return null;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        typeof (parsed as LicenseRecord).key === "string" &&
+        typeof (parsed as LicenseRecord).lastCheckedAt === "number"
+      ) {
+        return parsed as LicenseRecord;
+      }
+      return null;
+    } catch {
+      // Installs from before this format existed stored the bare key as
+      // plain text. Treat it as due for an immediate background check
+      // rather than logging an existing customer out.
+      return { key: raw, lastCheckedAt: 0 };
+    }
   } catch {
     return null;
   }
 }
 
+function writeRecord(record: LicenseRecord) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(KEY, JSON.stringify(record));
+}
+
+export function isLicensed(): boolean {
+  return readRecord() !== null;
+}
+
+export function getLicenseKey(): string | null {
+  return readRecord()?.key ?? null;
+}
+
 export function saveLicenseKey(key: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, key);
+  writeRecord({ key, lastCheckedAt: Date.now() });
   clearExecSummaryCounts();
   window.dispatchEvent(new Event(EVENT));
 }
@@ -119,4 +151,46 @@ export function useLicensed(): boolean {
     return onLicenseChange(() => setLicensed(isLicensed()));
   }, []);
   return licensed;
+}
+
+/** Re-checks the stored key against Gumroad in the background, once per app
+ *  load (throttled to REVALIDATE_INTERVAL_MS). Revokes access only on a
+ *  genuine rejection from Gumroad — never on a network hiccup, so a flaky
+ *  connection can't cost a real customer their access.
+ *
+ *  This is what makes `isLicensed()` mean something: writing an arbitrary
+ *  string to localStorage (or a legacy plain-text key) now gets checked
+ *  against Gumroad on the very next load and is revoked if it doesn't
+ *  actually verify. There's no way to make a purely client-side check
+ *  unbypassable without a backend of our own, but this closes the "paste
+ *  anything and it works forever" version of the bypass. */
+export function useLicenseRevalidation(): void {
+  const verify = useServerFn(verifyLicenseKey);
+  useEffect(() => {
+    const record = readRecord();
+    if (!record) return;
+    if (Date.now() - record.lastCheckedAt < REVALIDATE_INTERVAL_MS) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await verify({ data: { key: record.key, incrementUses: false } });
+        if (cancelled) return;
+        if (result.valid) {
+          writeRecord({ key: record.key, lastCheckedAt: Date.now() });
+        } else if (!result.transient) {
+          clearLicenseKey();
+        }
+        // Transient failures: leave the record untouched and try again next load.
+      } catch {
+        // Unexpected error calling the server function itself — treat as
+        // transient, never revoke access over an unexpected failure.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

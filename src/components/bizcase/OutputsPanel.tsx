@@ -3,7 +3,14 @@ import { Lock } from "lucide-react";
 import { Card, Metric, Btn, LockedOverlay } from "./ui";
 import { CashFlowChart } from "./CashFlowChart";
 import { SeriesChart } from "./SeriesChart";
-import { fmtCompact, fmtCurrency, fmtMonths, fmtNumber, fmtPercent } from "@/lib/bizcase/format";
+import {
+  fmtCompact,
+  fmtCurrency,
+  fmtIrr,
+  fmtMonths,
+  fmtNumber,
+  fmtPercent,
+} from "@/lib/bizcase/format";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
 import { useLicensed } from "@/lib/bizcase/license";
 import { REGIONS } from "@/lib/bizcase/types";
@@ -70,7 +77,7 @@ export function OutputsPanel({
           />
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Metric label="IRR" info="irr" value={fmtPercent(outputs.irr)} />
+          <Metric label="IRR" info="irr" value={fmtIrr(outputs.irr)} />
           <Metric label="Payback" info="payback" value={fmtMonths(outputs.paybackMonths)} />
           <Metric
             label="Total Investment"
@@ -167,8 +174,16 @@ export function OutputsPanel({
         (licensed ? (
           <Card label="Scenario Range">
             <div className="grid grid-cols-2 gap-3">
-              <Metric label="Worst Case NPV" value={fmtCompact(scenarioRange.worst)} tone={scenarioRange.worst >= 0 ? "positive" : "negative"} />
-              <Metric label="Best Case NPV" value={fmtCompact(scenarioRange.best)} tone={scenarioRange.best >= 0 ? "positive" : "negative"} />
+              <Metric
+                label="Worst Case NPV"
+                value={fmtCompact(scenarioRange.worst)}
+                tone={scenarioRange.worst >= 0 ? "positive" : "negative"}
+              />
+              <Metric
+                label="Best Case NPV"
+                value={fmtCompact(scenarioRange.best)}
+                tone={scenarioRange.best >= 0 ? "positive" : "negative"}
+              />
             </div>
           </Card>
         ) : (
@@ -206,7 +221,6 @@ export function OutputsPanel({
           </LockedOverlay>
         </Card>
       )}
-
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Btn variant="primary" onClick={onExecSummary}>
