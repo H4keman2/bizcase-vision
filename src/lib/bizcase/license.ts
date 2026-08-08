@@ -104,16 +104,16 @@ export function saveLicenseKey(key: string) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** Clear all per-case exec summary counters when the user upgrades.
- *  Licensed users should never hit a stale locked state. */
+/** Clear all per-case exec summary counters when the user upgrades, across every
+ *  prefix variant that has been used. Licensed users should never hit a stale
+ *  locked state. */
 export function clearExecSummaryCounts() {
   if (typeof window === "undefined") return;
   try {
-    const prefix = "execSummaryCount:";
     const keys: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
-      if (k && k.startsWith(prefix)) keys.push(k);
+      if (k && EXEC_SUMMARY_PREFIXES.some((p) => k.startsWith(p))) keys.push(k);
     }
     keys.forEach((k) => window.localStorage.removeItem(k));
   } catch {
@@ -123,7 +123,8 @@ export function clearExecSummaryCounts() {
 
 export function clearLicenseKey() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(KEY);
+  // Remove every variant so a legacy copy can't silently re-license the app.
+  LICENSE_KEYS.forEach((k) => window.localStorage.removeItem(k));
   window.dispatchEvent(new Event(EVENT));
 }
 
@@ -131,7 +132,7 @@ export function clearLicenseKey() {
 export const FREE_EXEC_SUMMARY_LIMIT = 1;
 
 function execSummaryKey(caseId: string) {
-  return `execSummaryCount:${caseId}`;
+  return `${EXEC_SUMMARY_PREFIX}${caseId}`;
 }
 
 export function getExecSummaryCount(caseId: string): number {
