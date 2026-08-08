@@ -225,9 +225,19 @@ export function OutputsPanel({
       )}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Btn variant="primary" onClick={onExecSummary}>
-          Generate Executive Summary
-        </Btn>
+        <div className="flex flex-col gap-2">
+          {!licensed && caseId && (
+            <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              {canGenerateExecSummary(caseId)
+                ? `${FREE_EXEC_SUMMARY_LIMIT - getExecSummaryCount(caseId)} free generation remaining`
+                : "Locked — upgrade for unlimited"}
+            </p>
+          )}
+          <Btn variant="primary" onClick={onExecSummary}>
+            Generate Executive Summary
+          </Btn>
+        </div>
         <div className="flex flex-col gap-2">
           <Btn onClick={onExport} disabled={exporting}>
             {exporting ? "Exporting…" : "Export to PDF"}
