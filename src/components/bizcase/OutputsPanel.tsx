@@ -12,7 +12,7 @@ import {
   fmtPercent,
 } from "@/lib/bizcase/format";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
-import { useLicensed, canGenerateExecSummary } from "@/lib/bizcase/license";
+import { useLicensed, canGenerateExecSummary, getExecSummaryCount, FREE_EXEC_SUMMARY_LIMIT } from "@/lib/bizcase/license";
 import { REGIONS } from "@/lib/bizcase/types";
 import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
