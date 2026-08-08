@@ -10,9 +10,28 @@ export const FREE_CASE_LIMIT = 2;
 
 const KEY = "bizcase:license";
 const EVENT = "bizcase:license-changed";
+/** Every localStorage key that has ever held the license, across formats. */
+const LICENSE_KEYS = [KEY, "bizcase-license", "bizcase:licenseKey", "bizcaseLicense", "license"];
+const EXEC_SUMMARY_PREFIX = "execSummaryCount:";
+/** Legacy/alternate prefixes used for the per-case exec summary counter. */
+const EXEC_SUMMARY_PREFIXES = [
+  EXEC_SUMMARY_PREFIX,
+  "bizcase:execSummaryCount:",
+  "execSummaryCount-",
+];
 // Don't re-ping Gumroad more than this often — just enough to catch a
 // refunded/revoked key within a reasonable window without hammering the API.
 const REVALIDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
+/** True for any storage key whose change could flip license or free-usage state,
+ *  regardless of which format/prefix wrote it. */
+export function isLicenseRelatedStorageKey(key: string | null): boolean {
+  // A null key means storage was cleared wholesale — always re-read.
+  if (key === null) return true;
+  return (
+    LICENSE_KEYS.includes(key) || EXEC_SUMMARY_PREFIXES.some((p) => key.startsWith(p))
+  );
+}
 
 export class LicenseLimitError extends Error {
   constructor() {
@@ -28,28 +47,38 @@ interface LicenseRecord {
   lastCheckedAt: number;
 }
 
+function parseRecord(raw: string): LicenseRecord | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      typeof (parsed as LicenseRecord).key === "string" &&
+      typeof (parsed as LicenseRecord).lastCheckedAt === "number"
+    ) {
+      return parsed as LicenseRecord;
+    }
+    return null;
+  } catch {
+    // Installs from before this format existed stored the bare key as
+    // plain text. Treat it as due for an immediate background check
+    // rather than logging an existing customer out.
+    return { key: raw, lastCheckedAt: 0 };
+  }
+}
+
 function readRecord(): LicenseRecord | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return null;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        typeof (parsed as LicenseRecord).key === "string" &&
-        typeof (parsed as LicenseRecord).lastCheckedAt === "number"
-      ) {
-        return parsed as LicenseRecord;
-      }
-      return null;
-    } catch {
-      // Installs from before this format existed stored the bare key as
-      // plain text. Treat it as due for an immediate background check
-      // rather than logging an existing customer out.
-      return { key: raw, lastCheckedAt: 0 };
+    // Read the current key first, then any legacy/alternate location, so a key
+    // written by an older build (or another surface) still unlocks the app.
+    for (const k of LICENSE_KEYS) {
+      const raw = window.localStorage.getItem(k);
+      if (!raw) continue;
+      const record = parseRecord(raw);
+      if (record) return record;
     }
+    return null;
   } catch {
     return null;
   }
@@ -75,16 +104,16 @@ export function saveLicenseKey(key: string) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** Clear all per-case exec summary counters when the user upgrades.
- *  Licensed users should never hit a stale locked state. */
+/** Clear all per-case exec summary counters when the user upgrades, across every
+ *  prefix variant that has been used. Licensed users should never hit a stale
+ *  locked state. */
 export function clearExecSummaryCounts() {
   if (typeof window === "undefined") return;
   try {
-    const prefix = "execSummaryCount:";
     const keys: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
-      if (k && k.startsWith(prefix)) keys.push(k);
+      if (k && EXEC_SUMMARY_PREFIXES.some((p) => k.startsWith(p))) keys.push(k);
     }
     keys.forEach((k) => window.localStorage.removeItem(k));
   } catch {
@@ -94,7 +123,8 @@ export function clearExecSummaryCounts() {
 
 export function clearLicenseKey() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(KEY);
+  // Remove every variant so a legacy copy can't silently re-license the app.
+  LICENSE_KEYS.forEach((k) => window.localStorage.removeItem(k));
   window.dispatchEvent(new Event(EVENT));
 }
 
@@ -102,13 +132,18 @@ export function clearLicenseKey() {
 export const FREE_EXEC_SUMMARY_LIMIT = 1;
 
 function execSummaryKey(caseId: string) {
-  return `execSummaryCount:${caseId}`;
+  return `${EXEC_SUMMARY_PREFIX}${caseId}`;
 }
 
 export function getExecSummaryCount(caseId: string): number {
   if (typeof window === "undefined") return 0;
   try {
-    return Number(window.localStorage.getItem(execSummaryKey(caseId)) ?? 0) || 0;
+    // Take the highest count across prefix variants so a legacy counter can't
+    // be bypassed by the key format changing.
+    return EXEC_SUMMARY_PREFIXES.reduce((max, p) => {
+      const n = Number(window.localStorage.getItem(`${p}${caseId}`) ?? 0) || 0;
+      return n > max ? n : max;
+    }, 0);
   } catch {
     return 0;
   }
@@ -142,7 +177,7 @@ export function onLicenseChange(fn: () => void): () => void {
   // per-case exec summary counter changes, so an upgrade in one tab clears
   // the locked state everywhere without a refresh.
   const onStorage = (e: StorageEvent) => {
-    if (e.key === null || e.key === KEY || e.key.startsWith("execSummaryCount:")) fn();
+    if (isLicenseRelatedStorageKey(e.key)) fn();
   };
   window.addEventListener(EVENT, fn);
   window.addEventListener("storage", onStorage);
