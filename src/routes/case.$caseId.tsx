@@ -292,6 +292,7 @@ function CaseEditor() {
           <OutputsPanel
             inputs={inputs}
             outputs={outputs}
+            caseId={caseId}
             mode={mode}
             onExecSummary={() => setModal("summary")}
             onExport={handleExport}
