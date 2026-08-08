@@ -138,7 +138,12 @@ function execSummaryKey(caseId: string) {
 export function getExecSummaryCount(caseId: string): number {
   if (typeof window === "undefined") return 0;
   try {
-    return Number(window.localStorage.getItem(execSummaryKey(caseId)) ?? 0) || 0;
+    // Take the highest count across prefix variants so a legacy counter can't
+    // be bypassed by the key format changing.
+    return EXEC_SUMMARY_PREFIXES.reduce((max, p) => {
+      const n = Number(window.localStorage.getItem(`${p}${caseId}`) ?? 0) || 0;
+      return n > max ? n : max;
+    }, 0);
   } catch {
     return 0;
   }
