@@ -10,9 +10,28 @@ export const FREE_CASE_LIMIT = 2;
 
 const KEY = "bizcase:license";
 const EVENT = "bizcase:license-changed";
+/** Every localStorage key that has ever held the license, across formats. */
+const LICENSE_KEYS = [KEY, "bizcase-license", "bizcase:licenseKey", "bizcaseLicense", "license"];
+const EXEC_SUMMARY_PREFIX = "execSummaryCount:";
+/** Legacy/alternate prefixes used for the per-case exec summary counter. */
+const EXEC_SUMMARY_PREFIXES = [
+  EXEC_SUMMARY_PREFIX,
+  "bizcase:execSummaryCount:",
+  "execSummaryCount-",
+];
 // Don't re-ping Gumroad more than this often — just enough to catch a
 // refunded/revoked key within a reasonable window without hammering the API.
 const REVALIDATE_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
+/** True for any storage key whose change could flip license or free-usage state,
+ *  regardless of which format/prefix wrote it. */
+export function isLicenseRelatedStorageKey(key: string | null): boolean {
+  // A null key means storage was cleared wholesale — always re-read.
+  if (key === null) return true;
+  return (
+    LICENSE_KEYS.includes(key) || EXEC_SUMMARY_PREFIXES.some((p) => key.startsWith(p))
+  );
+}
 
 export class LicenseLimitError extends Error {
   constructor() {
