@@ -19,6 +19,7 @@ import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 export function OutputsPanel({
   inputs,
   outputs,
+  caseId,
   onExecSummary,
   onExport,
   exporting,
@@ -30,6 +31,7 @@ export function OutputsPanel({
 }: {
   inputs: CaseInputs;
   outputs: CaseOutputs;
+  caseId?: string;
   onExecSummary: () => void;
   onExport: () => void;
   exporting: boolean;
