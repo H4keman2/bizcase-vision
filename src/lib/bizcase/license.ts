@@ -177,7 +177,7 @@ export function onLicenseChange(fn: () => void): () => void {
   // per-case exec summary counter changes, so an upgrade in one tab clears
   // the locked state everywhere without a refresh.
   const onStorage = (e: StorageEvent) => {
-    if (e.key === null || e.key === KEY || e.key.startsWith("execSummaryCount:")) fn();
+    if (isLicenseRelatedStorageKey(e.key)) fn();
   };
   window.addEventListener(EVENT, fn);
   window.addEventListener("storage", onStorage);
