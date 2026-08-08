@@ -138,8 +138,18 @@ export function maskLicenseKey(key: string): string {
 
 export function onLicenseChange(fn: () => void): () => void {
   if (typeof window === "undefined") return () => {};
+  // Cross-tab: `storage` fires in other tabs when the license key or a
+  // per-case exec summary counter changes, so an upgrade in one tab clears
+  // the locked state everywhere without a refresh.
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === null || e.key === KEY || e.key.startsWith("execSummaryCount:")) fn();
+  };
   window.addEventListener(EVENT, fn);
-  return () => window.removeEventListener(EVENT, fn);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener(EVENT, fn);
+    window.removeEventListener("storage", onStorage);
+  };
 }
 
 /** Hydration-safe license state: false on the server and first client render,
