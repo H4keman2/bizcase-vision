@@ -47,28 +47,38 @@ interface LicenseRecord {
   lastCheckedAt: number;
 }
 
+function parseRecord(raw: string): LicenseRecord | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      typeof (parsed as LicenseRecord).key === "string" &&
+      typeof (parsed as LicenseRecord).lastCheckedAt === "number"
+    ) {
+      return parsed as LicenseRecord;
+    }
+    return null;
+  } catch {
+    // Installs from before this format existed stored the bare key as
+    // plain text. Treat it as due for an immediate background check
+    // rather than logging an existing customer out.
+    return { key: raw, lastCheckedAt: 0 };
+  }
+}
+
 function readRecord(): LicenseRecord | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return null;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        typeof (parsed as LicenseRecord).key === "string" &&
-        typeof (parsed as LicenseRecord).lastCheckedAt === "number"
-      ) {
-        return parsed as LicenseRecord;
-      }
-      return null;
-    } catch {
-      // Installs from before this format existed stored the bare key as
-      // plain text. Treat it as due for an immediate background check
-      // rather than logging an existing customer out.
-      return { key: raw, lastCheckedAt: 0 };
+    // Read the current key first, then any legacy/alternate location, so a key
+    // written by an older build (or another surface) still unlocks the app.
+    for (const k of LICENSE_KEYS) {
+      const raw = window.localStorage.getItem(k);
+      if (!raw) continue;
+      const record = parseRecord(raw);
+      if (record) return record;
     }
+    return null;
   } catch {
     return null;
   }
