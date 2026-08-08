@@ -163,11 +163,17 @@ export function ExecSummaryModal({
   onGenerated?: (summary: ExecSummary) => void;
 }) {
   const run = useServerFn(generateExecSummary);
+  const licensed = useLicensed();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<ExecSummary | null>(null);
   const [copied, setCopied] = useState(false);
   const [capped, setCapped] = useState(false);
+
+  // Clear any locked state the moment a license appears (including from another tab).
+  useEffect(() => {
+    if (licensed) setCapped(false);
+  }, [licensed]);
 
   const generate = async () => {
     if (!canGenerateExecSummary(caseId)) {
@@ -188,7 +194,7 @@ export function ExecSummaryModal({
     }
   };
 
-  const locked = !isLicensed() && (capped || !canGenerateExecSummary(caseId));
+  const locked = !licensed && (capped || !canGenerateExecSummary(caseId));
 
   return (
     <Modal title="Executive Summary" onClose={onClose} wide>
