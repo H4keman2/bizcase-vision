@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Modal, Btn, LoadingLine } from "./ui";
 import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
@@ -6,6 +6,7 @@ import { calculate } from "@/lib/bizcase/calc";
 import { loadSettings } from "@/lib/bizcase/settings";
 import {
   isLicensed,
+  useLicensed,
   canGenerateExecSummary,
   incrementExecSummaryCount,
 } from "@/lib/bizcase/license";
