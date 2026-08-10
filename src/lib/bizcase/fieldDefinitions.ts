@@ -86,6 +86,8 @@ export const fieldDefinitions: Record<string, string> = {
   compareDelta:
     "The difference between Case B and Case A for that metric. Green means Case B is better.",
   compareSelect: "Pick which saved version or the current unsaved draft to place on this side.",
+  freeExecSummary:
+    "Free users can generate one AI Executive Summary per case. The counter is tracked locally in this browser — it resets on a new device or after clearing site data. Upgrade to unlock unlimited summaries across all cases.",
 };
 
 export type FieldKey = keyof typeof fieldDefinitions;
