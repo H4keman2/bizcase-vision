@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { Card, Metric, Btn, LockedOverlay } from "./ui";
+import { InfoTooltip } from "./InfoTooltip";
 import { CashFlowChart } from "./CashFlowChart";
 import { SeriesChart } from "./SeriesChart";
 import {
@@ -232,6 +233,7 @@ export function OutputsPanel({
               {canGenerateExecSummary(caseId)
                 ? `${FREE_EXEC_SUMMARY_LIMIT - getExecSummaryCount(caseId)} free generation remaining`
                 : "Locked — upgrade for unlimited"}
+              <InfoTooltip field="freeExecSummary" />
             </p>
           )}
           <Btn variant="primary" onClick={onExecSummary}>
