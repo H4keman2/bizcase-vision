@@ -78,6 +78,9 @@ export function InfoTooltip({ field, className }: { field: string; className?: s
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             toggle();
+          } else if (e.key === "Escape" && open) {
+            e.preventDefault();
+            close();
           }
         }}
         className="flex h-4 w-4 items-center justify-center rounded-full border border-primary font-mono text-[9px] font-bold leading-none text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
