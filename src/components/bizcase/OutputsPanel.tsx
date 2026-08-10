@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { Card, Metric, Btn, LockedOverlay } from "./ui";
+import { InfoTooltip } from "./InfoTooltip";
 import { CashFlowChart } from "./CashFlowChart";
 import { SeriesChart } from "./SeriesChart";
 import {
