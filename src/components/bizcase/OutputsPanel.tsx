@@ -233,6 +233,7 @@ export function OutputsPanel({
               {canGenerateExecSummary(caseId)
                 ? `${FREE_EXEC_SUMMARY_LIMIT - getExecSummaryCount(caseId)} free generation remaining`
                 : "Locked — upgrade for unlimited"}
+              <InfoTooltip field="freeExecSummary" />
             </p>
           )}
           <Btn variant="primary" onClick={onExecSummary}>
