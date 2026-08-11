@@ -76,7 +76,13 @@ export function InfoTooltip({ field, className }: { field: string; className?: s
           e.stopPropagation();
           toggle();
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (suppressFocusOpen.current) {
+            suppressFocusOpen.current = false;
+            return;
+          }
+          setOpen(true);
+        }}
         onBlur={() => !pinned && setOpen(false)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
