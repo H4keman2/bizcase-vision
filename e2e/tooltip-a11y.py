@@ -85,6 +85,66 @@ async def main():
         await pg.wait_for_timeout(200)
         check("outside click: pinned tooltip dismissed", await pg.get_by_role("tooltip").count() == 0)
 
+        # --- focus order: tooltip content is never a tab stop
+        async def active():
+            return await pg.evaluate(
+                "() => { const el = document.activeElement; return { tag: el.tagName, label: el.getAttribute('aria-label'), inTip: !!el.closest('[role=tooltip]') }; }"
+            )
+
+        await trigger.focus()
+        before = await active()
+        # capture the neighbours in DOM tab order around the trigger
+        await pg.keyboard.press("Tab")
+        await pg.wait_for_timeout(150)
+        after_tab = await active()
+        check("tab: focus leaves trigger", after_tab != before)
+        check("tab: focus never lands inside tooltip", not after_tab["inTip"])
+        check("tab: tooltip closed after leaving trigger", await pg.get_by_role("tooltip").count() == 0)
+
+        # Shift+Tab returns to the trigger itself
+        await pg.keyboard.press("Shift+Tab")
+        await pg.wait_for_timeout(150)
+        back = await active()
+        check("shift+tab: focus returns to trigger", back["label"] == before["label"])
+        check("shift+tab: reopens tooltip on focus", await pg.get_by_role("tooltip").count() == 1)
+        check("shift+tab: focus not inside tooltip", not back["inTip"])
+
+        # pinned tooltip: tabbing forward still skips tooltip content entirely
+        await trigger.focus()
+        await pg.keyboard.press("Enter")
+        await pg.wait_for_timeout(150)
+        check("pinned: tooltip open before tabbing", await pg.get_by_role("tooltip").count() == 1)
+        seen_in_tip = False
+        for _ in range(5):
+            await pg.keyboard.press("Tab")
+            await pg.wait_for_timeout(80)
+            if (await active())["inTip"]:
+                seen_in_tip = True
+                break
+        check("pinned: 5 forward tabs never enter tooltip", not seen_in_tip)
+        # and Shift+Tab back the same number of steps is not trapped
+        for _ in range(5):
+            await pg.keyboard.press("Shift+Tab")
+            await pg.wait_for_timeout(80)
+            if (await active())["inTip"]:
+                seen_in_tip = True
+        check("pinned: reverse tabbing never enters tooltip", not seen_in_tip)
+
+        # closing with Escape restores focus to the trigger control, not body
+        await trigger.focus()
+        await pg.keyboard.press("Enter")
+        await pg.wait_for_timeout(150)
+        await pg.keyboard.press("Escape")
+        await pg.wait_for_timeout(200)
+        restored = await active()
+        check("escape: focus restored to trigger (not body)", restored["tag"] == "BUTTON" and restored["label"] == before["label"])
+        check("escape: focus not lost to document.body", restored["tag"] != "BODY")
+        # and the next Tab from there moves on normally
+        await pg.keyboard.press("Tab")
+        await pg.wait_for_timeout(150)
+        onward = await active()
+        check("escape: tab after close moves forward normally", onward["label"] != before["label"] and not onward["inTip"])
+
         await b.close()
     print("\n%d failure(s)" % len(fails), fails)
     sys.exit(1 if fails else 0)
