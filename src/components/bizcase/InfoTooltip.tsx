@@ -15,6 +15,7 @@ export function InfoTooltip({ field, className }: { field: string; className?: s
   const [pinned, setPinned] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const suppressFocusOpen = useRef(false);
   const tooltipId = useId();
 
   const close = () => {
@@ -33,6 +34,8 @@ export function InfoTooltip({ field, className }: { field: string; className?: s
       if (e.key === "Escape") {
         e.preventDefault();
         close();
+        // Returning focus must not re-open the tooltip via onFocus.
+        suppressFocusOpen.current = true;
         triggerRef.current?.focus();
       }
     };
@@ -43,6 +46,7 @@ export function InfoTooltip({ field, className }: { field: string; className?: s
       document.removeEventListener("keydown", onKey);
     };
   }, [pinned]);
+
 
   if (!text) return null;
 
