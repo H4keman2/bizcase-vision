@@ -3,6 +3,7 @@ import { Modal, Btn, NumField, SegToggle } from "./ui";
 import { SettingsCtx } from "./settings-context";
 import { toast } from "sonner";
 import { LicenseModal } from "./LicenseModals";
+import { OnboardingModal, hasSeenOnboarding, markOnboardingSeen } from "./OnboardingModal";
 import {
   GUMROAD_URL,
   LICENSE_PRICE,
@@ -31,6 +32,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [licenseOpen, setLicenseOpen] = useState(false);
   const [licensed, setLicensed] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    if (!hasSeenOnboarding()) setOnboardingOpen(true);
+  }, []);
+
+  const closeOnboarding = () => {
+    markOnboardingSeen();
+    setOnboardingOpen(false);
+  };
 
   useEffect(() => {
     setLicensed(isLicensed());
@@ -243,10 +254,25 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 </Btn>
               </div>
             </section>
+
+            <section>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Help
+              </p>
+              <Btn
+                onClick={() => {
+                  setOpen(false);
+                  setOnboardingOpen(true);
+                }}
+              >
+                Show Tutorial
+              </Btn>
+            </section>
           </div>
         </Modal>
       )}
       {licenseOpen && <LicenseModal onClose={() => setLicenseOpen(false)} />}
+      {onboardingOpen && <OnboardingModal onClose={closeOnboarding} />}
     </SettingsCtx.Provider>
   );
 }
