@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal } from "lucide-react";
 import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
@@ -88,6 +88,7 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
  */
 export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
   const lastStep = step === STEPS.length - 1;
   const { icon: Icon, title, body, image, alt } = STEPS[step];
 
@@ -97,8 +98,25 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Clicking anywhere outside the card dismisses it (the app stays interactive,
+  // so the click itself still reaches whatever was pressed).
+  useEffect(() => {
+    let armed = false;
+    const arm = window.setTimeout(() => (armed = true), 0);
+    const onDown = (e: PointerEvent) => {
+      if (!armed) return;
+      if (!cardRef.current?.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      window.clearTimeout(arm);
+      document.removeEventListener("pointerdown", onDown);
+    };
+  }, [onClose]);
+
   return (
     <div
+      ref={cardRef}
       role="complementary"
       aria-label="Getting started guide"
       className="fixed right-3 top-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 duration-200 sm:right-4 sm:top-4"

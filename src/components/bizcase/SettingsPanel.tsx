@@ -34,8 +34,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
+  // First-time visitors: auto-show the corner guide after a short delay so it
+  // doesn't flash in mid page-load. Returning users open it from Settings > Help.
   useEffect(() => {
-    if (!hasSeenOnboarding()) setOnboardingOpen(true);
+    if (hasSeenOnboarding()) return;
+    const t = window.setTimeout(() => setOnboardingOpen(true), 700);
+    return () => window.clearTimeout(t);
   }, []);
 
   const closeOnboarding = () => {
