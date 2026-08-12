@@ -27,35 +27,69 @@ type Step = {
   icon: typeof Layers;
   title: string;
   body: string;
+  image: string;
+  alt: string;
 };
 
+/**
+ * Drop real screenshots at public/onboarding/step-1.png … step-4.png
+ * (roughly 640x360, they render ~288px wide inside the card).
+ * If a file is missing the image slot hides itself automatically.
+ */
 const STEPS: Step[] = [
   {
     icon: SlidersHorizontal,
-    title: "Build your inputs",
-    body: "Start a new case and enter your investment, benefits, and cost assumptions. NPV, IRR, ROI, and payback update live as you type.",
+    title: "Start with your assumptions",
+    body: "Pop in your investment, benefits, and costs. NPV, IRR, ROI, and payback recalculate the moment you type — no recalculating spreadsheets by hand.",
+    image: "/onboarding/step-1.png",
+    alt: "The case editor inputs panel with live KPI results alongside it",
   },
   {
     icon: FlaskConical,
-    title: "Stress-test with scenarios",
-    body: "Switch between Expected, Best, and Worst case to see how sensitive your return is to the assumptions moving against you.",
+    title: "See what happens if you're wrong",
+    body: "Flip between Expected, Best, and Worst case. It's the fastest way to find out which assumption your whole business case is really resting on.",
+    image: "/onboarding/step-2.png",
+    alt: "Scenario toggle showing expected, best, and worst case results",
   },
   {
     icon: Layers,
-    title: "Save versions, compare cases",
-    body: "Every case keeps its version history, and you can save multiple cases side by side to compare different paths forward.",
+    title: "Save versions and compare",
+    body: "Every case keeps its own version history. Save a few options side by side and see which path actually pays back faster.",
+    image: "/onboarding/step-3.png",
+    alt: "Side-by-side comparison view of two saved cases",
   },
   {
     icon: FileDown,
-    title: "Export when you're ready",
-    body: "Download a full Excel workbook or a summary report to share your case with stakeholders.",
+    title: "Share it when you're happy",
+    body: "One click gives you a full Excel workbook or a clean summary report — ready to drop in front of stakeholders.",
+    image: "/onboarding/step-4.png",
+    alt: "Export buttons for the Excel workbook and summary report",
   },
 ];
 
+function StepImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (failed) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="mb-3 aspect-video w-full border border-border bg-card-inset object-cover"
+    />
+  );
+}
+
+/**
+ * Corner-anchored onboarding guide. Deliberately not a modal: it never dims the
+ * page, never traps focus, and the app stays fully interactive behind it.
+ */
 export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
   const lastStep = step === STEPS.length - 1;
-  const { icon: Icon, title, body } = STEPS[step];
+  const { icon: Icon, title, body, image, alt } = STEPS[step];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -65,35 +99,36 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background/85 p-4 animate-in fade-in duration-150"
-      onClick={onClose}
+      role="complementary"
+      aria-label="Getting started guide"
+      className="fixed right-3 top-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 duration-200 sm:right-4 sm:top-4"
     >
-      <div
-        className="surface-card w-full max-w-md animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+      <div className="surface-card">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <p className="label-eyebrow">
             Getting Started · {step + 1}/{STEPS.length}
           </p>
           <button
             onClick={onClose}
             aria-label="Skip tutorial"
-            className="border border-transparent px-2 py-1 font-mono text-xs text-muted-foreground hover:border-border hover:text-foreground"
+            className="border border-transparent px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:border-border hover:text-foreground"
           >
             SKIP
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center border border-border bg-card-inset">
-            <Icon className="h-5 w-5 text-primary" strokeWidth={2} />
+        <div className="p-4">
+          <StepImage src={image} alt={alt} />
+          <div className="mb-2 flex items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
+              <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+            </span>
+            <h2 className="text-sm font-bold tracking-tight">{title}</h2>
           </div>
-          <h2 className="mb-2 text-lg font-bold tracking-tight">{title}</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border px-5 py-4">
+        <div className="flex items-center justify-between border-t border-border px-3 py-3">
           <div className="flex gap-1.5">
             {STEPS.map((_, i) => (
               <span
