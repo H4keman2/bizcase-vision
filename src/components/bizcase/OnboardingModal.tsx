@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal } from "lucide-react";
 import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
