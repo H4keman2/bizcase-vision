@@ -107,7 +107,7 @@ async def main():
         )
         check("after dismissal: page hit-testable (no leftover overlay)", clickable is not None)
 
-        # --- 6. Auto-show fires exactly once for a first-time visitor ---
+        # --- 7. Auto-show fires exactly once for a first-time visitor ---
         ctx2 = await browser.new_context(viewport={"width": 1280, "height": 1800})
         page2 = await ctx2.new_page()
         await page2.goto(BASE, wait_until="domcontentloaded")
