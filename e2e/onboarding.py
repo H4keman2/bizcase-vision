@@ -71,17 +71,20 @@ async def main():
         check("skip: seen flag persisted",
               await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
 
-        # --- 4. Click outside dismisses and prevents auto-show ---
+        # --- 4. Click outside dismisses and prevents auto-show forever ---
         await fresh(page)
         # Click centre-left, well outside the top-right card.
         await page.mouse.click(200, 400)
         await page.wait_for_selector(CARD, state="detached", timeout=3000)
         check("click-outside: card dismissed", await page.locator(CARD).count() == 0)
-        check("click-outside: seen flag persisted",
+        check("click-outside: seen flag persisted immediately",
               await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
-        await page.reload(wait_until="domcontentloaded")
-        await page.wait_for_timeout(2000)
-        check("click-outside: stays dismissed after reload", await page.locator(CARD).count() == 0)
+        # Reload several times in the same profile: auto-show must never fire again.
+        for i in (1, 2):
+            await page.reload(wait_until="domcontentloaded")
+            await page.wait_for_timeout(2500)
+            check(f"click-outside: still hidden on reload #{i}",
+                  await page.locator(CARD).count() == 0)
 
         # --- 5. Reopen from Settings > Help, then dismiss both ways ---
         for mode in ("skip", "escape"):
