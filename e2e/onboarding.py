@@ -71,7 +71,19 @@ async def main():
         check("skip: seen flag persisted",
               await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
 
-        # --- 4. Reopen from Settings > Help, then dismiss both ways ---
+        # --- 4. Click outside dismisses and prevents auto-show ---
+        await fresh(page)
+        # Click centre-left, well outside the top-right card.
+        await page.mouse.click(200, 400)
+        await page.wait_for_selector(CARD, state="detached", timeout=3000)
+        check("click-outside: card dismissed", await page.locator(CARD).count() == 0)
+        check("click-outside: seen flag persisted",
+              await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
+        await page.reload(wait_until="domcontentloaded")
+        await page.wait_for_timeout(2000)
+        check("click-outside: stays dismissed after reload", await page.locator(CARD).count() == 0)
+
+        # --- 5. Reopen from Settings > Help, then dismiss both ways ---
         for mode in ("skip", "escape"):
             await page.get_by_role("button", name="Settings").first.click()
             await page.get_by_role("button", name="Show Tutorial").click()
@@ -88,7 +100,7 @@ async def main():
             await page.wait_for_selector(CARD, state="detached", timeout=3000)
             check(f"reopen ({mode}): card dismissed", await page.locator(CARD).count() == 0)
 
-        # --- 5. App still usable after dismissal ---
+        # --- 6. App still usable after dismissal ---
         clickable = await page.evaluate(
             "() => { const el = document.elementFromPoint(innerWidth/2, 200);"
             " return el ? el.tagName : null }"
