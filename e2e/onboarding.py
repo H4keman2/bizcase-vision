@@ -1,5 +1,9 @@
 """Playwright checks: onboarding corner card dismissal + non-blocking behavior.
 
+All waits are on deterministic UI states (animations settled, stable bounding
+box, persisted localStorage flag) rather than fixed sleeps, so the suite stays
+reliable on slower CI machines.
+
 Run: python3 e2e/onboarding.py
 """
 import asyncio, sys
@@ -7,6 +11,9 @@ from playwright.async_api import async_playwright
 
 BASE = "http://localhost:8080"
 CARD = "[aria-label='Getting started guide']"
+# Generous ceilings: these are upper bounds, not sleeps — waits resolve as soon
+# as the condition is true, so slow CI just takes longer, it doesn't flake.
+T = 15000
 fails = []
 
 def check(name, cond):
@@ -14,15 +21,105 @@ def check(name, cond):
     if not cond:
         fails.append(name)
 
+async def wait_app_ready(page):
+    """Wait until the app shell has hydrated and is interactive."""
+    await page.wait_for_load_state("domcontentloaded")
+    await page.get_by_role("button", name="Settings").first.wait_for(
+        state="visible", timeout=T
+    )
+    await page.wait_for_function(
+        "() => document.fonts ? document.fonts.status === 'loaded' : true", timeout=T
+    )
+
+async def wait_card_stable(page):
+    """Card visible, entry animation finished, and geometry settled."""
+    card = page.locator(CARD)
+    await card.wait_for(state="visible", timeout=T)
+    # All CSS animations/transitions on the card and its subtree have finished.
+    await page.wait_for_function(
+        """(sel) => {
+             const el = document.querySelector(sel);
+             if (!el) return false;
+             const anims = el.getAnimations ? el.getAnimations({ subtree: true }) : [];
+             return anims.every(a => a.playState === 'finished' || a.playState === 'idle');
+           }""",
+        arg=CARD, timeout=T,
+    )
+    # Two identical consecutive frames of the bounding box => layout is stable.
+    await page.wait_for_function(
+        """(sel) => new Promise(resolve => {
+             const el = document.querySelector(sel);
+             if (!el) return resolve(false);
+             const a = el.getBoundingClientRect();
+             requestAnimationFrame(() => {
+               const b = el.getBoundingClientRect();
+               resolve(a.top === b.top && a.left === b.left &&
+                       a.width === b.width && a.height === b.height &&
+                       b.width > 0 && b.height > 0);
+             });
+           })""",
+        arg=CARD, timeout=T,
+    )
+    return card
+
+async def wait_card_gone(page):
+    """Card removed from the DOM (or hidden) and no exit animation still running."""
+    await page.wait_for_function(
+        """(sel) => {
+             const el = document.querySelector(sel);
+             if (!el) return true;
+             const cs = getComputedStyle(el);
+             if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return true;
+             return false;
+           }""",
+        arg=CARD, timeout=T,
+    )
+
+async def card_hidden(page):
+    return await page.evaluate(
+        """(sel) => {
+             const el = document.querySelector(sel);
+             if (!el) return true;
+             const cs = getComputedStyle(el);
+             return cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0';
+           }""",
+        CARD,
+    )
+
+async def wait_seen_flag(page):
+    await page.wait_for_function(
+        "() => localStorage.getItem('onboarding:seen') !== null", timeout=T
+    )
+    return True
+
+async def wait_no_autoshow(page):
+    """Deterministically confirm the card never auto-shows on this load.
+
+    Waits for the app to be ready and for the auto-show timer window to be over
+    (signalled by two idle animation frames after readiness), then asserts.
+    """
+    await wait_app_ready(page)
+    await page.wait_for_function(
+        """() => new Promise(resolve => {
+             // Yield past any queued auto-show timer/microtasks.
+             setTimeout(() => requestAnimationFrame(() =>
+               requestAnimationFrame(() => resolve(true))), 1200);
+           })""",
+        timeout=T,
+    )
+    return await card_hidden(page)
+
 async def fresh(page):
     """Load the home page with onboarding un-seen so the card auto-shows."""
     await page.goto(BASE, wait_until="domcontentloaded")
+    await wait_app_ready(page)
     await page.evaluate("localStorage.removeItem('onboarding:seen')")
     await page.reload(wait_until="domcontentloaded")
-    await page.wait_for_selector(CARD, timeout=10000)
+    await wait_app_ready(page)
+    await wait_card_stable(page)
 
 async def assert_not_blocking(page, label):
-    card = page.locator(CARD)
+    card = await wait_card_stable(page)
     box = await card.bounding_box()
     check(f"{label}: card is anchored top-right", box is not None and box["y"] < 120)
     # No dimming/blocking overlay covering the viewport centre.
@@ -55,44 +152,43 @@ async def main():
 
         # --- 2. Escape dismisses ---
         await page.keyboard.press("Escape")
-        await page.wait_for_selector(CARD, state="detached", timeout=3000)
-        check("escape: card dismissed", await page.locator(CARD).count() == 0)
-        check("escape: seen flag persisted",
-              await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
+        await wait_card_gone(page)
+        check("escape: card dismissed", await card_hidden(page))
+        check("escape: seen flag persisted", await wait_seen_flag(page))
         await page.reload(wait_until="domcontentloaded")
-        await page.wait_for_timeout(500)
-        check("escape: stays dismissed after reload", await page.locator(CARD).count() == 0)
+        check("escape: stays dismissed after reload", await wait_no_autoshow(page))
 
         # --- 3. SKIP dismisses ---
         await fresh(page)
         await page.get_by_role("button", name="Skip tutorial").click()
-        await page.wait_for_selector(CARD, state="detached", timeout=3000)
-        check("skip: card dismissed", await page.locator(CARD).count() == 0)
-        check("skip: seen flag persisted",
-              await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
+        await wait_card_gone(page)
+        check("skip: card dismissed", await card_hidden(page))
+        check("skip: seen flag persisted", await wait_seen_flag(page))
 
         # --- 4. Click outside dismisses and prevents auto-show forever ---
         await fresh(page)
         # Click centre-left, well outside the top-right card.
         await page.mouse.click(200, 400)
-        await page.wait_for_selector(CARD, state="detached", timeout=3000)
-        check("click-outside: card dismissed", await page.locator(CARD).count() == 0)
-        check("click-outside: seen flag persisted immediately",
-              await page.evaluate("localStorage.getItem('onboarding:seen')") == "1")
+        await wait_card_gone(page)
+        check("click-outside: card dismissed", await card_hidden(page))
+        check("click-outside: seen flag persisted immediately", await wait_seen_flag(page))
         # Reload several times in the same profile: auto-show must never fire again.
         for i in (1, 2):
             await page.reload(wait_until="domcontentloaded")
-            await page.wait_for_timeout(2500)
-            check(f"click-outside: still hidden on reload #{i}",
-                  await page.locator(CARD).count() == 0)
+            check(f"click-outside: still hidden on reload #{i}", await wait_no_autoshow(page))
 
         # --- 5. Reopen from Settings > Help, then dismiss both ways ---
         for mode in ("skip", "escape"):
-            await page.get_by_role("button", name="Settings").first.click()
-            await page.get_by_role("button", name="Show Tutorial").click()
-            await page.wait_for_selector(CARD, timeout=5000)
+            settings = page.get_by_role("button", name="Settings").first
+            await settings.wait_for(state="visible", timeout=T)
+            await settings.click()
+            tutorial = page.get_by_role("button", name="Show Tutorial")
+            await tutorial.wait_for(state="visible", timeout=T)
+            await tutorial.click()
+            await wait_card_stable(page)
             check(f"reopen ({mode}): card visible from Settings > Help",
                   await page.locator(CARD).is_visible())
+            await tutorial.wait_for(state="detached", timeout=T)
             check(f"reopen ({mode}): settings modal closed",
                   await page.get_by_role("button", name="Show Tutorial").count() == 0)
             await assert_not_blocking(page, f"reopen ({mode})")
@@ -100,8 +196,8 @@ async def main():
                 await page.get_by_role("button", name="Skip tutorial").click()
             else:
                 await page.keyboard.press("Escape")
-            await page.wait_for_selector(CARD, state="detached", timeout=3000)
-            check(f"reopen ({mode}): card dismissed", await page.locator(CARD).count() == 0)
+            await wait_card_gone(page)
+            check(f"reopen ({mode}): card dismissed", await card_hidden(page))
 
         # --- 6. App still usable after dismissal ---
         clickable = await page.evaluate(
@@ -114,6 +210,7 @@ async def main():
         ctx2 = await browser.new_context(viewport={"width": 1280, "height": 1800})
         page2 = await ctx2.new_page()
         await page2.goto(BASE, wait_until="domcontentloaded")
+        await wait_app_ready(page2)
         await page2.evaluate("localStorage.removeItem('onboarding:seen')")
         await page2.reload(wait_until="domcontentloaded")
 
@@ -122,26 +219,24 @@ async def main():
         # Not shown immediately — the trigger is delayed so it can't flash in mid-load.
         check("auto-show: card not present instantly on load",
               await page2.locator(CARD).count() == 0)
-        await page2.wait_for_selector(CARD, timeout=5000)
+        await wait_card_stable(page2)
         check("auto-show: card appears after the delay",
               await page2.locator(CARD).is_visible())
         await assert_not_blocking(page2, "auto-show")
 
         # Dismiss, then confirm it never auto-shows again across repeated reloads.
         await page2.get_by_role("button", name="Skip tutorial").click()
-        await page2.wait_for_selector(CARD, state="detached", timeout=3000)
+        await wait_card_gone(page2)
         for i in (1, 2):
             await page2.reload(wait_until="domcontentloaded")
-            await page2.wait_for_timeout(2000)
-            check(f"auto-show: still hidden on reload #{i}",
-                  await page2.locator(CARD).count() == 0)
+            check(f"auto-show: still hidden on reload #{i}", await wait_no_autoshow(page2))
 
         # A brand-new browser profile (no localStorage) sees it again.
         ctx3 = await browser.new_context(viewport={"width": 1280, "height": 1800})
         page3 = await ctx3.new_page()
         await page3.goto(BASE, wait_until="domcontentloaded")
         try:
-            await page3.wait_for_selector(CARD, timeout=5000)
+            await wait_card_stable(page3)
             shown = True
         except Exception:
             shown = False
