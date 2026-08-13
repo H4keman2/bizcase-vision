@@ -95,7 +95,47 @@ async def main():
         )
         check("after dismissal: page hit-testable (no leftover overlay)", clickable is not None)
 
+        # --- 6. Auto-show fires exactly once for a first-time visitor ---
+        ctx2 = await browser.new_context(viewport={"width": 1280, "height": 1800})
+        page2 = await ctx2.new_page()
+        await page2.goto(BASE, wait_until="domcontentloaded")
+        await page2.evaluate("localStorage.removeItem('onboarding:seen')")
+        await page2.reload(wait_until="domcontentloaded")
+
+        check("auto-show: no seen flag before first visit completes",
+              await page2.evaluate("localStorage.getItem('onboarding:seen')") is None)
+        # Not shown immediately — the trigger is delayed so it can't flash in mid-load.
+        check("auto-show: card not present instantly on load",
+              await page2.locator(CARD).count() == 0)
+        await page2.wait_for_selector(CARD, timeout=5000)
+        check("auto-show: card appears after the delay",
+              await page2.locator(CARD).is_visible())
+        await assert_not_blocking(page2, "auto-show")
+
+        # Dismiss, then confirm it never auto-shows again across repeated reloads.
+        await page2.get_by_role("button", name="Skip tutorial").click()
+        await page2.wait_for_selector(CARD, state="detached", timeout=3000)
+        for i in (1, 2):
+            await page2.reload(wait_until="domcontentloaded")
+            await page2.wait_for_timeout(2000)
+            check(f"auto-show: still hidden on reload #{i}",
+                  await page2.locator(CARD).count() == 0)
+
+        # A brand-new browser profile (no localStorage) sees it again.
+        ctx3 = await browser.new_context(viewport={"width": 1280, "height": 1800})
+        page3 = await ctx3.new_page()
+        await page3.goto(BASE, wait_until="domcontentloaded")
+        try:
+            await page3.wait_for_selector(CARD, timeout=5000)
+            shown = True
+        except Exception:
+            shown = False
+        check("auto-show: fresh profile sees the card again", shown)
+        await ctx3.close()
+        await ctx2.close()
+
         await page.screenshot(path="/tmp/browser/onboarding-final.png")
+
         await browser.close()
 
     print(f"\n{'ALL CHECKS PASSED' if not fails else 'FAILURES: ' + ', '.join(fails)}")
