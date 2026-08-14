@@ -68,17 +68,30 @@ const STEPS: Step[] = [
 ];
 
 function StepImage({ src, alt }: { src: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (failed) return null;
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setLoaded(true);
+    img.onerror = () => setLoaded(false);
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src]);
+
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className="mb-3 aspect-video w-full border border-border bg-card-inset object-cover"
-    />
+    <div className="mb-3 aspect-video w-full overflow-hidden border border-border bg-card-inset">
+      {loaded && (
+        <img
+          src={src}
+          alt={alt}
+          className="h-full w-full animate-in fade-in object-cover duration-200"
+        />
+      )}
+    </div>
   );
 }
 
