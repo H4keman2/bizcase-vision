@@ -184,6 +184,9 @@ export function InputsPanel({
           />
         </div>
 
+        <SavingsRationaleSection inputs={inputs} patch={patch} />
+
+
         {detailed && (
           <>
             <p className="mb-2 mt-4 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
