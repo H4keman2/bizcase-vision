@@ -48,6 +48,9 @@ export interface CaseInputs {
   benefits: {
     costSavingsAnnual: number;
     timeSavingsAnnual: number;
+    /** Optional "show your work" assumptions behind the two savings figures. */
+    rationale?: SavingsRationale;
+
     revenueModel: {
       type: RevenueModelType;
       aggregate: { revenueLiftAnnual: number; cogsAnnual: number };
