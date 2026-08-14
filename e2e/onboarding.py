@@ -146,11 +146,11 @@ VIEWPORTS = [
     ("mobile 393x706", {"width": 393, "height": 706}),
 ]
 
-async def run_viewport(browser, vp_name, vp):
+async def run_viewport(browser, engine, vp_name, vp):
     """Full onboarding suite for one viewport size."""
     ctx = await browser.new_context(viewport=vp)
     page = await ctx.new_page()
-    V = f"[{vp_name}] "
+    V = f"[{engine} · {vp_name}] "
 
     # --- 1. First visit: card shows and does not block ---
     await fresh(page)
