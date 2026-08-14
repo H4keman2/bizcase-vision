@@ -255,21 +255,37 @@ async def run_viewport(browser, vp_name, vp):
         shown = False
     check(V + "auto-show: fresh profile sees the card again", shown)
 
-    await page.screenshot(path=f"/tmp/browser/onboarding-{vp['width']}x{vp['height']}.png")
+    await page.screenshot(
+        path=f"/tmp/browser/onboarding-{engine}-{vp['width']}x{vp['height']}.png"
+    )
     await ctx3.close()
     await ctx2.close()
     await ctx.close()
 
+# Chromium runs the full viewport matrix; Firefox and WebKit run a desktop +
+# mobile pair, which is enough to catch engine-specific timer/animation and
+# storage-persistence differences without tripling total runtime.
+ENGINES = [
+    ("chromium", VIEWPORTS),
+    ("firefox", [VIEWPORTS[0], VIEWPORTS[-1]]),
+    ("webkit", [VIEWPORTS[0], VIEWPORTS[-1]]),
+]
+
 async def main():
+    only = sys.argv[1] if len(sys.argv) > 1 else None
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        for vp_name, vp in VIEWPORTS:
-            print(f"\n=== {vp_name} ===")
-            await run_viewport(browser, vp_name, vp)
-        await browser.close()
+        for engine, viewports in ENGINES:
+            if only and only != engine:
+                continue
+            browser = await getattr(p, engine).launch(headless=True)
+            for vp_name, vp in viewports:
+                print(f"\n=== {engine} · {vp_name} ===")
+                await run_viewport(browser, engine, vp_name, vp)
+            await browser.close()
 
     print(f"\n{'ALL CHECKS PASSED' if not fails else 'FAILURES: ' + ', '.join(fails)}")
     sys.exit(1 if fails else 0)
 
 asyncio.run(main())
+
 
