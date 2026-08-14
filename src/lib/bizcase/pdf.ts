@@ -2,6 +2,9 @@ import { jsPDF } from "jspdf";
 import { fmtCompact, fmtCurrency, fmtIrr, fmtMonths, fmtNumber, fmtPercent } from "./format";
 import {
   describeManualTimelineShort,
+  describeCostRationale,
+  describeTimeRationale,
+  resolveRationale,
   REGIONS,
   REGION_LABEL,
   type CaseInputs,
@@ -284,6 +287,36 @@ function rows(doc: jsPDF, items: [string, string][], y: number, cols = 2) {
   return y + Math.ceil(items.length / cols) * 20 + 12;
 }
 
+/** Plain-language "show your work" lines for the two savings figures, when built from assumptions. */
+function rationaleLines(i: CaseInputs): string[] {
+  const r = resolveRationale(i);
+  const out: string[] = [];
+  const cost = describeCostRationale(r.cost);
+  const time = describeTimeRationale(r.time);
+  if (cost)
+    out.push(`Cost Savings / Yr: ${fmtCurrency(i.benefits.costSavingsAnnual)} - ${cost}`);
+  if (time)
+    out.push(`Time Savings / Yr: ${fmtCurrency(i.benefits.timeSavingsAnnual)} - ${time}`);
+  return out;
+}
+
+/** Renders wrapped, full-width note lines. */
+function noteLines(doc: jsPDF, lines: string[], y: number) {
+  const W = doc.internal.pageSize.getWidth();
+  doc.setFont("courier", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(TEXT);
+  lines.forEach((line) => {
+    const wrapped = doc.splitTextToSize(line, W - 80) as string[];
+    wrapped.forEach((w) => {
+      doc.text(w, 40, y);
+      y += 13;
+    });
+    y += 4;
+  });
+  return y + 8;
+}
+
 function inputRows(c: PdfCase): [string, string][] {
   const { inputs: i, mode } = c;
   const rm = i.benefits.revenueModel;
@@ -495,6 +528,12 @@ export function exportCasePdf(c: PdfCase) {
   y = sectionLabel(doc, "Assumptions", y);
   y = rows(doc, inputRows(c), y, 2);
 
+  const rlines = rationaleLines(c.inputs);
+  if (rlines.length) {
+    y = sectionLabel(doc, "Savings Rationale", y);
+    y = noteLines(doc, rlines, y);
+  }
+
   const regRows = regionalRows(c);
   if (regRows.length) {
     y = sectionLabel(doc, "Regional Breakdown", y);
@@ -698,6 +737,12 @@ export function exportComparisonPdf(opts: {
 
   y = sectionLabel(doc, "Assumptions · Case B", y);
   y = rows(doc, inputRows(b), y, 2);
+
+  const rlinesB = rationaleLines(b.inputs);
+  if (rlinesB.length) {
+    y = sectionLabel(doc, "Savings Rationale · Case B", y);
+    y = noteLines(doc, rlinesB, y);
+  }
 
   const regRowsB = regionalRows(b);
   if (regRowsB.length) {
