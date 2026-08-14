@@ -1,5 +1,6 @@
 import { Card, NumField, SegToggle, Btn } from "./ui";
 import { InfoTooltip } from "./InfoTooltip";
+import { SavingsRationaleSection } from "./SavingsRationale";
 import { cn } from "@/lib/utils";
 import {
   periodCount,
