@@ -1,5 +1,6 @@
 import { Card, NumField, SegToggle, Btn } from "./ui";
 import { InfoTooltip } from "./InfoTooltip";
+import { SavingsRationaleSection } from "./SavingsRationale";
 import { cn } from "@/lib/utils";
 import {
   periodCount,
@@ -183,6 +184,9 @@ export function InputsPanel({
             onChange={(v) => patch((d) => void (d.benefits.timeSavingsAnnual = v))}
           />
         </div>
+
+        <SavingsRationaleSection inputs={inputs} patch={patch} />
+
 
         {detailed && (
           <>
