@@ -174,7 +174,14 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <div className="flex gap-2">
-            {step > 0 && <Btn onClick={() => setStep((s) => s - 1)}>Back</Btn>}
+            <Btn
+              onClick={() => setStep((s) => s - 1)}
+              tabIndex={step === 0 ? -1 : 0}
+              aria-hidden={step === 0}
+              className={cn(step === 0 && "pointer-events-none opacity-0")}
+            >
+              Back
+            </Btn>
             <Btn variant="primary" onClick={() => (lastStep ? onClose() : setStep((s) => s + 1))}>
               {lastStep ? (
                 "Let's go"
