@@ -68,17 +68,30 @@ const STEPS: Step[] = [
 ];
 
 function StepImage({ src, alt }: { src: string; alt: string }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (failed) return null;
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setLoaded(true);
+    img.onerror = () => setLoaded(false);
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src]);
+
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className="mb-3 aspect-video w-full border border-border bg-card-inset object-cover"
-    />
+    <div className="mb-3 aspect-video w-full overflow-hidden border border-border bg-card-inset">
+      {loaded && (
+        <img
+          src={src}
+          alt={alt}
+          className="h-full w-full animate-in fade-in object-cover duration-200"
+        />
+      )}
+    </div>
   );
 }
 
@@ -137,13 +150,15 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
 
         <div className="p-4">
           <StepImage src={image} alt={alt} />
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
-              <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
-            </span>
-            <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+          <div key={step} className="min-h-[64px] animate-in fade-in duration-200">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
+                <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+              </span>
+              <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
         </div>
 
         <div className="flex items-center justify-between border-t border-border px-3 py-3">
@@ -159,7 +174,14 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
             ))}
           </div>
           <div className="flex gap-2">
-            {step > 0 && <Btn onClick={() => setStep((s) => s - 1)}>Back</Btn>}
+            <Btn
+              onClick={() => setStep((s) => s - 1)}
+              tabIndex={step === 0 ? -1 : 0}
+              aria-hidden={step === 0}
+              className={cn(step === 0 && "pointer-events-none opacity-0")}
+            >
+              Back
+            </Btn>
             <Btn variant="primary" onClick={() => (lastStep ? onClose() : setStep((s) => s + 1))}>
               {lastStep ? (
                 "Let's go"
