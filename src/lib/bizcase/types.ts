@@ -39,7 +39,75 @@ export interface PhasedCapex {
   amount: number;
 }
 
+export type TimeUnit = "seconds" | "minutes";
+
+/** Assumption inputs behind Time Savings / Yr. */
+export interface TimeSavingsRationale {
+  enabled: boolean;
+  /** Time saved per transaction/task, expressed in `unit`. */
+  perTask: number;
+  unit: TimeUnit;
+  tasksPerMonth: number;
+  /** Fully-loaded labor cost per hour. */
+  hourlyRate: number;
+}
+
+/** Assumption inputs behind Cost Savings / Yr. */
+export interface CostSavingsRationale {
+  enabled: boolean;
+  /** Short driver label, e.g. "Fewer scan re-tries". */
+  label: string;
+  quantityPerMonth: number;
+  valuePerUnit: number;
+}
+
+export interface SavingsRationale {
+  time: TimeSavingsRationale;
+  cost: CostSavingsRationale;
+}
+
+export function defaultRationale(): SavingsRationale {
+  return {
+    time: { enabled: false, perTask: 30, unit: "seconds", tasksPerMonth: 1000, hourlyRate: 32 },
+    cost: { enabled: false, label: "", quantityPerMonth: 0, valuePerUnit: 0 },
+  };
+}
+
+/** Normalises a possibly-missing rationale from older saved cases. */
+export function resolveRationale(inputs: CaseInputs): SavingsRationale {
+  const d = defaultRationale();
+  const r = inputs.benefits.rationale;
+  if (!r) return d;
+  return { time: { ...d.time, ...r.time }, cost: { ...d.cost, ...r.cost } };
+}
+
+/** Annual dollar value produced by the time-savings assumptions. */
+export function computeTimeSavingsAnnual(t: TimeSavingsRationale): number {
+  const hoursPerTask = (t.perTask || 0) / (t.unit === "minutes" ? 60 : 3600);
+  return Math.round(hoursPerTask * (t.tasksPerMonth || 0) * 12 * (t.hourlyRate || 0));
+}
+
+/** Annual dollar value produced by the cost-savings assumptions. */
+export function computeCostSavingsAnnual(c: CostSavingsRationale): number {
+  return Math.round((c.quantityPerMonth || 0) * (c.valuePerUnit || 0) * 12);
+}
+
+/** e.g. "based on 30 sec/transaction x 1,000 transactions/month x $32/hr labor rate" */
+export function describeTimeRationale(t: TimeSavingsRationale): string | null {
+  if (!t.enabled) return null;
+  const unit = t.unit === "minutes" ? "min" : "sec";
+  return `based on ${t.perTask.toLocaleString()} ${unit}/transaction x ${t.tasksPerMonth.toLocaleString()} transactions/month x $${t.hourlyRate.toLocaleString()}/hr labor rate`;
+}
+
+/** e.g. "Fewer scan re-tries: 500/month x $4.00 each" */
+export function describeCostRationale(c: CostSavingsRationale): string | null {
+  if (!c.enabled) return null;
+  const label = c.label.trim() || "Cost driver";
+  return `${label}: ${c.quantityPerMonth.toLocaleString()}/month x $${c.valuePerUnit.toLocaleString()} each`;
+}
+
 export interface CaseInputs {
+
   investment: {
     nre: number;
     upfront: number;
