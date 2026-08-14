@@ -150,13 +150,15 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
 
         <div className="p-4">
           <StepImage src={image} alt={alt} />
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
-              <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
-            </span>
-            <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+          <div key={step} className="min-h-[64px] animate-in fade-in duration-200">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
+                <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
+              </span>
+              <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
         </div>
 
         <div className="flex items-center justify-between border-t border-border px-3 py-3">
