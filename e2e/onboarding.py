@@ -139,116 +139,137 @@ async def assert_not_blocking(page, label):
         )
         check(f"{label}: app controls behind the card stay focusable", focused)
 
+VIEWPORTS = [
+    ("desktop 1280x1800", {"width": 1280, "height": 1800}),
+    ("laptop 1024x768", {"width": 1024, "height": 768}),
+    ("tablet 768x1024", {"width": 768, "height": 1024}),
+    ("mobile 393x706", {"width": 393, "height": 706}),
+]
+
+async def run_viewport(browser, vp_name, vp):
+    """Full onboarding suite for one viewport size."""
+    ctx = await browser.new_context(viewport=vp)
+    page = await ctx.new_page()
+    V = f"[{vp_name}] "
+
+    # --- 1. First visit: card shows and does not block ---
+    await fresh(page)
+    check(V + "first visit: card visible", await page.locator(CARD).is_visible())
+    await assert_not_blocking(page, V + "first visit")
+    # Card must fit inside the viewport at every size.
+    box = await page.locator(CARD).bounding_box()
+    check(
+        V + "first visit: card fits within the viewport",
+        box is not None
+        and box["x"] >= 0
+        and box["x"] + box["width"] <= vp["width"] + 1
+        and box["height"] <= vp["height"],
+    )
+
+    # --- 2. Escape dismisses ---
+    await page.keyboard.press("Escape")
+    await wait_card_gone(page)
+    check(V + "escape: card dismissed", await card_hidden(page))
+    check(V + "escape: seen flag persisted", await wait_seen_flag(page))
+    await page.reload(wait_until="domcontentloaded")
+    check(V + "escape: stays dismissed after reload", await wait_no_autoshow(page))
+
+    # --- 3. SKIP dismisses ---
+    await fresh(page)
+    await page.get_by_role("button", name="Skip tutorial").click()
+    await wait_card_gone(page)
+    check(V + "skip: card dismissed", await card_hidden(page))
+    check(V + "skip: seen flag persisted", await wait_seen_flag(page))
+
+    # --- 4. Click outside dismisses and prevents auto-show forever ---
+    await fresh(page)
+    # Click low-left, well outside the top-right card at any width.
+    await page.mouse.click(min(200, vp["width"] // 4), vp["height"] - 60)
+    await wait_card_gone(page)
+    check(V + "click-outside: card dismissed", await card_hidden(page))
+    check(V + "click-outside: seen flag persisted immediately", await wait_seen_flag(page))
+    for i in (1, 2):
+        await page.reload(wait_until="domcontentloaded")
+        check(V + f"click-outside: still hidden on reload #{i}", await wait_no_autoshow(page))
+
+    # --- 5. Reopen from Settings > Help, then dismiss both ways ---
+    for mode in ("skip", "escape"):
+        settings = page.get_by_role("button", name="Settings").first
+        await settings.wait_for(state="visible", timeout=T)
+        await settings.click()
+        tutorial = page.get_by_role("button", name="Show Tutorial")
+        await tutorial.wait_for(state="visible", timeout=T)
+        await tutorial.click()
+        await wait_card_stable(page)
+        check(V + f"reopen ({mode}): card visible from Settings > Help",
+              await page.locator(CARD).is_visible())
+        await tutorial.wait_for(state="detached", timeout=T)
+        check(V + f"reopen ({mode}): settings modal closed",
+              await page.get_by_role("button", name="Show Tutorial").count() == 0)
+        await assert_not_blocking(page, V + f"reopen ({mode})")
+        if mode == "skip":
+            await page.get_by_role("button", name="Skip tutorial").click()
+        else:
+            await page.keyboard.press("Escape")
+        await wait_card_gone(page)
+        check(V + f"reopen ({mode}): card dismissed", await card_hidden(page))
+
+    # --- 6. App still usable after dismissal ---
+    clickable = await page.evaluate(
+        "() => { const el = document.elementFromPoint(innerWidth/2, 200);"
+        " return el ? el.tagName : null }"
+    )
+    check(V + "after dismissal: page hit-testable (no leftover overlay)", clickable is not None)
+
+    # --- 7. Auto-show fires exactly once for a first-time visitor ---
+    ctx2 = await browser.new_context(viewport=vp)
+    page2 = await ctx2.new_page()
+    await page2.goto(BASE, wait_until="domcontentloaded")
+    await wait_app_ready(page2)
+    await page2.evaluate("localStorage.removeItem('onboarding:seen')")
+    await page2.reload(wait_until="domcontentloaded")
+
+    check(V + "auto-show: no seen flag before first visit completes",
+          await page2.evaluate("localStorage.getItem('onboarding:seen')") is None)
+    check(V + "auto-show: card not present instantly on load",
+          await page2.locator(CARD).count() == 0)
+    await wait_card_stable(page2)
+    check(V + "auto-show: card appears after the delay",
+          await page2.locator(CARD).is_visible())
+    await assert_not_blocking(page2, V + "auto-show")
+
+    await page2.get_by_role("button", name="Skip tutorial").click()
+    await wait_card_gone(page2)
+    for i in (1, 2):
+        await page2.reload(wait_until="domcontentloaded")
+        check(V + f"auto-show: still hidden on reload #{i}", await wait_no_autoshow(page2))
+
+    # A brand-new browser profile (no localStorage) sees it again.
+    ctx3 = await browser.new_context(viewport=vp)
+    page3 = await ctx3.new_page()
+    await page3.goto(BASE, wait_until="domcontentloaded")
+    try:
+        await wait_card_stable(page3)
+        shown = True
+    except Exception:
+        shown = False
+    check(V + "auto-show: fresh profile sees the card again", shown)
+
+    await page.screenshot(path=f"/tmp/browser/onboarding-{vp['width']}x{vp['height']}.png")
+    await ctx3.close()
+    await ctx2.close()
+    await ctx.close()
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        ctx = await browser.new_context(viewport={"width": 1280, "height": 1800})
-        page = await ctx.new_page()
-
-        # --- 1. First visit: card shows and does not block ---
-        await fresh(page)
-        check("first visit: card visible", await page.locator(CARD).is_visible())
-        await assert_not_blocking(page, "first visit")
-
-        # --- 2. Escape dismisses ---
-        await page.keyboard.press("Escape")
-        await wait_card_gone(page)
-        check("escape: card dismissed", await card_hidden(page))
-        check("escape: seen flag persisted", await wait_seen_flag(page))
-        await page.reload(wait_until="domcontentloaded")
-        check("escape: stays dismissed after reload", await wait_no_autoshow(page))
-
-        # --- 3. SKIP dismisses ---
-        await fresh(page)
-        await page.get_by_role("button", name="Skip tutorial").click()
-        await wait_card_gone(page)
-        check("skip: card dismissed", await card_hidden(page))
-        check("skip: seen flag persisted", await wait_seen_flag(page))
-
-        # --- 4. Click outside dismisses and prevents auto-show forever ---
-        await fresh(page)
-        # Click centre-left, well outside the top-right card.
-        await page.mouse.click(200, 400)
-        await wait_card_gone(page)
-        check("click-outside: card dismissed", await card_hidden(page))
-        check("click-outside: seen flag persisted immediately", await wait_seen_flag(page))
-        # Reload several times in the same profile: auto-show must never fire again.
-        for i in (1, 2):
-            await page.reload(wait_until="domcontentloaded")
-            check(f"click-outside: still hidden on reload #{i}", await wait_no_autoshow(page))
-
-        # --- 5. Reopen from Settings > Help, then dismiss both ways ---
-        for mode in ("skip", "escape"):
-            settings = page.get_by_role("button", name="Settings").first
-            await settings.wait_for(state="visible", timeout=T)
-            await settings.click()
-            tutorial = page.get_by_role("button", name="Show Tutorial")
-            await tutorial.wait_for(state="visible", timeout=T)
-            await tutorial.click()
-            await wait_card_stable(page)
-            check(f"reopen ({mode}): card visible from Settings > Help",
-                  await page.locator(CARD).is_visible())
-            await tutorial.wait_for(state="detached", timeout=T)
-            check(f"reopen ({mode}): settings modal closed",
-                  await page.get_by_role("button", name="Show Tutorial").count() == 0)
-            await assert_not_blocking(page, f"reopen ({mode})")
-            if mode == "skip":
-                await page.get_by_role("button", name="Skip tutorial").click()
-            else:
-                await page.keyboard.press("Escape")
-            await wait_card_gone(page)
-            check(f"reopen ({mode}): card dismissed", await card_hidden(page))
-
-        # --- 6. App still usable after dismissal ---
-        clickable = await page.evaluate(
-            "() => { const el = document.elementFromPoint(innerWidth/2, 200);"
-            " return el ? el.tagName : null }"
-        )
-        check("after dismissal: page hit-testable (no leftover overlay)", clickable is not None)
-
-        # --- 7. Auto-show fires exactly once for a first-time visitor ---
-        ctx2 = await browser.new_context(viewport={"width": 1280, "height": 1800})
-        page2 = await ctx2.new_page()
-        await page2.goto(BASE, wait_until="domcontentloaded")
-        await wait_app_ready(page2)
-        await page2.evaluate("localStorage.removeItem('onboarding:seen')")
-        await page2.reload(wait_until="domcontentloaded")
-
-        check("auto-show: no seen flag before first visit completes",
-              await page2.evaluate("localStorage.getItem('onboarding:seen')") is None)
-        # Not shown immediately — the trigger is delayed so it can't flash in mid-load.
-        check("auto-show: card not present instantly on load",
-              await page2.locator(CARD).count() == 0)
-        await wait_card_stable(page2)
-        check("auto-show: card appears after the delay",
-              await page2.locator(CARD).is_visible())
-        await assert_not_blocking(page2, "auto-show")
-
-        # Dismiss, then confirm it never auto-shows again across repeated reloads.
-        await page2.get_by_role("button", name="Skip tutorial").click()
-        await wait_card_gone(page2)
-        for i in (1, 2):
-            await page2.reload(wait_until="domcontentloaded")
-            check(f"auto-show: still hidden on reload #{i}", await wait_no_autoshow(page2))
-
-        # A brand-new browser profile (no localStorage) sees it again.
-        ctx3 = await browser.new_context(viewport={"width": 1280, "height": 1800})
-        page3 = await ctx3.new_page()
-        await page3.goto(BASE, wait_until="domcontentloaded")
-        try:
-            await wait_card_stable(page3)
-            shown = True
-        except Exception:
-            shown = False
-        check("auto-show: fresh profile sees the card again", shown)
-        await ctx3.close()
-        await ctx2.close()
-
-        await page.screenshot(path="/tmp/browser/onboarding-final.png")
-
+        for vp_name, vp in VIEWPORTS:
+            print(f"\n=== {vp_name} ===")
+            await run_viewport(browser, vp_name, vp)
         await browser.close()
 
     print(f"\n{'ALL CHECKS PASSED' if not fails else 'FAILURES: ' + ', '.join(fails)}")
     sys.exit(1 if fails else 0)
 
 asyncio.run(main())
+
