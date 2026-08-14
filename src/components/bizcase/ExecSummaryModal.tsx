@@ -13,6 +13,9 @@ import {
 import { UpgradeNotice } from "./LicenseModals";
 import {
   applyScenario,
+  describeCostRationale,
+  describeTimeRationale,
+  resolveRationale,
   REGIONS,
   REGION_LABEL,
   type CaseInputs,
@@ -81,6 +84,23 @@ function regionalContext(inputs: CaseInputs): string {
   return `Regional mix (share of annual units): ${parts.join(", ")}.`;
 }
 
+/** How the savings figures were built, when the user showed their work. */
+function savingsRationaleContext(inputs: CaseInputs): string {
+  const r = resolveRationale(inputs);
+  const parts: string[] = [];
+  const cost = describeCostRationale(r.cost);
+  const time = describeTimeRationale(r.time);
+  if (cost)
+    parts.push(
+      `Cost savings of $${Math.round(inputs.benefits.costSavingsAnnual).toLocaleString()} per year, ${cost}`,
+    );
+  if (time)
+    parts.push(
+      `Time savings of $${Math.round(inputs.benefits.timeSavingsAnnual).toLocaleString()} per year, ${time}`,
+    );
+  return parts.length ? `Savings rationale: ${parts.join("; ")}.` : "";
+}
+
 /** Full model payload for a case, including worst/best case NPV from the saved scenario adjustments. */
 export function buildSummaryPayload(name: string, inputs: CaseInputs, outputs: CaseOutputs) {
   const { revenueContext, timelineContext } = buildContexts(inputs, outputs);
@@ -113,6 +133,7 @@ export function buildSummaryPayload(name: string, inputs: CaseInputs, outputs: C
     marginContext: marginContext(outputs),
     phasedCapexContext: phasedCapexContext(inputs),
     regionalContext: regionalContext(inputs),
+    savingsRationaleContext: savingsRationaleContext(inputs),
   };
 }
 

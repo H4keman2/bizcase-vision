@@ -43,6 +43,7 @@ const SummaryInput = z.object({
   marginContext: z.string().optional(),
   phasedCapexContext: z.string().optional(),
   regionalContext: z.string().optional(),
+  savingsRationaleContext: z.string().optional(),
 });
 
 export interface ExecSummary {
@@ -79,8 +80,11 @@ ${range}
 ${data.marginContext ?? ""}
 ${data.phasedCapexContext ?? ""}
 ${data.regionalContext ?? ""}
+${data.savingsRationaleContext ?? ""}
 ${data.revenueContext}
 ${data.timelineContext}
+
+When a savings rationale is given, reference the underlying assumptions (per-task time, volume, labor rate, or quantity and unit value) in the drivers so the case shows its work rather than quoting a bare dollar figure.
 
 Ground every risk in the real numbers above: reference the worst-case NPV, the payback timing, margin or breakeven figures, regional mix, and phased capex timing where they exist. Do not write generic hedging that could apply to any project.
 
