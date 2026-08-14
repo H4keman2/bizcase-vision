@@ -401,6 +401,7 @@ export function zeroInputs(): CaseInputs {
     investment: { nre: 0, upfront: 0, phased: [] },
     benefits: {
       costSavingsAnnual: 0,
+      rationale: defaultRationale(),
       timeSavingsAnnual: 0,
       revenueModel: {
         type: "none",
@@ -430,6 +431,7 @@ export function defaultInputs(): CaseInputs {
     investment: { nre: 85000, upfront: 260000, phased: [] },
     benefits: {
       costSavingsAnnual: 180000,
+      rationale: defaultRationale(),
       timeSavingsAnnual: 30000,
       revenueModel: {
         type: "none",
