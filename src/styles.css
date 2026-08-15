@@ -195,7 +195,7 @@
 
 @utility field-inset {
   width: 100%;
-  height: 2.25rem; /* 36px — matches SegToggle buttons */
+  height: 2.75rem; /* 44px — matches SegToggle buttons */
   background-color: var(--color-card-inset);
   border: 1px solid var(--color-border);
   padding: 0 0.625rem;

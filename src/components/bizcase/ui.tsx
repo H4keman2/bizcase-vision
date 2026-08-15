@@ -236,7 +236,7 @@ export function SegToggle<T extends string>({
             aria-disabled={o.disabled}
             onClick={() => (o.disabled ? onLockedClick?.(o.value) : onChange(o.value))}
             className={cn(
-              "h-9 w-full px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+              "h-11 w-full px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
               o.disabled
                 ? "cursor-not-allowed bg-card-inset/30 text-muted-foreground/30"
                 : value === o.value
