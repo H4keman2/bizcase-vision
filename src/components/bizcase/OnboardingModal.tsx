@@ -3,6 +3,7 @@ import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal } from "l
 import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
 import onboardingStep1Asset from "@/assets/onboarding-step-1.png.asset.json";
+import onboardingStep2Asset from "@/assets/onboarding-step-2.jpg.asset.json";
 
 const SEEN_KEY = "onboarding:seen";
 
@@ -50,8 +51,8 @@ const STEPS: Step[] = [
     icon: FlaskConical,
     title: "See what happens if you're wrong",
     body: "Flip between Expected, Best, and Worst case. It's the fastest way to find out which assumption your whole business case is really resting on.",
-    image: "/onboarding/step-2.png",
-    alt: "Scenario toggle showing expected, best, and worst case results",
+    image: onboardingStep2Asset.url,
+    alt: "Sensitivity view tooltip explaining that Worst Case applies -15% to benefits/revenue and +15% to costs while Best Case applies +15% benefits and -5% costs",
   },
   {
     icon: Layers,
