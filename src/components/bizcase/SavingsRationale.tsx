@@ -106,7 +106,7 @@ export function SavingsRationaleSection({
                     }
                   />
                 </label>
-                <div className="grid grid-cols-2 gap-3 max-w-xl">
+                <div className="grid grid-cols-2 gap-3">
                   <NumField
                     label="Quantity / Month"
                     value={r.cost.quantityPerMonth}
@@ -141,7 +141,7 @@ export function SavingsRationaleSection({
           {r.time.enabled ? (
             <>
               <div className="mt-3 flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-3 max-w-xl">
+                <div className="grid grid-cols-2 gap-3">
                   <NumField
                     label="Time Saved / Task"
                     value={r.time.perTask}
@@ -161,7 +161,7 @@ export function SavingsRationaleSection({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 max-w-xl">
+                <div className="grid grid-cols-2 gap-3">
                   <NumField
                     label="Tasks / Month"
                     value={r.time.tasksPerMonth}
