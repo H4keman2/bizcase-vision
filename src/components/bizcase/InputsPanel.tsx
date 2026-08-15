@@ -107,7 +107,7 @@ export function InputsPanel({
   return (
     <div className="flex flex-col gap-4">
       <Card label="Investment">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 max-w-xl">
           <NumField
             label="NRE"
             info="nre"
@@ -168,7 +168,7 @@ export function InputsPanel({
       </Card>
 
       <Card label="Benefits">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 max-w-xl">
           <NumField
             label="Cost Savings / Yr"
             info="costSavingsAnnual"
@@ -213,7 +213,7 @@ export function InputsPanel({
             />
 
             {rm.type === "aggregate" && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-3 max-w-xl">
                 <NumField
                   label="Revenue Lift / Yr"
                   info="revenueLiftAnnual"
@@ -237,7 +237,7 @@ export function InputsPanel({
 
             {rm.type === "unit" && (
               <div className="mt-3 flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 max-w-xl">
                   <NumField
                     label="Price / Unit"
                     info="pricePerUnit"
@@ -329,7 +329,7 @@ export function InputsPanel({
 
                   {licensed && rm.unit.regional?.enabled ? (
                     <>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 max-w-xl">
                         {REGIONS.map((region) => (
                           <NumField
                             key={region}
@@ -400,7 +400,7 @@ export function InputsPanel({
           }
         >
           {inputs.benefits.overhead.enabled ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 max-w-xl">
               <div>
                 <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   Basis
@@ -561,7 +561,7 @@ export function InputsPanel({
           </div>
         )}
         {tl.type === "ramp" && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-3 grid grid-cols-2 gap-3 max-w-xl">
             <NumField
               label="Year 1"
               info="rampYear1"
@@ -581,7 +581,7 @@ export function InputsPanel({
       </Card>
 
       <Card label="Horizon & Discount Rate">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 max-w-xl">
           <NumField
             label="Horizon (Years)"
             info="horizonYears"
