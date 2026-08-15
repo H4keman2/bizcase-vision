@@ -69,8 +69,8 @@ export function NumInput({
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background px-4 py-7 text-foreground md:px-10 md:py-10 xl:px-14">
-      <div className="mx-auto max-w-[1600px]">{children}</div>
+    <div className="min-h-screen bg-background px-4 py-7 text-foreground md:px-8 md:py-10 xl:px-10">
+      <div className="mx-auto max-w-[1680px]">{children}</div>
     </div>
   );
 }

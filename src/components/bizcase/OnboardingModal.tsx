@@ -149,7 +149,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             aria-label="Skip tutorial"
-            className="border border-transparent px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:border-border hover:text-foreground"
+            className="border border-transparent px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground hover:border-border hover:text-foreground"
           >
             SKIP
           </button>
@@ -162,9 +162,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
               </span>
-              <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+              <h2 className="text-base font-bold tracking-tight">{title}</h2>
             </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
           </div>
         </div>
 
@@ -185,11 +185,15 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               onClick={() => setStep((s) => s - 1)}
               tabIndex={step === 0 ? -1 : 0}
               aria-hidden={step === 0}
-              className={cn(step === 0 && "pointer-events-none opacity-0")}
+              className={cn("px-3.5 py-2.5 text-xs", step === 0 && "pointer-events-none opacity-0")}
             >
               Back
             </Btn>
-            <Btn variant="primary" onClick={() => (lastStep ? onClose() : setStep((s) => s + 1))}>
+            <Btn
+              variant="primary"
+              className="px-3.5 py-2.5 text-xs"
+              onClick={() => (lastStep ? onClose() : setStep((s) => s + 1))}
+            >
               {lastStep ? (
                 "Let's go"
               ) : (

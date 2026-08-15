@@ -272,7 +272,7 @@ function UpgradeCard() {
 
   return (
     <>
-      <Btn variant="primary" onClick={() => setOpen(true)}>
+      <Btn variant="primary" className="px-4 py-2.5 text-xs" onClick={() => setOpen(true)}>
         Unlock Full Access — Pay Once
       </Btn>
       <button
@@ -395,15 +395,19 @@ function CaseList() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Btn variant="primary" onClick={onNew}>
+          <Btn variant="primary" className="px-4 py-2.5 text-xs" onClick={onNew}>
             + New Case
           </Btn>
           {!licensed ? (
             <LockedHover>
-              <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+              <Btn className="px-4 py-2.5 text-xs" onClick={() => setBulkOpen(true)}>
+                Import Multiple Cases
+              </Btn>
             </LockedHover>
           ) : (
-            <Btn onClick={() => setBulkOpen(true)}>Import Multiple Cases</Btn>
+            <Btn className="px-4 py-2.5 text-xs" onClick={() => setBulkOpen(true)}>
+              Import Multiple Cases
+            </Btn>
           )}
           <UpgradeCard />
           <button
@@ -424,11 +428,11 @@ function CaseList() {
         <div className="surface-card relative overflow-hidden p-10 text-center">
           <BackdropChart className="opacity-[0.13]" />
           <div className="relative animate-in fade-in zoom-in-95 duration-500">
-            <p className="mb-2 text-base font-semibold">Ready when you are</p>
-            <p className="mb-6 text-sm text-muted-foreground">
+            <p className="mb-2 text-lg font-semibold">Ready when you are</p>
+            <p className="mb-6 text-base text-muted-foreground">
               Create a case to model investment, benefits and returns.
             </p>
-            <Btn variant="primary" onClick={onNew}>
+            <Btn variant="primary" className="px-5 py-3 text-sm" onClick={onNew}>
               + New Case
             </Btn>
           </div>
