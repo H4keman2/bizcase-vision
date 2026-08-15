@@ -33,17 +33,18 @@ type Step = {
 };
 
 /**
- * Drop real screenshots at public/onboarding/step-1.png … step-4.png
- * (roughly 640x360, they render ~288px wide inside the card).
- * If a file is missing the image slot hides itself automatically.
+ * Tutorial card images. Step 1 is served from the Lovable CDN asset pointer;
+ * steps 2-4 still drop into public/onboarding/ (roughly 640x360, they render
+ * ~288px wide inside the card). If a file is missing the image slot hides
+ * itself automatically.
  */
 const STEPS: Step[] = [
   {
     icon: SlidersHorizontal,
     title: "Start with your assumptions",
     body: "Pop in your investment, benefits, and costs. NPV, IRR, ROI, and payback recalculate the moment you type — no recalculating spreadsheets by hand.",
-    image: "/onboarding/step-1.png",
-    alt: "The case editor inputs panel with live KPI results alongside it",
+    image: onboardingStep1Asset.url,
+    alt: "Benefits card showing the Savings Rationale builder with Cost Savings and Time Savings assumptions",
   },
   {
     icon: FlaskConical,
