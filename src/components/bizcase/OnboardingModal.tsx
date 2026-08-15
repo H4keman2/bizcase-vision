@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import onboardingStep1Asset from "@/assets/onboarding-step-1.png.asset.json";
 import onboardingStep2Asset from "@/assets/onboarding-step-2.jpg.asset.json";
 import onboardingStep3Asset from "@/assets/onboarding-step-3.jpg.asset.json";
+import onboardingStep4Asset from "@/assets/onboarding-step-4.jpg.asset.json";
 
 const SEEN_KEY = "onboarding:seen";
 
@@ -35,9 +36,8 @@ type Step = {
 };
 
 /**
- * Tutorial card images. Step 1 is served from the Lovable CDN asset pointer;
- * steps 2-4 still drop into public/onboarding/ (roughly 640x360, they render
- * ~288px wide inside the card). If a file is missing the image slot hides
+ * Tutorial card images are served from Lovable CDN asset pointers. They render
+ * ~288px wide inside the card. If an asset fails to load, the image slot hides
  * itself automatically.
  */
 const STEPS: Step[] = [
@@ -66,8 +66,8 @@ const STEPS: Step[] = [
     icon: FileDown,
     title: "Share it when you're happy",
     body: "One click gives you a full Excel workbook or a clean summary report — ready to drop in front of stakeholders.",
-    image: "/onboarding/step-4.png",
-    alt: "Export buttons for the Excel workbook and summary report",
+    image: onboardingStep4Asset.url,
+    alt: "Executive Summary modal showing the recommendation, key drivers, and risks sections",
   },
 ];
 
