@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal } from "lucide-react";
 import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
-import onboardingStep1Asset from "@/assets/onboarding-step-1.png.asset.json";
+import onboardingStep1Asset from "@/assets/onboarding-step-1.jpg.asset.json";
 import onboardingStep2Asset from "@/assets/onboarding-step-2.jpg.asset.json";
 import onboardingStep3Asset from "@/assets/onboarding-step-3.jpg.asset.json";
 import onboardingStep4Asset from "@/assets/onboarding-step-4.jpg.asset.json";
