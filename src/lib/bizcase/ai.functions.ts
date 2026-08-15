@@ -160,11 +160,7 @@ Respond ONLY with a JSON object, no markdown fences, no preamble. Shape:
 {"fields": {"<fieldKey>": {"value": number or string or null, "confidence": "high" | "medium" | "low" | null}}}`;
 
     const text = await callGateway([{ role: "user", content: prompt }]);
-    const cleaned = text
-      .trim()
-      .replace(/^```(?:json)?/i, "")
-      .replace(/```$/, "")
-      .trim();
+    const cleaned = extractJson(text);
     try {
       return JSON.parse(cleaned) as {
         fields: Record<string, { value: number | string | null; confidence: string | null }>;

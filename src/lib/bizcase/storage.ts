@@ -41,10 +41,19 @@ export function canCreateCase(): boolean {
   return isLicensed() || listCaseIds().length < FREE_CASE_LIMIT;
 }
 
+/** Random suffix so two cases created in the same millisecond (e.g. a fast
+ *  double-click) can never collide on the timestamp alone. */
+function randomSuffix(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID().slice(0, 8);
+  }
+  return Math.random().toString(36).slice(2, 10);
+}
+
 export function createCase(name = "Untitled Case"): CaseRecord {
   const ids = listCaseIds();
   if (!isLicensed() && ids.length >= FREE_CASE_LIMIT) throw new LicenseLimitError();
-  const id = `case_${Date.now().toString(36)}`;
+  const id = `case_${Date.now().toString(36)}_${randomSuffix()}`;
   const now = new Date().toISOString();
   const inputs = defaultInputs();
   const record: CaseRecord = {

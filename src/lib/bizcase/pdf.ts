@@ -416,6 +416,73 @@ function today() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Starts a new page if there isn't `needed` points of room left, returning the
+ *  (possibly reset) y cursor. Shared by every section that might overflow a page. */
+function pageBreak(doc: jsPDF, y: number, needed: number): number {
+  if (y > doc.internal.pageSize.getHeight() - needed) {
+    footer(doc);
+    doc.addPage();
+    return 60;
+  }
+  return y;
+}
+
+/** Regional breakdown table + units/revenue stacked-bar charts, when a case has
+ *  regional data. Shared by the single-case and comparison exports; `opts.suffix`
+ *  distinguishes "Case B" headings and `opts.initialBreakNeeded` matches each
+ *  export's own space check before the section starts. */
+function renderRegionalSection(
+  doc: jsPDF,
+  c: PdfCase,
+  y: number,
+  opts: { suffix?: string; initialBreakNeeded?: number } = {},
+): number {
+  const regRows = regionalRows(c);
+  if (!regRows.length) return y;
+  const { suffix = "", initialBreakNeeded } = opts;
+
+  if (initialBreakNeeded !== undefined) y = pageBreak(doc, y, initialBreakNeeded);
+
+  y = sectionLabel(doc, `Regional Breakdown${suffix}`, y);
+  y = rows(doc, regRows, y, 2);
+
+  const W = doc.internal.pageSize.getWidth();
+  const regionSeries = (points: (r: Region) => number[]) =>
+    REGIONS.map((r) => ({
+      label: REGION_LABEL[r],
+      color: REGION_COLORS_PDF[r],
+      points: points(r),
+    }));
+
+  const unitsImg = stackedBarChartImage(
+    regionSeries((r) => c.outputs.unitsSeries.map((p) => p.byRegion[r])),
+    (v) => fmtNumber(v, 0),
+  );
+  if (unitsImg) {
+    y = pageBreak(doc, y, 220);
+    y = sectionLabel(doc, `Units Over Time · Regional${suffix}`, y);
+    const iw = W - 80;
+    const ih = iw * (420 / 1200);
+    doc.addImage(unitsImg, "PNG", 40, y - 8, iw, ih);
+    y += ih + 18;
+  }
+
+  const revenueImg = stackedBarChartImage(
+    regionSeries((r) => c.outputs.revenueSeries.map((p) => p.byRegion[r])),
+    fmtCompact,
+  );
+  if (revenueImg) {
+    y = pageBreak(doc, y, 220);
+    y = sectionLabel(doc, `Revenue Over Time · Regional${suffix}`, y);
+    const iw = W - 80;
+    const ih = iw * (420 / 1200);
+    doc.addImage(revenueImg, "PNG", 40, y - 8, iw, ih);
+    y += ih + 18;
+  }
+
+  return y;
+}
+
 function footer(doc: jsPDF) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -534,52 +601,7 @@ export function exportCasePdf(c: PdfCase) {
     y = noteLines(doc, rlines, y);
   }
 
-  const regRows = regionalRows(c);
-  if (regRows.length) {
-    y = sectionLabel(doc, "Regional Breakdown", y);
-    y = rows(doc, regRows, y, 2);
-
-    const regionSeries = (points: (r: Region) => number[]) =>
-      REGIONS.map((r) => ({
-        label: REGION_LABEL[r],
-        color: REGION_COLORS_PDF[r],
-        points: points(r),
-      }));
-
-    const pageBreakIfNeeded = (needed: number) => {
-      if (y > doc.internal.pageSize.getHeight() - needed) {
-        footer(doc);
-        doc.addPage();
-        y = 60;
-      }
-    };
-
-    const unitsImg = stackedBarChartImage(
-      regionSeries((r) => c.outputs.unitsSeries.map((p) => p.byRegion[r])),
-      (v) => fmtNumber(v, 0),
-    );
-    if (unitsImg) {
-      pageBreakIfNeeded(220);
-      y = sectionLabel(doc, "Units Over Time · Regional", y);
-      const iw = W - 80;
-      const ih = iw * (420 / 1200);
-      doc.addImage(unitsImg, "PNG", 40, y - 8, iw, ih);
-      y += ih + 18;
-    }
-
-    const revenueImg = stackedBarChartImage(
-      regionSeries((r) => c.outputs.revenueSeries.map((p) => p.byRegion[r])),
-      fmtCompact,
-    );
-    if (revenueImg) {
-      pageBreakIfNeeded(220);
-      y = sectionLabel(doc, "Revenue Over Time · Regional", y);
-      const iw = W - 80;
-      const ih = iw * (420 / 1200);
-      doc.addImage(revenueImg, "PNG", 40, y - 8, iw, ih);
-      y += ih + 18;
-    }
-  }
+  y = renderRegionalSection(doc, c, y);
 
   const img = chartImage([
     {
@@ -597,11 +619,7 @@ export function exportCasePdf(c: PdfCase) {
   }
 
   if (c.summary) {
-    if (y > doc.internal.pageSize.getHeight() - 190) {
-      footer(doc);
-      doc.addPage();
-      y = 60;
-    }
+    y = pageBreak(doc, y, 190);
     y = sectionLabel(doc, "Executive Summary", y);
     y = summaryBlock(doc, c.summary, y);
   }
@@ -744,56 +762,7 @@ export function exportComparisonPdf(opts: {
     y = noteLines(doc, rlinesB, y);
   }
 
-  const regRowsB = regionalRows(b);
-  if (regRowsB.length) {
-    if (y > doc.internal.pageSize.getHeight() - 140) {
-      footer(doc);
-      doc.addPage();
-      y = 60;
-    }
-    y = sectionLabel(doc, "Regional Breakdown · Case B", y);
-    y = rows(doc, regRowsB, y, 2);
-
-    const regionSeriesB = (points: (r: Region) => number[]) =>
-      REGIONS.map((r) => ({
-        label: REGION_LABEL[r],
-        color: REGION_COLORS_PDF[r],
-        points: points(r),
-      }));
-    const pageBreakIfNeededB = (needed: number) => {
-      if (y > doc.internal.pageSize.getHeight() - needed) {
-        footer(doc);
-        doc.addPage();
-        y = 60;
-      }
-    };
-
-    const unitsImgB = stackedBarChartImage(
-      regionSeriesB((r) => b.outputs.unitsSeries.map((p) => p.byRegion[r])),
-      (v) => fmtNumber(v, 0),
-    );
-    if (unitsImgB) {
-      pageBreakIfNeededB(220);
-      y = sectionLabel(doc, "Units Over Time · Regional · Case B", y);
-      const iw = W - 80;
-      const ih = iw * (420 / 1200);
-      doc.addImage(unitsImgB, "PNG", 40, y - 8, iw, ih);
-      y += ih + 18;
-    }
-
-    const revenueImgB = stackedBarChartImage(
-      regionSeriesB((r) => b.outputs.revenueSeries.map((p) => p.byRegion[r])),
-      fmtCompact,
-    );
-    if (revenueImgB) {
-      pageBreakIfNeededB(220);
-      y = sectionLabel(doc, "Revenue Over Time · Regional · Case B", y);
-      const iw = W - 80;
-      const ih = iw * (420 / 1200);
-      doc.addImage(revenueImgB, "PNG", 40, y - 8, iw, ih);
-      y += ih + 18;
-    }
-  }
+  y = renderRegionalSection(doc, b, y, { suffix: " · Case B", initialBreakNeeded: 140 });
 
   footer(doc);
   watermarkIfUnlicensed(doc);
