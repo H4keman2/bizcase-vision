@@ -402,7 +402,7 @@ export function InputsPanel({
           {inputs.benefits.overhead.enabled ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-1.5 flex min-h-[2.25rem] items-end font-mono text-[10px] uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
+                <p className="mb-1.5 flex min-h-[2.25rem] items-end font-mono text-xs uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
                   Basis
                 </p>
                 <SegToggle<OverheadBasis>

@@ -200,7 +200,7 @@
   border: 1px solid var(--color-border);
   padding: 0 0.625rem;
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   color: var(--color-foreground);
   outline: none;
   &:hover {

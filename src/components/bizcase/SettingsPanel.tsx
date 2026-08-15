@@ -68,25 +68,25 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     <SettingsCtx.Provider value={{ open: () => setOpen(true) }}>
       {children}
       {open && (
-        <Modal title="Settings" onClose={() => setOpen(false)}>
+        <Modal title="Settings" onClose={() => setOpen(false)} wide>
           <div className="flex flex-col gap-6">
             <section>
-              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 License
               </p>
               {licensed ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="border border-primary px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+                    <span className="border border-primary px-2 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
                       Full version unlocked
                     </span>
-                    <span className="font-mono text-[11px] text-muted-foreground">
+                    <span className="font-mono text-sm text-muted-foreground">
                       Key {maskLicenseKey(getLicenseKey() ?? "")}
                     </span>
                   </div>
                   {confirmSignOut ? (
                     <div className="border border-warning bg-warning/10 p-3">
-                      <p className="text-sm text-foreground">
+                      <p className="text-base text-foreground">
                         Sign out of the full version on this device? Your cases stay saved, but you
                         will need the key again to import, export without a watermark, or add more
                         than {FREE_CASE_LIMIT} cases.
@@ -113,7 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <p className="font-mono text-[11px] text-muted-foreground">
+                  <p className="font-mono text-sm text-muted-foreground">
                     Free version: {FREE_CASE_LIMIT} cases, no Excel import, no best/worst case, no
                     import template, watermarked exports. One-time {LICENSE_PRICE} unlock.
                   </p>
@@ -125,7 +125,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       href={GUMROAD_URL}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground underline hover:text-primary"
+                      className="font-mono text-sm uppercase tracking-widest text-muted-foreground underline hover:text-primary"
                     >
                       Buy a key
                     </a>
@@ -135,12 +135,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             </section>
 
             <section>
-              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Appearance
               </p>
               <div className="flex flex-col gap-3">
                 <div>
-                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <p className="mb-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                     Theme
                   </p>
                   <SegToggle<Theme>
@@ -153,7 +153,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                   />
                 </div>
                 <div>
-                  <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <p className="mb-1.5 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                     Text Size
                   </p>
                   <SegToggle<TextSize>
@@ -169,16 +169,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             </section>
 
             <section>
-              <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Scenario Percentages
               </p>
-              <p className="mb-3 font-mono text-[11px] text-muted-foreground">
+              <p className="mb-3 font-mono text-sm text-muted-foreground">
                 Controls how far the Worst / Best toggle in the Case Editor shifts revenue and cost
                 from your entered numbers.
               </p>
               <div className="flex flex-col gap-4">
                 <div>
-                  <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-decline">
+                  <p className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-decline">
                     Worst Case
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -215,7 +215,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+                  <p className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-primary">
                     Best Case
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -260,7 +260,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             </section>
 
             <section>
-              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Help
               </p>
               <Btn

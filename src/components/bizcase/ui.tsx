@@ -188,13 +188,13 @@ export function NumField({
     <label className="block">
       {/* Fixed min-height so a label wrapping to two lines keeps its input box
           aligned with single-line neighbours in the same grid row. */}
-      <span className="mb-1.5 flex min-h-[2.25rem] items-end gap-1.5 font-mono text-[10px] uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
+      <span className="mb-1.5 flex min-h-[2.25rem] items-end gap-1.5 font-mono text-xs uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
         {label}
         {info ? <InfoTooltip field={info} /> : null}
       </span>
       <div className="relative">
         {prefix ? (
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-[13px] text-muted-foreground">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
             {prefix}
           </span>
         ) : null}
@@ -205,7 +205,7 @@ export function NumField({
           onChange={onChange}
         />
         {suffix ? (
-          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[12px] text-muted-foreground">
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
             {suffix}
           </span>
         ) : null}
