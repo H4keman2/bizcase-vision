@@ -37,8 +37,9 @@ type Step = {
 
 /**
  * Tutorial card images are served from Lovable CDN asset pointers. They render
- * ~288px wide inside the card. If an asset fails to load, the image slot hides
- * itself automatically.
+ * ~384px wide inside the card, cropped to fill the frame (object-cover) rather
+ * than letterboxed, so a wide app screenshot doesn't shrink down to a postage
+ * stamp. If an asset fails to load, the image slot hides itself automatically.
  */
 const STEPS: Step[] = [
   {
@@ -87,19 +88,18 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
   }, [src]);
 
   return (
-    <div className="mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden border border-border bg-card p-2 sm:aspect-video sm:p-3">
+    <div className="mb-3 flex aspect-video w-full items-center justify-center overflow-hidden border border-border bg-card">
       {loaded && (
         <img
           src={src}
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="h-full w-full animate-in fade-in object-contain duration-200"
+          className="h-full w-full animate-in fade-in object-cover duration-200"
         />
       )}
     </div>
   );
-
 }
 
 /**
@@ -139,7 +139,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
       ref={cardRef}
       role="complementary"
       aria-label="Getting started guide"
-      className="fixed right-3 top-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 duration-200 sm:right-4 sm:top-4"
+      className="fixed right-3 top-3 z-50 w-[min(24rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 duration-200 sm:right-4 sm:top-4"
     >
       <div className="surface-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
