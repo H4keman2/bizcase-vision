@@ -264,6 +264,53 @@ export function exportCaseExcel(c: ExcelCase) {
   XLSX.writeFile(wb, `BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.xlsx`);
 }
 
+/** Escapes a single CSV field per RFC 4180: wrap in quotes if it contains a
+ *  comma, quote, or newline, doubling any embedded quotes. */
+function csvField(v: string | number): string {
+  const s = String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function toCsv(rows: SheetRow[]): string {
+  if (rows.length === 0) return "";
+  const headers = Object.keys(rows[0]);
+  const lines = [headers.map(csvField).join(",")];
+  for (const row of rows) {
+    lines.push(headers.map((h) => csvField(row[h] ?? "")).join(","));
+  }
+  return lines.join("\r\n");
+}
+
+function downloadCsv(filename: string, contents: string) {
+  // Leading BOM so Excel opens the file with correct UTF-8 encoding instead
+  // of mis-reading currency symbols and dashes as garbled characters.
+  const blob = new Blob(["\ufeff" + contents], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Plain-text CSV of the month-by-month cash flow — the one sheet everyone
+ *  actually pulls into another tool (Sheets, a BI dashboard, a model).
+ *  No xlsx dependency needed for this path, and no license gate: a text
+ *  export is fair game on the free tier just like the PDF is (watermarked). */
+export function exportCaseCsv(c: ExcelCase) {
+  const rows: SheetRow[] = c.outputs.cashFlowSeries.map((p) => ({
+    Month: p.month,
+    Revenue: p.revenue ?? 0,
+    Cost: p.cost ?? 0,
+    "Net Cash Flow": p.net ?? 0,
+    "Discounted Cash Flow": p.discounted ?? 0,
+    "Cumulative Cash Flow": p.cumulative,
+  }));
+  downloadCsv(`BizCase_${slug(c.name)}_${slug(c.versionLabel)}_${today()}.csv`, toCsv(rows));
+}
+
 type LedgerKind = "currency" | "percent" | "number";
 
 /** Short text summary of a case's timeline, safe for a single sheet cell. */

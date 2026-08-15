@@ -14,7 +14,7 @@ import { getCase, saveCase, saveVersion, listVersions, createCase } from "@/lib/
 import { fmtCompact, fmtDate } from "@/lib/bizcase/format";
 import { effectiveInputs, zeroInputs, applyScenario } from "@/lib/bizcase/types";
 import { exportCasePdf } from "@/lib/bizcase/pdf";
-import { exportCaseExcel, downloadImportTemplate } from "@/lib/bizcase/excel";
+import { exportCaseExcel, exportCaseCsv, downloadImportTemplate } from "@/lib/bizcase/excel";
 import { generateExecSummary, type ExecSummary } from "@/lib/bizcase/ai.functions";
 import { loadSettings } from "@/lib/bizcase/settings";
 import type { CaseInputs, CaseMode, CaseRecord, CaseVersion, Scenario } from "@/lib/bizcase/types";
@@ -301,6 +301,16 @@ function CaseEditor() {
             exporting={exporting}
             onExportExcel={() =>
               exportCaseExcel({
+                name: record.name,
+                versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
+                inputs: eff,
+                outputs,
+                mode,
+                summary: execSummary,
+              })
+            }
+            onExportCsv={() =>
+              exportCaseCsv({
                 name: record.name,
                 versionLabel: versions[0] ? `Draft (after ${versions[0].versionLabel})` : "Draft",
                 inputs: eff,

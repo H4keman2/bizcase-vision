@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Modal, Btn, LoadingLine } from "./ui";
@@ -49,6 +50,65 @@ export const FULL_FEATURES = [
   "Regional revenue & unit breakdown (NA, LA, APAC, EMEA)",
 ];
 
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "Is this a subscription?",
+    a: `No. You pay ${LICENSE_PRICE} once through Gumroad and the license is yours for good — no renewals, no recurring charge.`,
+  },
+  {
+    q: "What if it's not for me?",
+    a: "Gumroad handles refunds directly — reach out within 7 days of purchase and they'll sort it out, no questions asked.",
+  },
+  {
+    q: "Where does my data live?",
+    a: "Everything stays in your browser's local storage. Nothing is uploaded to a server, so there's no account to set up and nothing to leak.",
+  },
+  {
+    q: "Can I use the license on more than one device?",
+    a: "Your key works wherever you paste it — just reopen Settings on the new device and enter the same key from your receipt.",
+  },
+];
+
+/** Small collapsible FAQ to answer the purchase-hesitation questions people
+ *  actually have before they'll paste a card number in. */
+function UpgradeFaq() {
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        Before you buy
+      </p>
+      <div className="flex flex-col divide-y divide-border border border-border">
+        {FAQ_ITEMS.map((item, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={item.q}>
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-[13px] font-semibold text-foreground hover:bg-card-inset"
+              >
+                {item.q}
+                <ChevronDown
+                  className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {isOpen && (
+                <p className="px-3 pb-3 text-[13px] leading-relaxed text-muted-foreground">
+                  {item.a}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /** The shared Free-vs-Full comparison columns plus the unlock / key buttons.
  *  Reused by both the UpgradeModal and the home-screen upgrade card. */
 export function UpgradeCompare() {
@@ -98,6 +158,12 @@ export function UpgradeCompare() {
         </a>
         <Btn onClick={() => setLicenseOpen(true)}>I already have a key</Btn>
       </div>
+      <p className="mt-2.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        One-time {LICENSE_PRICE} · Pays for itself the first time it saves you from rebuilding a
+        case in a spreadsheet
+      </p>
+
+      <UpgradeFaq />
 
       {licenseOpen && <LicenseModal onClose={() => setLicenseOpen(false)} />}
     </>

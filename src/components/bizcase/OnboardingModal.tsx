@@ -113,7 +113,15 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const { icon: Icon, title, body, image, alt } = STEPS[step];
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      } else if (e.key === "ArrowRight") {
+        setStep((s) => (s === STEPS.length - 1 ? s : s + 1));
+      } else if (e.key === "ArrowLeft") {
+        setStep((s) => (s === 0 ? s : s - 1));
+      }
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -157,7 +165,11 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
 
         <div className="p-4">
           <StepImage src={image} alt={alt} />
-          <div key={step} className="min-h-[64px] animate-in fade-in duration-200">
+          <div
+            key={step}
+            className="min-h-[64px] animate-in fade-in duration-200"
+            aria-live="polite"
+          >
             <div className="mb-2 flex items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />

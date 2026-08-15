@@ -13,7 +13,12 @@ import {
   fmtPercent,
 } from "@/lib/bizcase/format";
 import { exportCaseExcel } from "@/lib/bizcase/excel";
-import { useLicensed, canGenerateExecSummary, getExecSummaryCount, FREE_EXEC_SUMMARY_LIMIT } from "@/lib/bizcase/license";
+import {
+  useLicensed,
+  canGenerateExecSummary,
+  getExecSummaryCount,
+  FREE_EXEC_SUMMARY_LIMIT,
+} from "@/lib/bizcase/license";
 import { REGIONS } from "@/lib/bizcase/types";
 import type { CaseInputs, CaseMode, CaseOutputs } from "@/lib/bizcase/types";
 
@@ -25,6 +30,7 @@ export function OutputsPanel({
   onExport,
   exporting,
   onExportExcel,
+  onExportCsv,
   onReset,
   mode = "detailed",
   scenarioRange,
@@ -37,6 +43,7 @@ export function OutputsPanel({
   onExport: () => void;
   exporting: boolean;
   onExportExcel: () => void;
+  onExportCsv: () => void;
   onReset?: () => void;
   mode?: CaseMode;
   scenarioRange?: { best: number; worst: number } | null;
@@ -251,6 +258,7 @@ export function OutputsPanel({
             </p>
           )}
           <Btn onClick={onExportExcel}>Export to Excel</Btn>
+          <Btn onClick={onExportCsv}>Export Cash Flow (CSV)</Btn>
           {onReset && <Btn onClick={onReset}>Reset</Btn>}
         </div>
       </div>
