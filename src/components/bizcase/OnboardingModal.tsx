@@ -4,6 +4,7 @@ import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
 import onboardingStep1Asset from "@/assets/onboarding-step-1.png.asset.json";
 import onboardingStep2Asset from "@/assets/onboarding-step-2.jpg.asset.json";
+import onboardingStep3Asset from "@/assets/onboarding-step-3.jpg.asset.json";
 
 const SEEN_KEY = "onboarding:seen";
 
@@ -58,8 +59,8 @@ const STEPS: Step[] = [
     icon: Layers,
     title: "Save versions and compare",
     body: "Every case keeps its own version history. Save a few options side by side and see which path actually pays back faster.",
-    image: "/onboarding/step-3.png",
-    alt: "Side-by-side comparison view of two saved cases",
+    image: onboardingStep3Asset.url,
+    alt: "Case Comparison view showing Case A and Case B NPV values with a metrics ledger comparing NPV and IRR",
   },
   {
     icon: FileDown,
