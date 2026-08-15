@@ -87,14 +87,14 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
   }, [src]);
 
   return (
-    <div className="mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden border border-border bg-card-inset sm:aspect-video">
+    <div className="mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden border border-border bg-card p-2 sm:aspect-video sm:p-3">
       {loaded && (
         <img
           src={src}
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="max-h-full max-w-full animate-in fade-in object-contain duration-200"
+          className="h-full w-full animate-in fade-in object-contain duration-200"
         />
       )}
     </div>
