@@ -105,7 +105,7 @@ export function InputsPanel({
   const hasNegativeUnits = manualBasis === "units" && manualValues.some((v) => v < 0);
 
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <Card label="Investment">
         <div className="grid grid-cols-2 gap-3">
           <NumField

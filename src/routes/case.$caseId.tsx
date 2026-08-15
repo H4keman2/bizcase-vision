@@ -281,7 +281,7 @@ function CaseEditor() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,780px)_1fr]">
         <InputsPanel
           inputs={inputs}
           onChange={setInputs}
