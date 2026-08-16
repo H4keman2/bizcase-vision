@@ -175,6 +175,7 @@ export function NumField({
   prefix,
   step,
   info,
+  compact = false,
 }: {
   label: string;
   value: number;
@@ -183,12 +184,19 @@ export function NumField({
   prefix?: string;
   step?: number;
   info?: string;
+  /** Smaller 36px input for dense surfaces like the Settings modal. */
+  compact?: boolean;
 }) {
   return (
     <label className="block">
       {/* Fixed min-height so a label wrapping to two lines keeps its input box
           aligned with single-line neighbours in the same grid row. */}
-      <span className="mb-1.5 flex min-h-[2.25rem] items-end gap-1.5 font-mono text-xs uppercase leading-[1.1rem] tracking-widest text-muted-foreground">
+      <span
+        className={cn(
+          "mb-1.5 flex items-end gap-1.5 font-mono text-xs uppercase leading-[1.1rem] tracking-widest text-muted-foreground",
+          !compact && "min-h-[2.25rem]",
+        )}
+      >
         {label}
         {info ? <InfoTooltip field={info} /> : null}
       </span>
