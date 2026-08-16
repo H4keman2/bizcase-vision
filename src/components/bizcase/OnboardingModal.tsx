@@ -102,9 +102,24 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+function getFocusable(root: HTMLElement): HTMLElement[] {
+  const selector = [
+    'button:not([disabled])',
+    'a[href]',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(", ");
+  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+    (el) => el.offsetParent !== null,
+  );
+}
+
 /**
- * Corner-anchored onboarding guide. Deliberately not a modal: it never dims the
- * page, never traps focus, and the app stays fully interactive behind it.
+ * Corner-anchored onboarding guide. Acts as a modal dialog for assistive
+ * technology: focus moves into the card on open, Tab cycles within it, and
+ * Escape or clicking outside dismisses it.
  */
 export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
@@ -112,22 +127,59 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const lastStep = step === STEPS.length - 1;
   const { icon: Icon, title, body, image, alt } = STEPS[step];
 
+  // Move focus into the card when it first appears.
   useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    card.focus({ preventScroll: true });
+  }, []);
+
+  // Keep focus inside the card while it's open.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
-      } else if (e.key === "ArrowRight") {
+        return;
+      }
+      if (e.key === "ArrowRight") {
         setStep((s) => (s === STEPS.length - 1 ? s : s + 1));
-      } else if (e.key === "ArrowLeft") {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
         setStep((s) => (s === 0 ? s : s - 1));
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable(card);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, step]);
 
-  // Clicking anywhere outside the card dismisses it (the app stays interactive,
-  // so the click itself still reaches whatever was pressed).
+  // If a step change hides the focused element, move focus to a stable control.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const focusable = getFocusable(card);
+    if (focusable.length === 0) return;
+    if (!card.contains(document.activeElement)) {
+      focusable[focusable.length - 1].focus();
+    }
+  }, [step]);
+
+  // Clicking anywhere outside the card dismisses it.
   useEffect(() => {
     let armed = false;
     const arm = window.setTimeout(() => (armed = true), 0);
