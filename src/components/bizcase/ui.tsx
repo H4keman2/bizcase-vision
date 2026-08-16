@@ -208,7 +208,12 @@ export function NumField({
         ) : null}
         <NumInput
           step={step}
-          className={cn("field-inset", prefix && "pl-6", suffix && "pr-8")}
+          className={cn(
+            "field-inset",
+            compact && "field-inset-compact",
+            prefix && "pl-6",
+            suffix && "pr-8",
+          )}
           value={value}
           onChange={onChange}
         />
@@ -227,12 +232,15 @@ export function SegToggle<T extends string>({
   value,
   onChange,
   onLockedClick,
+  compact = false,
 }: {
   options: { value: T; label: string; disabled?: boolean }[];
   value: T;
   onChange: (v: T) => void;
   /** Called instead of onChange when a disabled option is clicked (e.g. to show an upgrade prompt). */
   onLockedClick?: (v: T) => void;
+  /** Smaller 36px buttons for dense surfaces like the Settings modal. */
+  compact?: boolean;
 }) {
   return (
     <div className="flex border border-border">
@@ -244,7 +252,8 @@ export function SegToggle<T extends string>({
             aria-disabled={o.disabled}
             onClick={() => (o.disabled ? onLockedClick?.(o.value) : onChange(o.value))}
             className={cn(
-              "h-11 w-full px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+              "w-full px-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors",
+              compact ? "h-9 py-1.5" : "h-11 py-2",
               o.disabled
                 ? "cursor-not-allowed bg-card-inset/30 text-muted-foreground/30"
                 : value === o.value
@@ -372,12 +381,15 @@ export function Modal({
   children,
   wide,
   info,
+  compactBody = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
   info?: string;
+  /** Tighter body padding (p-4 instead of p-5). Opt-in only; other modals are unaffected. */
+  compactBody?: boolean;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -410,7 +422,7 @@ export function Modal({
             ESC
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className={compactBody ? "p-4" : "p-5"}>{children}</div>
       </div>
     </div>
   );

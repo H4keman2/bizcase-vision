@@ -68,8 +68,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     <SettingsCtx.Provider value={{ open: () => setOpen(true) }}>
       {children}
       {open && (
-        <Modal title="Settings" onClose={() => setOpen(false)} wide>
-          <div className="flex flex-col gap-6">
+        <Modal title="Settings" onClose={() => setOpen(false)} wide compactBody>
+          <div className="flex flex-col gap-5">
             <section>
               <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 License
@@ -146,6 +146,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                   <SegToggle<Theme>
                     value={settings.theme}
                     onChange={(v) => update({ ...settings, theme: v })}
+                    compact
                     options={[
                       { value: "dark", label: "Dark" },
                       { value: "light", label: "Light" },
@@ -159,6 +160,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                   <SegToggle<TextSize>
                     value={settings.textSize}
                     onChange={(v) => update({ ...settings, textSize: v })}
+                    compact
                     options={(["small", "default", "large"] as const).map((s) => ({
                       value: s,
                       label: TEXT_SIZE_LABEL[s],
@@ -186,6 +188,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       label="Revenue"
                       suffix="%"
                       step={1}
+                      compact
                       value={settings.scenario.worst.revenue}
                       onChange={(v) =>
                         update({
@@ -201,6 +204,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       label="Cost"
                       suffix="%"
                       step={1}
+                      compact
                       value={settings.scenario.worst.cost}
                       onChange={(v) =>
                         update({
@@ -223,6 +227,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       label="Revenue"
                       suffix="%"
                       step={1}
+                      compact
                       value={settings.scenario.best.revenue}
                       onChange={(v) =>
                         update({
@@ -238,6 +243,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
                       label="Cost"
                       suffix="%"
                       step={1}
+                      compact
                       value={settings.scenario.best.cost}
                       onChange={(v) =>
                         update({
