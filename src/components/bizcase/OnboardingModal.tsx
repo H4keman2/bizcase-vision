@@ -201,7 +201,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
       aria-modal="true"
       aria-labelledby="onboarding-step-title"
       tabIndex={-1}
-      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 focus:outline-none focus:ring-2 focus:ring-primary sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
+      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_0_0_1px_rgba(199,249,43,0.35),0_0_28px_rgba(199,249,43,0.25),0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
     >
       <div className="surface-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">

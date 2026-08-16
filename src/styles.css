@@ -214,3 +214,10 @@
     outline: none;
   }
 }
+
+/* Compact variant used only by the Settings modal fields. */
+@utility field-inset-compact {
+  height: 2.25rem; /* 36px */
+  padding: 0 0.5rem;
+  font-size: 0.8125rem; /* 13px */
+}
