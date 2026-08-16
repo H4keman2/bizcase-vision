@@ -197,9 +197,11 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={cardRef}
-      role="complementary"
-      aria-label="Getting started guide"
-      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-step-title"
+      tabIndex={-1}
+      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 focus:outline-none focus:ring-2 focus:ring-primary sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
     >
       <div className="surface-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
@@ -226,7 +228,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
               </span>
-              <h2 className="text-sm font-bold tracking-tight sm:text-base">{title}</h2>
+              <h2 id="onboarding-step-title" className="text-sm font-bold tracking-tight sm:text-base">
+                {title}
+              </h2>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">{body}</p>
           </div>
