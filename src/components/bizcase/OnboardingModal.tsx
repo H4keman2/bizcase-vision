@@ -102,9 +102,24 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+function getFocusable(root: HTMLElement): HTMLElement[] {
+  const selector = [
+    'button:not([disabled])',
+    'a[href]',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(", ");
+  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+    (el) => el.offsetParent !== null,
+  );
+}
+
 /**
- * Corner-anchored onboarding guide. Deliberately not a modal: it never dims the
- * page, never traps focus, and the app stays fully interactive behind it.
+ * Corner-anchored onboarding guide. Acts as a modal dialog for assistive
+ * technology: focus moves into the card on open, Tab cycles within it, and
+ * Escape or clicking outside dismisses it.
  */
 export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
@@ -112,22 +127,59 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
   const lastStep = step === STEPS.length - 1;
   const { icon: Icon, title, body, image, alt } = STEPS[step];
 
+  // Move focus into the card when it first appears.
   useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    card.focus({ preventScroll: true });
+  }, []);
+
+  // Keep focus inside the card while it's open.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
-      } else if (e.key === "ArrowRight") {
+        return;
+      }
+      if (e.key === "ArrowRight") {
         setStep((s) => (s === STEPS.length - 1 ? s : s + 1));
-      } else if (e.key === "ArrowLeft") {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
         setStep((s) => (s === 0 ? s : s - 1));
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable(card);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, step]);
 
-  // Clicking anywhere outside the card dismisses it (the app stays interactive,
-  // so the click itself still reaches whatever was pressed).
+  // If a step change hides the focused element, move focus to a stable control.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const focusable = getFocusable(card);
+    if (focusable.length === 0) return;
+    if (!card.contains(document.activeElement)) {
+      focusable[focusable.length - 1].focus();
+    }
+  }, [step]);
+
+  // Clicking anywhere outside the card dismisses it.
   useEffect(() => {
     let armed = false;
     const arm = window.setTimeout(() => (armed = true), 0);
@@ -145,9 +197,11 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={cardRef}
-      role="complementary"
-      aria-label="Getting started guide"
-      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-step-title"
+      tabIndex={-1}
+      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 focus:outline-none focus:ring-2 focus:ring-primary sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
     >
       <div className="surface-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
@@ -174,7 +228,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
               </span>
-              <h2 className="text-sm font-bold tracking-tight sm:text-base">{title}</h2>
+              <h2 id="onboarding-step-title" className="text-sm font-bold tracking-tight sm:text-base">
+                {title}
+              </h2>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">{body}</p>
           </div>
