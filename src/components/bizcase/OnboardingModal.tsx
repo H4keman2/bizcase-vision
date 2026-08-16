@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Layers, FileDown, FlaskConical, SlidersHorizontal, X } from "lucide-react";
 import { Btn } from "./ui";
 import { cn } from "@/lib/utils";
 import onboardingStep1Asset from "@/assets/onboarding-step-1.jpg.asset.json";
@@ -88,14 +88,14 @@ function StepImage({ src, alt }: { src: string; alt: string }) {
   }, [src]);
 
   return (
-    <div className="mb-3 flex aspect-video w-full items-center justify-center overflow-hidden border border-border bg-card">
+    <div className="mb-3 flex h-28 w-full items-center justify-center overflow-hidden border border-border bg-card p-2 sm:h-auto sm:aspect-video sm:p-3">
       {loaded && (
         <img
           src={src}
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="h-full w-full animate-in fade-in object-cover duration-200"
+          className="h-full w-full animate-in fade-in object-contain duration-200"
         />
       )}
     </div>
@@ -147,7 +147,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
       ref={cardRef}
       role="complementary"
       aria-label="Getting started guide"
-      className="fixed right-3 top-3 z-50 w-[min(28rem,calc(100vw-1.5rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 duration-200 sm:right-4 sm:top-4"
+      className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-50 w-[min(24rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-right-4 slide-in-from-top-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] ring-1 ring-white/10 duration-200 sm:top-4 sm:w-[min(28rem,calc(100vw-2rem))]"
     >
       <div className="surface-card">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
@@ -157,9 +157,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             aria-label="Skip tutorial"
-            className="border border-transparent px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground hover:border-border hover:text-foreground"
+            className="grid h-9 w-9 place-items-center border border-border text-muted-foreground hover:text-foreground"
           >
-            SKIP
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -174,9 +174,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
               </span>
-              <h2 className="text-base font-bold tracking-tight">{title}</h2>
+              <h2 className="text-sm font-bold tracking-tight sm:text-base">{title}</h2>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">{body}</p>
           </div>
         </div>
 

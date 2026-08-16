@@ -9,15 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as IrrCalculatorRouteImport } from './routes/irr-calculator'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
+import { Route as IrrCalculatorRouteImport } from './routes/irr-calculator'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
+import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IrrCalculatorRoute = IrrCalculatorRouteImport.update({
@@ -25,19 +25,19 @@ const IrrCalculatorRoute = IrrCalculatorRouteImport.update({
   path: '/irr-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
-  id: '/case/$caseId',
-  path: '/case/$caseId',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareCaseIdRoute = CompareCaseIdRouteImport.update({
   id: '/compare/$caseId',
   path: '/compare/$caseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
+  id: '/case/$caseId',
+  path: '/case/$caseId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -97,11 +97,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/irr-calculator': {
@@ -111,18 +111,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IrrCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/case/$caseId': {
-      id: '/case/$caseId'
-      path: '/case/$caseId'
-      fullPath: '/case/$caseId'
-      preLoaderRoute: typeof CaseCaseIdRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare/$caseId': {
@@ -130,6 +123,13 @@ declare module '@tanstack/react-router' {
       path: '/compare/$caseId'
       fullPath: '/compare/$caseId'
       preLoaderRoute: typeof CompareCaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/case/$caseId': {
+      id: '/case/$caseId'
+      path: '/case/$caseId'
+      fullPath: '/case/$caseId'
+      preLoaderRoute: typeof CaseCaseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
