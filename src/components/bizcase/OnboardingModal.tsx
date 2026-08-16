@@ -174,9 +174,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-border bg-card-inset">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
               </span>
-              <h2 className="text-base font-bold tracking-tight">{title}</h2>
+              <h2 className="text-sm font-bold tracking-tight sm:text-base">{title}</h2>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">{body}</p>
           </div>
         </div>
 
