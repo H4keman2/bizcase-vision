@@ -38,8 +38,8 @@ async def suppress_onboarding(page):
 async def open_settings_modal(page):
     """Click Settings and wait for the modal to render and settle."""
     await page.get_by_role("button", name="Settings").first.click()
-    modal = page.get_by_role("dialog", name="Settings")
     # Wait for the dialog to exist in the DOM (it may start at opacity 0 during entry animation).
+    modal = page.locator("[role='dialog'][aria-label='Settings']")
     await modal.wait_for(state="attached", timeout=T)
     # Allow the zoom/fade entry animation to finish.
     await page.wait_for_timeout(400)
