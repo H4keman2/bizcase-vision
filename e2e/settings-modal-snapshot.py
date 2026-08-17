@@ -88,6 +88,8 @@ async def main():
         await suppress_onboarding(mobile_page)
         await mobile_page.reload(wait_until="domcontentloaded")
         await wait_app_ready(mobile_page)
+        # Mobile can take longer to hydrate the stacked header controls.
+        await mobile_page.wait_for_timeout(2500)
         await capture_snapshot(mobile_page, "mobile", "settings-modal-compact-mobile.png")
         await mobile_ctx.close()
 
