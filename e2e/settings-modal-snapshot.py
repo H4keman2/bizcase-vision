@@ -76,6 +76,8 @@ async def main():
         await suppress_onboarding(page)
         await page.reload(wait_until="domcontentloaded")
         await wait_app_ready(page)
+        # Give React a moment to finish hydration so the Settings trigger is interactive.
+        await page.wait_for_timeout(1500)
         await capture_snapshot(page, "desktop", "settings-modal-compact.png")
         await ctx.close()
 
