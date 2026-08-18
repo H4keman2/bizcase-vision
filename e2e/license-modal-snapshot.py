@@ -113,7 +113,7 @@ async def main():
         await mobile_page.reload(wait_until="domcontentloaded")
         await wait_app_ready(mobile_page)
         await mobile_page.wait_for_timeout(2500)
-        await capture_snapshot(page, "mobile", "license-modal-default-mobile.png")
+        await capture_snapshot(mobile_page, "mobile", "license-modal-default-mobile.png")
         await mobile_ctx.close()
 
         await browser.close()
