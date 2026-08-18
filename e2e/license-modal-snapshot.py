@@ -74,7 +74,7 @@ async def open_license_modal(page):
 
 
 async def capture_snapshot(page, label, filename):
-    modal = await open_license_modal(page, label)
+    modal = await open_license_modal(page)
 
     # --- Assert default (non-compact) body mode is active ---
     body = page.locator(
