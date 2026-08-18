@@ -53,17 +53,15 @@ async def clear_license_state(page):
         await page.evaluate(f"localStorage.removeItem({key!r})")
 
 
-async def open_license_modal(page, label):
+async def open_license_modal(page):
     """Open Settings, then click 'Enter License Key' and wait for the modal."""
     settings_btn = page.get_by_role("button", name="Settings").first
     await settings_btn.wait_for(state="visible", timeout=T)
-    await page.screenshot(path=str(SNAPSHOT_DIR / f"{label}-before-settings.png"))
     await settings_btn.click(force=True)
 
     settings_modal = page.locator("[role='dialog'][aria-label='Settings']")
     await settings_modal.wait_for(state="attached", timeout=T)
     await page.wait_for_timeout(300)
-    await page.screenshot(path=str(SNAPSHOT_DIR / f"{label}-settings-open.png"))
 
     enter_key_btn = page.get_by_role("button", name="Enter License Key").first
     await enter_key_btn.wait_for(state="visible", timeout=T)
