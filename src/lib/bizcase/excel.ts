@@ -26,6 +26,15 @@ function slug(s: string) {
   return (s.trim() || "Case").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+/** Excel/Sheets treats a leading =, +, -, or @ as the start of a formula.
+ *  Prefixing with an apostrophe forces the cell to be read as plain text,
+ *  which prevents formula injection when a user-entered string (like a
+ *  case name) is exported and later opened by someone else. */
+function sanitizeCell(v: string): string {
+  return /^[=+\-@]/.test(v) ? `'${v}` : v;
+}
+
+
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -220,8 +229,9 @@ export function exportCaseExcel(c: ExcelCase) {
 
   // Summary sheet — key outputs + assumptions stacked.
   const summary: SheetRow[] = [];
-  summary.push({ Metric: "BizCase Builder", Value: c.name });
-  summary.push({ Metric: "Version", Value: c.versionLabel });
+  summary.push({ Metric: "BizCase Builder", Value: sanitizeCell(c.name) });
+  summary.push({ Metric: "Version", Value: sanitizeCell(c.versionLabel) });
+
   summary.push({ Metric: "Mode", Value: c.mode.toUpperCase() });
   summary.push({ Metric: "Generated", Value: today() });
   summary.push({ Metric: "", Value: "" });
@@ -419,9 +429,10 @@ function assumptionsCompareSheet(a: ExcelCase, b: ExcelCase): XLSX.WorkSheet {
     if (va === null && vb === null) continue; // not applicable to either case
     rows.push({
       Metric: d.label,
-      [`A · ${a.versionLabel}`]: va ?? "",
-      [`B · ${b.versionLabel}`]: vb ?? "",
+      [`A · ${sanitizeCell(a.versionLabel)}`]: va ?? "",
+      [`B · ${sanitizeCell(b.versionLabel)}`]: vb ?? "",
     });
+
     kinds.push(d.kind);
   }
 
@@ -488,10 +499,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
     if (va === null && vb === null) continue; // metric not applicable to either case
     rows.push({
       Metric: d.label,
-      [`A · ${a.versionLabel}`]: va ?? "",
-      [`B · ${b.versionLabel}`]: vb ?? "",
+      [`A · ${sanitizeCell(a.versionLabel)}`]: va ?? "",
+      [`B · ${sanitizeCell(b.versionLabel)}`]: vb ?? "",
       Delta: va !== null && vb !== null ? vb - va : "",
     });
+
     kinds.push(d.kind);
   }
 
