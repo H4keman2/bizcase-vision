@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PaybackPeriodCalculatorRouteImport } from './routes/payback-period-calculator'
+import { Route as NpvCalculatorRouteImport } from './routes/npv-calculator'
 import { Route as IrrCalculatorRouteImport } from './routes/irr-calculator'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompareCaseIdRouteImport } from './routes/compare.$caseId'
@@ -18,6 +20,16 @@ import { Route as CaseCaseIdRouteImport } from './routes/case.$caseId'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaybackPeriodCalculatorRoute = PaybackPeriodCalculatorRouteImport.update({
+  id: '/payback-period-calculator',
+  path: '/payback-period-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NpvCalculatorRoute = NpvCalculatorRouteImport.update({
+  id: '/npv-calculator',
+  path: '/npv-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IrrCalculatorRoute = IrrCalculatorRouteImport.update({
@@ -44,6 +56,8 @@ const CaseCaseIdRoute = CaseCaseIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/irr-calculator': typeof IrrCalculatorRoute
+  '/npv-calculator': typeof NpvCalculatorRoute
+  '/payback-period-calculator': typeof PaybackPeriodCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
@@ -51,6 +65,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/irr-calculator': typeof IrrCalculatorRoute
+  '/npv-calculator': typeof NpvCalculatorRoute
+  '/payback-period-calculator': typeof PaybackPeriodCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
@@ -59,6 +75,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/irr-calculator': typeof IrrCalculatorRoute
+  '/npv-calculator': typeof NpvCalculatorRoute
+  '/payback-period-calculator': typeof PaybackPeriodCalculatorRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/case/$caseId': typeof CaseCaseIdRoute
   '/compare/$caseId': typeof CompareCaseIdRoute
@@ -68,6 +86,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/irr-calculator'
+    | '/npv-calculator'
+    | '/payback-period-calculator'
     | '/sitemap.xml'
     | '/case/$caseId'
     | '/compare/$caseId'
@@ -75,6 +95,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/irr-calculator'
+    | '/npv-calculator'
+    | '/payback-period-calculator'
     | '/sitemap.xml'
     | '/case/$caseId'
     | '/compare/$caseId'
@@ -82,6 +104,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/irr-calculator'
+    | '/npv-calculator'
+    | '/payback-period-calculator'
     | '/sitemap.xml'
     | '/case/$caseId'
     | '/compare/$caseId'
@@ -90,6 +114,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   IrrCalculatorRoute: typeof IrrCalculatorRoute
+  NpvCalculatorRoute: typeof NpvCalculatorRoute
+  PaybackPeriodCalculatorRoute: typeof PaybackPeriodCalculatorRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CaseCaseIdRoute: typeof CaseCaseIdRoute
   CompareCaseIdRoute: typeof CompareCaseIdRoute
@@ -102,6 +128,20 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payback-period-calculator': {
+      id: '/payback-period-calculator'
+      path: '/payback-period-calculator'
+      fullPath: '/payback-period-calculator'
+      preLoaderRoute: typeof PaybackPeriodCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/npv-calculator': {
+      id: '/npv-calculator'
+      path: '/npv-calculator'
+      fullPath: '/npv-calculator'
+      preLoaderRoute: typeof NpvCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/irr-calculator': {
@@ -138,6 +178,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   IrrCalculatorRoute: IrrCalculatorRoute,
+  NpvCalculatorRoute: NpvCalculatorRoute,
+  PaybackPeriodCalculatorRoute: PaybackPeriodCalculatorRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CaseCaseIdRoute: CaseCaseIdRoute,
   CompareCaseIdRoute: CompareCaseIdRoute,
