@@ -229,8 +229,9 @@ export function exportCaseExcel(c: ExcelCase) {
 
   // Summary sheet — key outputs + assumptions stacked.
   const summary: SheetRow[] = [];
-  summary.push({ Metric: "BizCase Builder", Value: c.name });
-  summary.push({ Metric: "Version", Value: c.versionLabel });
+  summary.push({ Metric: "BizCase Builder", Value: sanitizeCell(c.name) });
+  summary.push({ Metric: "Version", Value: sanitizeCell(c.versionLabel) });
+
   summary.push({ Metric: "Mode", Value: c.mode.toUpperCase() });
   summary.push({ Metric: "Generated", Value: today() });
   summary.push({ Metric: "", Value: "" });
