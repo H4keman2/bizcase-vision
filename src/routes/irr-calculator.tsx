@@ -231,6 +231,52 @@ function IrrCalculatorPage() {
           three. BizCase Builder models them together, with best and worst case scenarios, phased
           capital spend and side-by-side version comparison.
         </p>
+
+        <h2 className="mt-8 text-xl font-bold uppercase tracking-tight">Frequently Asked Questions</h2>
+        <dl className="mt-4 border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What is IRR (internal rate of return)?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              IRR is the discount rate at which the net present value of an investment's cash flows equals zero. It expresses an investment's return as a single annualised percentage.
+            </dd>
+          </div>
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What is a good IRR?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              An IRR is good when it exceeds your hurdle rate or weighted average cost of capital. Many companies use a hurdle rate between 8% and 15%, so an IRR above that range is typically approved.
+            </dd>
+          </div>
+          <div className="p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              How is IRR different from NPV?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              NPV reports value created in currency at a chosen discount rate, while IRR reports the rate itself. Use NPV to compare absolute value and IRR to compare efficiency across projects of different sizes.
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-8">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related calculators</p>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <Link to="/npv-calculator" className="text-sm font-medium text-primary hover:underline">
+              NPV Calculator
+            </Link>
+            <Link to="/payback-period-calculator" className="text-sm font-medium text-primary hover:underline">
+              Payback Period Calculator
+            </Link>
+            <Link
+              to="/"
+              className="inline-block bg-primary px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
+            >
+              Model a full business case in BizCase Builder →
+            </Link>
+          </div>
+        </div>
       </section>
     </Screen>
   );

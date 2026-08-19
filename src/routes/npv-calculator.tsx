@@ -203,16 +203,50 @@ function NpvCalculatorPage() {
           </li>
         </ul>
 
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <Link to="/irr-calculator" className="text-sm font-medium text-primary hover:underline">
-            Also try our IRR Calculator
-          </Link>
-          <Link
-            to="/"
-            className="inline-block bg-primary px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
-          >
-            Model a full business case in BizCase Builder →
-          </Link>
+        <h2 className="mt-8 text-xl font-bold uppercase tracking-tight">Frequently Asked Questions</h2>
+        <dl className="mt-4 border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What is NPV (net present value)?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Net present value is the sum of an investment's future cash flows discounted back into today's money, minus the upfront cost. It answers a single question: after accounting for the time value of money, does this project add or subtract value? A positive NPV means the discounted benefits exceed what you paid to get them.
+            </dd>
+          </div>
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What discount rate should I use?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Most companies use their weighted average cost of capital, commonly somewhere between 8% and 15%, as the discount rate. If your finance team publishes a hurdle rate, use that instead so your case is comparable to other projects. Riskier or longer projects justify a higher rate because future cash is less certain.
+            </dd>
+          </div>
+          <div className="p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What does a negative NPV mean?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              A negative NPV means the project's discounted cash flows do not cover the investment at the rate you chose, so capital would earn more elsewhere. It is not automatically a rejection: try a lower discount rate, a longer horizon, or revisit whether all benefits are captured. If the number stays negative under realistic assumptions, the investment destroys value.
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-8">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related calculators</p>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <Link to="/irr-calculator" className="text-sm font-medium text-primary hover:underline">
+              IRR Calculator
+            </Link>
+            <Link to="/payback-period-calculator" className="text-sm font-medium text-primary hover:underline">
+              Payback Period Calculator
+            </Link>
+            <Link
+              to="/"
+              className="inline-block bg-primary px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
+            >
+              Model a full business case in BizCase Builder →
+            </Link>
+          </div>
         </div>
       </section>
     </Screen>
