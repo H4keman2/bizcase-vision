@@ -26,6 +26,15 @@ function slug(s: string) {
   return (s.trim() || "Case").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+/** Excel/Sheets treats a leading =, +, -, or @ as the start of a formula.
+ *  Prefixing with an apostrophe forces the cell to be read as plain text,
+ *  which prevents formula injection when a user-entered string (like a
+ *  case name) is exported and later opened by someone else. */
+function sanitizeCell(v: string): string {
+  return /^[=+\-@]/.test(v) ? `'${v}` : v;
+}
+
+
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
