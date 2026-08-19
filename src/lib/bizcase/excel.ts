@@ -499,10 +499,11 @@ export function exportComparisonExcel(opts: { name: string; a: ExcelCase; b: Exc
     if (va === null && vb === null) continue; // metric not applicable to either case
     rows.push({
       Metric: d.label,
-      [`A · ${a.versionLabel}`]: va ?? "",
-      [`B · ${b.versionLabel}`]: vb ?? "",
+      [`A · ${sanitizeCell(a.versionLabel)}`]: va ?? "",
+      [`B · ${sanitizeCell(b.versionLabel)}`]: vb ?? "",
       Delta: va !== null && vb !== null ? vb - va : "",
     });
+
     kinds.push(d.kind);
   }
 
