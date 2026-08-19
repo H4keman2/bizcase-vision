@@ -188,16 +188,50 @@ function PaybackCalculatorPage() {
           </li>
         </ul>
 
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <Link to="/irr-calculator" className="text-sm font-medium text-primary hover:underline">
-            Also try our IRR Calculator
-          </Link>
-          <Link
-            to="/"
-            className="inline-block bg-primary px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
-          >
-            Model a full business case in BizCase Builder →
-          </Link>
+        <h2 className="mt-8 text-xl font-bold uppercase tracking-tight">Frequently Asked Questions</h2>
+        <dl className="mt-4 border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What is payback period?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Payback period is the time it takes for an investment's cumulative cash flow to turn positive, meaning the project has recovered its upfront cost. It is usually expressed in months or years. Shorter paybacks mean capital is recovered sooner and is available for other uses.
+            </dd>
+          </div>
+          <div className="border-b border-border p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What's a good payback period?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Many companies look for payback inside 12 to 24 months for operational efficiency projects, and accept longer periods for infrastructure or platform investments. The right threshold depends on your industry, how quickly technology changes, and how tight your cash position is. Check whether your finance team publishes a target before setting your own.
+            </dd>
+          </div>
+          <div className="p-4">
+            <dt className="text-sm font-bold uppercase tracking-tight text-foreground">
+              What are the limits of payback period as a metric?
+            </dt>
+            <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Payback ignores the time value of money and everything that happens after the break-even point, so a project that pays back fast then stops can look better than one that compounds for years. It also says nothing about total value created. Use it alongside NPV and IRR rather than as the deciding number.
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-8">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related calculators</p>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <Link to="/irr-calculator" className="text-sm font-medium text-primary hover:underline">
+              IRR Calculator
+            </Link>
+            <Link to="/npv-calculator" className="text-sm font-medium text-primary hover:underline">
+              NPV Calculator
+            </Link>
+            <Link
+              to="/"
+              className="inline-block bg-primary px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:opacity-90"
+            >
+              Model a full business case in BizCase Builder →
+            </Link>
+          </div>
         </div>
       </section>
     </Screen>
