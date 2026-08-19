@@ -429,9 +429,10 @@ function assumptionsCompareSheet(a: ExcelCase, b: ExcelCase): XLSX.WorkSheet {
     if (va === null && vb === null) continue; // not applicable to either case
     rows.push({
       Metric: d.label,
-      [`A · ${a.versionLabel}`]: va ?? "",
-      [`B · ${b.versionLabel}`]: vb ?? "",
+      [`A · ${sanitizeCell(a.versionLabel)}`]: va ?? "",
+      [`B · ${sanitizeCell(b.versionLabel)}`]: vb ?? "",
     });
+
     kinds.push(d.kind);
   }
 
