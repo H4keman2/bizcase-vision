@@ -1,11 +1,6 @@
-import asyncio
 import re
-from pathlib import Path
 
 import requests
-
-SCREENSHOTS = Path(__file__).parent / "screenshots"
-SCREENSHOTS.mkdir(parents=True, exist_ok=True)
 
 CALCULATOR_PATHS = [
     "/irr-calculator",
