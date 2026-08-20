@@ -42,9 +42,9 @@ async def run_page(page, path, expected):
     await heading.wait_for(state="visible", timeout=T)
     check(f"{path}: FAQ heading visible", True)
 
-    # The FAQ <dl> immediately follows the heading.
+    # textContent (not inner_text) so the CSS uppercase transform is ignored.
     dts = page.locator("dl dt", has_text="?")
-    texts = [t.strip() for t in await dts.all_inner_texts()]
+    texts = [t.strip() for t in await dts.all_text_contents()]
     check(f"{path}: renders exactly 3 questions (got {len(texts)})", len(texts) == 3)
     for i, q in enumerate(expected):
         got = texts[i] if i < len(texts) else None
