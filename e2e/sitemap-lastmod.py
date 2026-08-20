@@ -32,7 +32,7 @@ def main():
             missing.append(f"{path}: URL block not found")
             continue
         block = match.group(1)
-        if not re.search(r"<lastmod>\d{{4}}-\d{{2}}-\d{{2}}</lastmod>", block):
+        if not re.search(r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>", block):
             missing.append(f"{path}: missing or malformed <lastmod>")
 
     if missing:
