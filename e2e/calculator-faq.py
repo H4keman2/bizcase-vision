@@ -66,6 +66,13 @@ async def run_page(page, path, expected):
     if schema_qs != expected:
         print("    schema:", schema_qs)
 
+    cta = page.get_by_role("link", name="Model a full business case")
+    await cta.wait_for(state="visible", timeout=T)
+    cta_href = await cta.get_attribute("href")
+    check(f"{path}: CTA links to home ('/')", cta_href == "/")
+    if cta_href != "/":
+        print("    href:", repr(cta_href))
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
